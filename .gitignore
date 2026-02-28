@@ -1,0 +1,22 @@
+# 環境・秘密情報
+.env
+.env.local
+.env.*.local
+*.pem
+
+# ローカル設定（トークン等を含む可能性）
+.claude/settings.local.json
+
+# ログ・一時ファイル
+*.log
+tmp/
+output/
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE（必要に応じてコメント解除）
+# .vscode/
+# .idea/
