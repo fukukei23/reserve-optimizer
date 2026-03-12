@@ -62,6 +62,11 @@ function handleLineWebhook(body, headers) {
       handleLineEvent(events[i]);
     } catch (eventError) {
       Logger.log('handleLineEvent error: ' + eventError.toString());
+      try {
+        appendLogRow('ERROR', eventError.message || eventError.toString());
+      } catch (logErr) {
+        Logger.log('appendLogRow failed: ' + logErr.toString());
+      }
     }
   }
 }
@@ -109,8 +114,8 @@ function verifyLineSignature(body, signature) {
   // Create expected signature
   var expectedSignature = Utilities.computeHmacSha256Signature(body, secret);
 
-  // Get signature from header
-  var actualSignature = headers['x-line-signature'];
+  // Use argument (headers not in scope here)
+  var actualSignature = signature;
 
   // Compare signatures
   return actualSignature === expectedSignature;
@@ -137,8 +142,8 @@ function verifyStripeSignature(body, signature) {
     secret
   );
 
-  // Get signature from header
-  var actualSignature = headers['stripe-signature'];
+  // Use argument (headers not in scope here)
+  var actualSignature = signature;
 
   // Compare signatures
   return actualSignature === expectedSignature;

@@ -5,6 +5,21 @@
  */
 
 /**
+ * Normalize phone input (+81, hyphens, spaces, parens) for validation.
+ * Returns cleaned string suitable for validatePhoneNumber; invalid input may still fail.
+ */
+function normalizePhoneInput(phone) {
+  if (!phone || typeof phone !== 'string') {
+    return '';
+  }
+  var s = phone.trim().replace(/[-\s()（）]/g, '');
+  if (s.replace(/^\+81/, '0').length >= 10 && s.indexOf('+81') === 0) {
+    s = '0' + s.substring(3);
+  }
+  return s;
+}
+
+/**
  * Validate phone number (Japanese format)
  */
 function validatePhoneNumber(phone) {
@@ -42,6 +57,54 @@ function validateDate(dateString) {
   }
 
   return false;
+}
+
+/**
+ * Normalize time input for user-friendly parsing (e.g. "10" or "10時" -> "10:00")
+ * Returns HH:MM string or original string; invalid input may still fail validateTime.
+ */
+function normalizeTimeInput(timeString) {
+  if (!timeString || typeof timeString !== 'string') {
+    return timeString;
+  }
+  var s = timeString.trim().replace(/[）)]\s*$/, '');
+  var onlyHour = /^([01]?[0-9]|2[0-3])$/;
+  var hourJp = /^([01]?[0-9]|2[0-3])時(半)?$/;
+  var hourMinJp = /^([01]?[0-9]|2[0-3])時([0-5]?[0-9])分?$/;
+  var gozenGogo = /^(午前|午後|あさ|昼|よる)?\s*([01]?[0-9]|2[0-3])時(半|([0-5]?[0-9])分?)?$/;
+  var amPm = /^([01]?[0-9]|2[0-3]):?([0-5][0-9])?\s*(am|pm|AM|PM)$/;
+
+  if (onlyHour.test(s)) {
+    return s + ':00';
+  }
+  var m = s.match(hourJp);
+  if (m) {
+    return m[1] + (m[2] ? ':30' : ':00');
+  }
+  m = s.match(hourMinJp);
+  if (m) {
+    var min = m[2].length === 1 ? '0' + m[2] : m[2];
+    return m[1] + ':' + min;
+  }
+  m = s.match(gozenGogo);
+  if (m) {
+    var hour = parseInt(m[2], 10);
+    var suffix = (m[1] || '').toString();
+    if (suffix.indexOf('午後') !== -1 || suffix.indexOf('昼') !== -1 || suffix === 'よる') {
+      if (hour >= 1 && hour <= 11) hour += 12;
+    }
+    var mins = (m[3] === '半') ? '30' : (m[4] ? (m[4].length === 1 ? '0' + m[4] : m[4]) : '00');
+    return hour + ':' + mins;
+  }
+  m = s.match(amPm);
+  if (m) {
+    var h = parseInt(m[1], 10);
+    var mins = m[2] ? m[2] : '00';
+    if ((m[3] || '').toLowerCase() === 'pm' && h >= 1 && h <= 11) h += 12;
+    if ((m[3] || '').toLowerCase() === 'am' && h === 12) h = 0;
+    return h + ':' + mins;
+  }
+  return s;
 }
 
 /**

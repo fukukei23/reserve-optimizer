@@ -166,6 +166,25 @@ var MessageTemplates = {
   },
 
   /**
+   * Contact message for "人間に問い合わせる" (human contact fallback)
+   */
+  getContactMessage: function() {
+    var phone = getContactPhone();
+    var url = getContactUrl();
+    var msg = 'お問い合わせありがとうございます。\n\n担当者から折り返しご連絡いたします。';
+    if (phone) {
+      msg += '\n\n【電話】 ' + phone;
+    }
+    if (url) {
+      msg += '\n【URL】 ' + url;
+    }
+    if (!phone && !url) {
+      msg += '\n\nご不明な点はお気軽にご連絡ください。';
+    }
+    return msg;
+  },
+
+  /**
    * Weekly summary for admin
    */
   getWeeklySummaryMessage: function(weekData) {

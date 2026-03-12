@@ -8,7 +8,8 @@
 var SHEET_NAMES = {
   RESERVATIONS: 'reservations',
   WAITLIST: 'waitlist',
-  WEEKLY_SUMMARY: 'weekly_summary'
+  WEEKLY_SUMMARY: 'weekly_summary',
+  LOG: 'ログ'
 };
 
 // Reservations sheet column indices (1-based)
@@ -80,6 +81,9 @@ var WEEKLY_SUMMARY_HEADERS = [
   'same_day_cancellations', 'resale_notifications', 'resale_success_count',
   'estimated_recovered_revenue'
 ];
+
+// Log sheet headers (timestamp, level, message)
+var LOG_HEADERS = ['timestamp', 'level', 'message'];
 
 // Reservation status values
 var RESERVATION_STATUS = {

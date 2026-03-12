@@ -73,6 +73,11 @@ function handleLineWebhook(body, headers) {
       handleLineEvent(events[i]);
     } catch (eventError) {
       Logger.log('handleLineEvent error: ' + eventError.toString());
+      try {
+        appendLogRow('ERROR', eventError.message || eventError.toString());
+      } catch (logErr) {
+        Logger.log('appendLogRow failed: ' + logErr.toString());
+      }
     }
   }
 }
@@ -101,6 +106,9 @@ function handleStripeWebhook(body, headers) {
     case 'payment_intent.payment_failed':
       handlePaymentFailure(event.data.object);
       break;
+    case 'charge.refunded':
+      handleRefund(event.data.object);
+      break;
     default:
       Logger.log('Unknown Stripe event type: ' + event.type);
   }
@@ -108,7 +116,6 @@ function handleStripeWebhook(body, headers) {
 
 /**
  * Verify LINE webhook signature
- *
  */
 function verifyLineSignature(body, signature) {
   var secret = PropertiesService.getScriptProperties().getProperty('LINE_CHANNEL_SECRET');
@@ -116,20 +123,13 @@ function verifyLineSignature(body, signature) {
     Logger.log('LINE_CHANNEL_SECRET not configured');
     return false;
   }
-
-  // Create expected signature
   var expectedSignature = Utilities.computeHmacSha256Signature(body, secret);
-
-  // Get signature from header (use argument; headers not in scope here)
   var actualSignature = signature;
-
-  // Compare signatures
   return actualSignature === expectedSignature;
 }
 
 /**
  * Verify Stripe webhook signature
- *
  */
 function verifyStripeSignature(body, signature) {
   var secret = PropertiesService.getScriptProperties().getProperty('STRIPE_WEBHOOK_SECRET');
@@ -137,21 +137,14 @@ function verifyStripeSignature(body, signature) {
     Logger.log('STRIPE_WEBHOOK_SECRET not configured');
     return false;
   }
-
-  // Parse Stripe signature format: timestamp,v1
   var signatureParts = signature.split(',');
   var timestamp = parseInt(signatureParts[0]);
   var v1 = signatureParts[1].replace(/=/g, '');
-
   var expectedSignature = Utilities.computeHmacSha256Signature(
     'timestamp=' + timestamp + ',v1=' + v1 + ',signature=' + body,
     secret
   );
-
-  // Use argument; headers not in scope here
   var actualSignature = signature;
-
-  // Compare signatures
   return actualSignature === expectedSignature;
 }
 
@@ -197,7 +190,11 @@ var PROPERTY_KEYS = {
   RESALE_NOTIFICATION_MINUTES: 'RESALE_NOTIFICATION_MINUTES',
   AVERAGE_UNIT_PRICE: 'AVERAGE_UNIT_PRICE',
   NO_SHOW_THRESHOLD: 'NO_SHOW_THRESHOLD',
-  NO_SHOW_DEPOSIT_AMOUNT: 'NO_SHOW_DEPOSIT_AMOUNT'
+  NO_SHOW_DEPOSIT_AMOUNT: 'NO_SHOW_DEPOSIT_AMOUNT',
+
+  // Contact (for fallback "人間に問い合わせる")
+  CONTACT_PHONE: 'CONTACT_PHONE',
+  CONTACT_URL: 'CONTACT_URL'
 };
 
 /**
@@ -307,6 +304,20 @@ function getNoShowDepositAmount() {
 }
 
 /**
+ * Get contact phone for "人間に問い合わせる" message (optional)
+ */
+function getContactPhone() {
+  return getProperty(PROPERTY_KEYS.CONTACT_PHONE, '');
+}
+
+/**
+ * Get contact URL for "人間に問い合わせる" message (optional)
+ */
+function getContactUrl() {
+  return getProperty(PROPERTY_KEYS.CONTACT_URL, '');
+}
+
+/**
  * Initialize default properties if not set
  */
 function initializeDefaultProperties() {
@@ -366,7 +377,8 @@ function validateRequiredProperties() {
 var SHEET_NAMES = {
   RESERVATIONS: 'reservations',
   WAITLIST: 'waitlist',
-  WEEKLY_SUMMARY: 'weekly_summary'
+  WEEKLY_SUMMARY: 'weekly_summary',
+  LOG: 'ログ'
 };
 
 // Reservations sheet column indices (1-based)
@@ -439,6 +451,9 @@ var WEEKLY_SUMMARY_HEADERS = [
   'estimated_recovered_revenue'
 ];
 
+// Log sheet headers (timestamp, level, message)
+var LOG_HEADERS = ['timestamp', 'level', 'message'];
+
 // Reservation status values
 var RESERVATION_STATUS = {
   PENDING: 'Pending',
@@ -478,8 +493,14 @@ function getWeeklySummaryColumn(columnName) {
 
 // ========== utils/ValidationUtils.gs ==========
 /**
- * Validation Utils - Input Validation
+ * Normalize phone input (+81, hyphens, spaces, parens) for validation.
  */
+function normalizePhoneInput(phone) {
+  if (!phone || typeof phone !== 'string') return '';
+  var s = phone.trim().replace(/[-\s()（）]/g, '');
+  if (s.replace(/^\+81/, '0').length >= 10 && s.indexOf('+81') === 0) s = '0' + s.substring(3);
+  return s;
+}
 function validatePhoneNumber(phone) {
   if (!phone || typeof phone !== 'string') return false;
   var cleaned = phone.replace(/[-\s]/g, '');
@@ -491,6 +512,40 @@ function validateDate(dateString) {
   for (var i = 0; i < patterns.length; i++) { if (patterns[i].test(dateString)) return true; }
   return false;
 }
+/**
+ * Normalize time input (e.g. "10" or "10時" -> "10:00")
+ */
+function normalizeTimeInput(timeString) {
+  if (!timeString || typeof timeString !== 'string') return timeString;
+  var s = timeString.trim().replace(/[）)]\s*$/, '');
+  var onlyHour = /^([01]?[0-9]|2[0-3])$/;
+  var hourJp = /^([01]?[0-9]|2[0-3])時(半)?$/;
+  var hourMinJp = /^([01]?[0-9]|2[0-3])時([0-5]?[0-9])分?$/;
+  var gozenGogo = /^(午前|午後|あさ|昼|よる)?\s*([01]?[0-9]|2[0-3])時(半|([0-5]?[0-9])分?)?$/;
+  var amPm = /^([01]?[0-9]|2[0-3]):?([0-5][0-9])?\s*(am|pm|AM|PM)$/;
+  if (onlyHour.test(s)) return s + ':00';
+  var m = s.match(hourJp);
+  if (m) return m[1] + (m[2] ? ':30' : ':00');
+  m = s.match(hourMinJp);
+  if (m) { var min = m[2].length === 1 ? '0' + m[2] : m[2]; return m[1] + ':' + min; }
+  m = s.match(gozenGogo);
+  if (m) {
+    var hour = parseInt(m[2], 10);
+    var suffix = (m[1] || '').toString();
+    if (suffix.indexOf('午後') !== -1 || suffix.indexOf('昼') !== -1 || suffix === 'よる') { if (hour >= 1 && hour <= 11) hour += 12; }
+    var mins = (m[3] === '半') ? '30' : (m[4] ? (m[4].length === 1 ? '0' + m[4] : m[4]) : '00');
+    return hour + ':' + mins;
+  }
+  m = s.match(amPm);
+  if (m) {
+    var h = parseInt(m[1], 10);
+    var mins = m[2] ? m[2] : '00';
+    if ((m[3] || '').toLowerCase() === 'pm' && h >= 1 && h <= 11) h += 12;
+    if ((m[3] || '').toLowerCase() === 'am' && h === 12) h = 0;
+    return h + ':' + mins;
+  }
+  return s;
+}
 function validateTime(timeString) {
   if (!timeString || typeof timeString !== 'string') return false;
   if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(timeString)) return false;
@@ -498,10 +553,7 @@ function validateTime(timeString) {
   var hours = parseInt(parts[0]), minutes = parseInt(parts[1]);
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
 }
-function validateEmail(email) {
-  if (!email || typeof email !== 'string') return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+function validateEmail(email) { if (!email || typeof email !== 'string') return false; return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 function validateVisitType(visitType) { return visitType === VISIT_TYPE.FIRST || visitType === VISIT_TYPE.REPEAT; }
 function validateMenuType(menuType) {
   var validMenus = ['初診（30分）', '再診（30分）', '再診（60分）'];
@@ -615,6 +667,15 @@ var MessageTemplates = {
   getChangePromptMessage: function() { return '変更したい予約の電話番号を入力してください。\n\n該当する予約を検索します。'; },
   getCancelPromptMessage: function() { return 'キャンセルしたい予約の電話番号を入力してください。\n\n該当する予約を検索します。\n※キャンセルは2時間前まで無料です。'; },
   getWaitlistRegistrationMessage: function() { return '待機リストに登録します。\n\n以下の情報を入力してください。\n\n1. 電話番号\n2. 希望時間（Morning/Afternoon/Evening/Any）\n3. 当日空き枠でよいか（Y/N）'; },
+  getContactMessage: function() {
+    var phone = getContactPhone();
+    var url = getContactUrl();
+    var msg = 'お問い合わせありがとうございます。\n\n担当者から折り返しご連絡いたします。';
+    if (phone) msg += '\n\n【電話】 ' + phone;
+    if (url) msg += '\n【URL】 ' + url;
+    if (!phone && !url) msg += '\n\nご不明な点はお気軽にご連絡ください。';
+    return msg;
+  },
   getWeeklySummaryMessage: function(weekData) {
     return '【週次サマリー】\n\n集計期間: ' + weekData.week_start + '\n\n総予約件数: ' + weekData.total_reservations + '\n無断件数: ' + weekData.total_no_shows + '\n無断率: ' + weekData.no_show_rate + '%\n当日キャンセル: ' + weekData.same_day_cancellations + '\n再販通知回数: ' + weekData.resale_notifications + '\n再販成功数: ' + weekData.resale_success_count + '\n推定回収額: ' + weekData.estimated_recovered_revenue + '円\n\n詳細はスプレッドシートをご確認ください。';
   }
@@ -689,6 +750,8 @@ function isWaitlistEntryStale(waitlistEntry, daysToKeep) {
 function getReservationsSheet() { var ss = SpreadsheetApp.openById(getSpreadsheetId()); var sheet = ss.getSheetByName(SHEET_NAMES.RESERVATIONS); if (!sheet) sheet = createSheetWithHeaders(ss, SHEET_NAMES.RESERVATIONS, RESERVATIONS_HEADERS); return sheet; }
 function getWaitlistSheet() { var ss = SpreadsheetApp.openById(getSpreadsheetId()); var sheet = ss.getSheetByName(SHEET_NAMES.WAITLIST); if (!sheet) sheet = createSheetWithHeaders(ss, SHEET_NAMES.WAITLIST, WAITLIST_HEADERS); return sheet; }
 function getWeeklySummarySheet() { var ss = SpreadsheetApp.openById(getSpreadsheetId()); var sheet = ss.getSheetByName(SHEET_NAMES.WEEKLY_SUMMARY); if (!sheet) sheet = createSheetWithHeaders(ss, SHEET_NAMES.WEEKLY_SUMMARY, WEEKLY_SUMMARY_HEADERS); return sheet; }
+function getLogSheet() { var ss = SpreadsheetApp.openById(getSpreadsheetId()); var sheet = ss.getSheetByName(SHEET_NAMES.LOG); if (!sheet) sheet = createSheetWithHeaders(ss, SHEET_NAMES.LOG, LOG_HEADERS); return sheet; }
+function appendLogRow(level, message) { var safeMsg = (message || '').toString().replace(/\r?\n/g, ' ').substring(0, 500); var sheet = getLogSheet(); sheet.appendRow([new Date(), level || 'INFO', safeMsg]); }
 function createSheetWithHeaders(ss, sheetName, headers) { var sheet = ss.insertSheet(sheetName); sheet.appendRow(headers); return sheet; }
 function generateReservationId() { var sheet = getReservationsSheet(); var lastRow = sheet.getLastRow(); if (lastRow === 1) return 'R0001'; var lastId = sheet.getRange(lastRow, 1).getValue(); var newNumber = parseInt(lastId.substring(1)) + 1; return 'R' + String(newNumber).padStart(4, '0'); }
 function createReservation(reservationData) {
@@ -787,6 +850,11 @@ function cleanupWaitlist() { var sheet = getWaitlistSheet(); var data = sheet.ge
 // ========== handlers/LineWebhookHandler.gs ==========
 var USER_STATES = { IDLE: 'IDLE', AWAITING_NAME: 'AWAITING_NAME', AWAITING_PHONE: 'AWAITING_PHONE', AWAITING_DATE: 'AWAITING_DATE', AWAITING_TIME: 'AWAITING_TIME', AWAITING_TREATMENT: 'AWAITING_TREATMENT', AWAITING_PAYMENT: 'AWAITING_PAYMENT' };
 var TEMP_DATA_KEY_PREFIX = 'user_temp_';
+var FALLBACK_RETRY_TEXT = 'もう一度入力する';
+var FALLBACK_CONTACT_TEXT = '人間に問い合わせる';
+function sendFallbackWithContact(replyToken, errorMessage) {
+  sendQuickReply(replyToken, errorMessage, [{ label: FALLBACK_RETRY_TEXT, text: FALLBACK_RETRY_TEXT }, { label: FALLBACK_CONTACT_TEXT, text: FALLBACK_CONTACT_TEXT }]);
+}
 function handleLineEvent(event) {
   var eventType = event.type; var source = event.source; var userId = source.userId; var replyToken = event.replyToken;
   switch (eventType) {
@@ -799,6 +867,7 @@ function handleLineEvent(event) {
 function handleMessage(message, replyToken, userId) {
   if (message.type !== 'text') return;
   var text = message.text.trim(); var userState = getUserState(userId); logLineMessage({ userId: userId }, text);
+  if (text === '人間に問い合わせる') { sendLineReply(replyToken, MessageTemplates.getContactMessage()); clearUserState(userId); return; }
   if (text.startsWith('/')) { handleCommand(text, replyToken, userId); return; }
   switch (userState.state) {
     case USER_STATES.IDLE: handleIdleState(text, replyToken, userId); break;
@@ -827,38 +896,65 @@ function handleIdleState(text, replyToken, userId) {
   else if (text === '当日空き枠通知を受け取る') handleWaitlistFlow(replyToken, userId);
   else { var w = MessageTemplates.getWelcomeMessage(); sendLineReply(replyToken, typeof w === 'string' ? w : w.text); }
 }
-function handleAwaitingName(text, replyToken, userId) { var tempData = getUserState(userId).context; tempData.patient_name = text; setUserState(userId, USER_STATES.AWAITING_PHONE, tempData); sendLineReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。'); }
+function handleAwaitingName(text, replyToken, userId) {
+  if (text === FALLBACK_RETRY_TEXT) { sendLineReply(replyToken, 'お名前を入力してください。'); return; }
+  var trimmed = text.trim();
+  if (!trimmed || trimmed.length > 100) { sendFallbackWithContact(replyToken, 'お名前を入力してください。\n（100文字以内でご入力ください）'); return; }
+  var tempData = getUserState(userId).context; tempData.patient_name = trimmed;
+  setUserState(userId, USER_STATES.AWAITING_PHONE, tempData); sendLineReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。');
+}
 function handleAwaitingPhone(text, replyToken, userId) {
+  if (text === FALLBACK_RETRY_TEXT) { sendLineReply(replyToken, '電話番号を入力してください（例: 09012345678）。'); return; }
   var tempData = getUserState(userId).context;
-  if (!validatePhoneNumber(text)) { sendLineReply(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678）。'); return; }
-  tempData.phone = text; setUserState(userId, USER_STATES.AWAITING_DATE, tempData); sendLineReply(replyToken, '電話番号を確認しました。\n\n希望日を入力してください（例: 来週の月曜日、または 2026-02-20）。');
+  var normalized = normalizePhoneInput(text);
+  if (!validatePhoneNumber(normalized)) { sendFallbackWithContact(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678 または 090-1234-5678）。'); return; }
+  tempData.phone = normalized; setUserState(userId, USER_STATES.AWAITING_DATE, tempData); sendDatePromptWithQuickReply(replyToken, userId);
+}
+function sendDatePromptWithQuickReply(replyToken, userId) {
+  var dateOptions = [{ label: '今日', text: '今日' }, { label: '明日', text: '明日' }, { label: '明後日', text: '明後日' }, { label: '来週月曜', text: '来週月曜' }, { label: '来週火曜', text: '来週火曜' }, { label: '来週水曜', text: '来週水曜' }, { label: '来週木曜', text: '来週木曜' }, { label: '来週金曜', text: '来週金曜' }, { label: '来週土曜', text: '来週土曜' }, { label: '来週日曜', text: '来週日曜' }];
+  sendQuickReply(replyToken, '希望日を入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。下のボタンから選ぶか、日付を入力してください。', dateOptions);
 }
 function handleAwaitingDate(text, replyToken, userId) {
-  var tempData = getUserState(userId).context; var parsedDate = parseDateInput(text);
-  if (!parsedDate) { sendLineReply(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 来週の月曜日、または 2026-02-20）。'); return; }
-  tempData.reserved_date = parsedDate; setUserState(userId, USER_STATES.AWAITING_TIME, tempData); sendLineReply(replyToken, '日付を確認しました。\n\n希望時間を入力してください（例: 10:00）。');
+  if (text === FALLBACK_RETRY_TEXT) { sendDatePromptWithQuickReply(replyToken, userId); return; }
+  var tempData = getUserState(userId).context;
+  var parsedDate = parseDateInput(text);
+  if (!parsedDate) { sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。'); return; }
+  tempData.reserved_date = parsedDate; setUserState(userId, USER_STATES.AWAITING_TIME, tempData); sendTimePromptWithQuickReply(replyToken);
+}
+function sendTimePromptWithQuickReply(replyToken) {
+  var timeOptions = ['9:00', '9:30', '10:00', '10:30', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'].map(function(t) { return { label: t, text: t }; });
+  sendQuickReply(replyToken, '希望時間を入力してください（例: 10:00 または 10時）。下のボタンから選ぶか、時刻を入力してください。', timeOptions);
 }
 function handleAwaitingTime(text, replyToken, userId) {
+  if (text === FALLBACK_RETRY_TEXT) { sendTimePromptWithQuickReply(replyToken); return; }
   var tempData = getUserState(userId).context;
-  if (!validateTime(text)) { sendLineReply(replyToken, '時間の形式が正しくありません。もう一度入力してください（例: 10:00）。'); return; }
-  tempData.reserved_start = text; tempData.reserved_end = calculateEndTime(text, 30); setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
+  var normalized = normalizeTimeInput(text);
+  if (!validateTime(normalized)) { sendFallbackWithContact(replyToken, '時間の形式が正しくありません。もう一度入力してください（例: 10:00 または 10時）。'); return; }
+  tempData.reserved_start = normalized; tempData.reserved_end = calculateEndTime(normalized);
+  setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
   var menuOptions = ['初診（30分）', '再診（30分）', '再診（60分）']; sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions.map(function(opt) { return { label: opt, text: opt }; }));
 }
 function handleAwaitingTreatment(text, replyToken, userId) {
   var tempData = getUserState(userId).context; tempData.menu_type = text; tempData.visit_type = text.indexOf('初診') >= 0 ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
   var profile = getLineProfile(userId); if (profile) tempData.line_display_name = profile.userId;
-  var result = createReservation(tempData); setUserState(userId, USER_STATES.AWAITING_PAYMENT, { reservation_id: result.id });
-  var paymentLink = createPaymentLink(result.id, tempData.patient_name, getDepositAmount());
-  if (paymentLink) { sendLineReply(replyToken, MessageTemplates.getDepositRequestMessage(result.id, tempData.reserved_date, tempData.reserved_start, tempData.menu_type, paymentLink)); } else { sendLineReply(replyToken, '決済リンクの作成に失敗しました。管理者にお問い合わせください。'); clearUserState(userId); }
+  var result = createReservation(tempData);
+  var paymentLink = null; try { paymentLink = createPaymentLink(result.id, tempData.patient_name, getDepositAmount()); } catch (e) { Logger.log('createPaymentLink error: ' + e.message); }
+  if (paymentLink) {
+    setUserState(userId, USER_STATES.AWAITING_PAYMENT, { reservation_id: result.id, payment_link: paymentLink });
+    sendLineReply(replyToken, MessageTemplates.getDepositRequestMessage(result.id, tempData.reserved_date, tempData.reserved_start, tempData.menu_type, paymentLink));
+  } else { sendLineReply(replyToken, '決済リンクの作成に失敗しました。管理者にお問い合わせください。'); clearUserState(userId); }
 }
 function handleAwaitingPayment(text, replyToken, userId) {
-  var tempData = getUserState(userId).context; var reservationId = tempData.reservation_id; var reservation = getReservationById(reservationId);
-  if (reservation && reservation.deposit_status === DEPOSIT_STATUS.PAID) { sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！'); clearUserState(userId); } else { sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n先ほど送信したリンクからデポジットをお支払いください。'); }
+  var tempData = getUserState(userId).context; var reservationId = tempData.reservation_id; var storedLink = tempData.payment_link;
+  var reservation = getReservationById(reservationId);
+  if (reservation && reservation.deposit_status === DEPOSIT_STATUS.PAID) { sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！'); clearUserState(userId); }
+  else if (storedLink) { sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。'); }
+  else { sendLineReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。'); }
 }
 function handleChangeFlow(replyToken, userId) { sendLineReply(replyToken, '予約変更機能は準備中です。管理者にお問い合わせください。'); }
 function handleCancelFlow(replyToken, userId) { sendLineReply(replyToken, 'キャンセル機能は準備中です。管理者にお問い合わせください。'); }
 function handleWaitlistFlow(replyToken, userId) { sendLineReply(replyToken, '待機リスト登録機能は準備中です。'); }
-function handleFollow(userId) { var profile = getLineProfile(userId); var displayName = profile ? profile.displayName : '患者さん'; Logger.log('User followed: ' + userId); sendLinePush(userId, (MessageTemplates.getWelcomeMessage().text || MessageTemplates.getWelcomeMessage())); }
+function handleFollow(userId) { var profile = getLineProfile(userId); var displayName = profile ? profile.displayName : '患者さん'; Logger.log('User followed: ' + userId); var message = MessageTemplates.getWelcomeMessage(); sendLinePush(userId, typeof message === 'string' ? message : message.text); }
 function handleUnfollow(userId) { Logger.log('User unfollowed: ' + userId); clearUserState(userId); }
 function setUserState(userId, state, context) { PropertiesService.getUserProperties().setProperty(TEMP_DATA_KEY_PREFIX + userId, JSON.stringify({ state: state, context: context || {}, timestamp: Date.now() })); }
 function getUserState(userId) {
@@ -868,7 +964,88 @@ function getUserState(userId) {
   return parsed;
 }
 function clearUserState(userId) { PropertiesService.getUserProperties().deleteProperty(TEMP_DATA_KEY_PREFIX + userId); }
-function parseDateInput(text) { var m = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return m[0]; m = text.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); if (m) return m[3] + '-' + m[1] + '-' + m[2]; return null; }
+function parseDateInput(text) {
+  if (!text || typeof text !== 'string') return null;
+  var s = text.trim();
+  var patterns = [/(\d{4})-(\d{1,2})-(\d{1,2})/, /(\d{1,2})\/(\d{1,2})\/(\d{4})/, /(\d{4})\/(\d{1,2})\/(\d{1,2})/];
+  for (var i = 0; i < patterns.length; i++) { var match = s.match(patterns[i]); if (match) return match[0].indexOf('-') !== -1 ? match[0] : formatDateFromMatch(match, patterns[i]); }
+  var tz = 'Asia/Tokyo'; var now = new Date(); var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  if (s === '今日') return todayStr;
+  if (s === '明日' || s === '翌日') return addDaysToDateStr(todayStr, 1);
+  if (s === '明後日') return addDaysToDateStr(todayStr, 2);
+  var weekdays = { '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7 };
+  var nextWeekMatch = s.match(/^来週([月火水木金土日])曜?/);
+  if (nextWeekMatch) { var targetDow = weekdays[nextWeekMatch[1]]; var d = getNextWeekday(now, targetDow, tz); return d ? Utilities.formatDate(d, tz, 'yyyy-MM-dd') : null; }
+  var thisWeekMatch = s.match(/^(今週|今週の)?([月火水木金土日])曜?/);
+  if (thisWeekMatch) { var targetDow2 = weekdays[thisWeekMatch[2]]; var d2 = getThisOrNextWeekday(now, targetDow2, tz); return d2 ? Utilities.formatDate(d2, tz, 'yyyy-MM-dd') : null; }
+  return null;
+}
+function formatDateFromMatch(match, pattern) {
+  var str = match[0]; if (str.indexOf('-') !== -1 && str.length >= 10) return str;
+  var parts = str.split('/'); if (parts.length !== 3) return str;
+  var y, m, d; if (parts[0].length === 4) { y = parts[0]; m = parts[1].length === 1 ? '0' + parts[1] : parts[1]; d = parts[2].length === 1 ? '0' + parts[2] : parts[2]; } else { y = parts[2]; m = parts[0].length === 1 ? '0' + parts[0] : parts[0]; d = parts[1].length === 1 ? '0' + parts[1] : parts[1]; }
+  return y + '-' + m + '-' + d;
+}
+function addDaysToDateStr(dateStr, days) { var d = new Date(dateStr + 'T12:00:00+09:00'); d.setDate(d.getDate() + days); return Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd'); }
+function getNextWeekday(now, targetDow, tz) {
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd'); var todayDate = new Date(todayStr + 'T12:00:00+09:00');
+  var day = todayDate.getDay(); var currentDow = day === 0 ? 7 : day; var daysAhead = (targetDow - currentDow + 7) % 7; if (daysAhead === 0) daysAhead = 7;
+  var d = new Date(todayDate); d.setDate(d.getDate() + daysAhead); return d;
+}
+function getThisOrNextWeekday(now, targetDow, tz) {
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd'); var todayDate = new Date(todayStr + 'T12:00:00+09:00');
+  var day = todayDate.getDay(); var currentDow = day === 0 ? 7 : day; var daysAhead = (targetDow - currentDow + 7) % 7;
+  var d = new Date(todayDate); d.setDate(d.getDate() + daysAhead); return d;
+}
+
+// ========== handlers/StripeWebhookHandler.gs ==========
+function handlePaymentSuccess(paymentIntent) {
+  var reservationId = paymentIntent.metadata ? paymentIntent.metadata.reservation_id : null;
+  if (!reservationId) { Logger.log('No reservation_id in payment intent metadata'); return; }
+  Logger.log('Processing payment success for reservation: ' + reservationId);
+  var reservation = getReservationById(reservationId);
+  if (!reservation) { Logger.log('Reservation not found: ' + reservationId); return; }
+  updateReservation(reservationId, { deposit_status: DEPOSIT_STATUS.PAID, status: RESERVATION_STATUS.CONFIRMED });
+  var confirmationMessage = MessageTemplates.getConfirmationMessage(reservation);
+  sendLinePush(reservation.line_display_name, confirmationMessage);
+  var adminUserId = getLineAdminUserId();
+  if (adminUserId) {
+    var adminMessage = '新しい予約が確定しました。\n\nID: ' + reservationId + '\n患者: ' + reservation.patient_name + '\n電話: ' + reservation.phone + '\n日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
+    sendLinePush(adminUserId, adminMessage);
+  }
+  Logger.log('Reservation confirmed: ' + reservationId);
+}
+function handlePaymentFailure(paymentIntent) {
+  var reservationId = paymentIntent.metadata ? paymentIntent.metadata.reservation_id : null;
+  var errorMessage = paymentIntent.last_payment_error ? paymentIntent.last_payment_error.message : 'Unknown error';
+  if (!reservationId) { Logger.log('No reservation_id in payment intent metadata'); return; }
+  Logger.log('Processing payment failure for reservation: ' + reservationId);
+  var reservation = getReservationById(reservationId);
+  if (!reservation) { Logger.log('Reservation not found: ' + reservationId); return; }
+  updateReservation(reservationId, { deposit_status: DEPOSIT_STATUS.UNPAID });
+  sendLinePush(reservation.line_display_name, MessageTemplates.getPaymentFailedMessage(errorMessage));
+  Logger.log('Payment failed for reservation: ' + reservationId);
+}
+function handleRefund(charge) {
+  var paymentIntentId = charge.payment_intent;
+  if (!paymentIntentId) { Logger.log('No payment_intent_id in charge'); return; }
+  Logger.log('Processing refund for payment intent: ' + paymentIntentId);
+  var sheet = getReservationsSheet();
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    var reservation = data[i];
+    var reservationId = reservation[0];
+    var depositStatus = reservation[13];
+    if (depositStatus === DEPOSIT_STATUS.PAID && reservation[10] === RESERVATION_STATUS.CANCELLED) {
+      updateReservation(reservationId, { deposit_status: DEPOSIT_STATUS.REFUNDED });
+      var lineDisplayName = reservation[4];
+      var refundMessage = MessageTemplates.getRefundConfirmationMessage(reservationId);
+      sendLinePush(lineDisplayName, refundMessage);
+      Logger.log('Refund processed for reservation: ' + reservationId);
+      break;
+    }
+  }
+}
 
 // ========== Setup.gs ==========
 function runSetup() {

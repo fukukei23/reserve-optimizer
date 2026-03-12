@@ -127,6 +127,8 @@
 7. 表示される **ウェブアプリのURL** をコピー（例: `https://script.google.com/macros/s/xxxxx/exec`）
 8. このURLを **LINE の Webhook URL** と **Stripe の Webhook エンドポイント** に登録する
 
+**コードを更新した場合**: 「デプロイ」→「デプロイを管理」→ 該当デプロイ（例: 予約Webhook v1）の横の編集（鉛筆）→「バージョン」で「新バージョン」を選んで保存すれば反映されます。Webhook URL は変更不要です。
+
 ---
 
 ## ステップ7: LINE Webhook を設定する

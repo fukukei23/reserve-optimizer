@@ -25,7 +25,11 @@ var PROPERTY_KEYS = {
   RESALE_NOTIFICATION_MINUTES: 'RESALE_NOTIFICATION_MINUTES',
   AVERAGE_UNIT_PRICE: 'AVERAGE_UNIT_PRICE',
   NO_SHOW_THRESHOLD: 'NO_SHOW_THRESHOLD',
-  NO_SHOW_DEPOSIT_AMOUNT: 'NO_SHOW_DEPOSIT_AMOUNT'
+  NO_SHOW_DEPOSIT_AMOUNT: 'NO_SHOW_DEPOSIT_AMOUNT',
+
+  // Contact (for fallback "人間に問い合わせる")
+  CONTACT_PHONE: 'CONTACT_PHONE',
+  CONTACT_URL: 'CONTACT_URL'
 };
 
 /**
@@ -132,6 +136,20 @@ function getNoShowThreshold() {
  */
 function getNoShowDepositAmount() {
   return parseInt(getProperty(PROPERTY_KEYS.NO_SHOW_DEPOSIT_AMOUNT, '2000'));
+}
+
+/**
+ * Get contact phone for "人間に問い合わせる" message (optional)
+ */
+function getContactPhone() {
+  return getProperty(PROPERTY_KEYS.CONTACT_PHONE, '');
+}
+
+/**
+ * Get contact URL for "人間に問い合わせる" message (optional)
+ */
+function getContactUrl() {
+  return getProperty(PROPERTY_KEYS.CONTACT_URL, '');
 }
 
 /**

@@ -18,6 +18,21 @@ var USER_STATES = {
 // Temporary data storage (24-hour TTL)
 var TEMP_DATA_KEY_PREFIX = 'user_temp_';
 
+// Fixed labels for fallback quick replies (same text is sent when tapped)
+var FALLBACK_RETRY_TEXT = 'もう一度入力する';
+var FALLBACK_CONTACT_TEXT = '人間に問い合わせる';
+
+/**
+ * Send error message with fallback quick replies (もう一度入力する / 人間に問い合わせる)
+ */
+function sendFallbackWithContact(replyToken, errorMessage) {
+  var items = [
+    { label: FALLBACK_RETRY_TEXT, text: FALLBACK_RETRY_TEXT },
+    { label: FALLBACK_CONTACT_TEXT, text: FALLBACK_CONTACT_TEXT }
+  ];
+  sendQuickReply(replyToken, errorMessage, items);
+}
+
 /**
  * Handle LINE webhook event
  */
@@ -25,6 +40,7 @@ function handleLineEvent(event) {
   var eventType = event.type;
   var source = event.source;
   var userId = source.userId;
+  var replyToken = event.replyToken;
 
   switch (eventType) {
     case 'message':
@@ -55,6 +71,13 @@ function handleMessage(message, replyToken, userId) {
   var userState = getUserState(userId);
 
   logLineMessage({userId: userId}, text);
+
+  // Handle "人間に問い合わせる" regardless of state (so it is not validated as name/phone/date/time)
+  if (text === '人間に問い合わせる') {
+    sendLineReply(replyToken, MessageTemplates.getContactMessage());
+    clearUserState(userId);
+    return;
+  }
 
   // Check for commands
   if (text.startsWith('/')) {
@@ -141,8 +164,19 @@ function handleIdleState(text, replyToken, userId) {
  * Handle awaiting name
  */
 function handleAwaitingName(text, replyToken, userId) {
+  if (text === FALLBACK_RETRY_TEXT) {
+    sendLineReply(replyToken, 'お名前を入力してください。');
+    return;
+  }
+
+  var trimmed = text.trim();
+  if (!trimmed || trimmed.length > 100) {
+    sendFallbackWithContact(replyToken, 'お名前を入力してください。\n（100文字以内でご入力ください）');
+    return;
+  }
+
   var tempData = getUserState(userId).context;
-  tempData.patient_name = text;
+  tempData.patient_name = trimmed;
 
   setUserState(userId, USER_STATES.AWAITING_PHONE, tempData);
   sendLineReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。');
@@ -152,53 +186,96 @@ function handleAwaitingName(text, replyToken, userId) {
  * Handle awaiting phone
  */
 function handleAwaitingPhone(text, replyToken, userId) {
-  var tempData = getUserState(userId).context;
-
-  // Validate phone number
-  if (!validatePhoneNumber(text)) {
-    sendLineReply(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678）。');
+  if (text === FALLBACK_RETRY_TEXT) {
+    sendLineReply(replyToken, '電話番号を入力してください（例: 09012345678）。');
     return;
   }
 
-  tempData.phone = text;
+  var tempData = getUserState(userId).context;
+  var normalized = normalizePhoneInput(text);
+  if (!validatePhoneNumber(normalized)) {
+    sendFallbackWithContact(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678 または 090-1234-5678）。');
+    return;
+  }
+
+  tempData.phone = normalized;
 
   setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
-  sendLineReply(replyToken, '電話番号を確認しました。\n\n希望日を入力してください（例: 来週の月曜日、または 2026-02-20）。');
+  sendDatePromptWithQuickReply(replyToken, userId);
+}
+
+/**
+ * Send date prompt with quick reply (今日 / 明日 / 明後日 / 来週月曜 ...)
+ */
+function sendDatePromptWithQuickReply(replyToken, userId) {
+  var dateOptions = [
+    { label: '今日', text: '今日' },
+    { label: '明日', text: '明日' },
+    { label: '明後日', text: '明後日' },
+    { label: '来週月曜', text: '来週月曜' },
+    { label: '来週火曜', text: '来週火曜' },
+    { label: '来週水曜', text: '来週水曜' },
+    { label: '来週木曜', text: '来週木曜' },
+    { label: '来週金曜', text: '来週金曜' },
+    { label: '来週土曜', text: '来週土曜' },
+    { label: '来週日曜', text: '来週日曜' }
+  ];
+  sendQuickReply(replyToken, '希望日を入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。下のボタンから選ぶか、日付を入力してください。', dateOptions);
 }
 
 /**
  * Handle awaiting date
  */
 function handleAwaitingDate(text, replyToken, userId) {
+  if (text === FALLBACK_RETRY_TEXT) {
+    sendDatePromptWithQuickReply(replyToken, userId);
+    return;
+  }
+
   var tempData = getUserState(userId).context;
 
-  // Parse date
   var parsedDate = parseDateInput(text);
   if (!parsedDate) {
-    sendLineReply(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 来週の月曜日、または 2026-02-20）。');
+    sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。');
     return;
   }
 
   tempData.reserved_date = parsedDate;
 
   setUserState(userId, USER_STATES.AWAITING_TIME, tempData);
-  sendLineReply(replyToken, '日付を確認しました。\n\n希望時間を入力してください（例: 10:00）。');
+  sendTimePromptWithQuickReply(replyToken);
+}
+
+/**
+ * Send time prompt with quick reply (9:00, 9:30, ... 17:00)
+ */
+function sendTimePromptWithQuickReply(replyToken) {
+  var timeOptions = [
+    '9:00', '9:30', '10:00', '10:30', '11:00', '12:00',
+    '13:00', '14:00', '15:00', '16:00', '17:00'
+  ].map(function(t) { return { label: t, text: t }; });
+  sendQuickReply(replyToken, '希望時間を入力してください（例: 10:00 または 10時）。下のボタンから選ぶか、時刻を入力してください。', timeOptions);
 }
 
 /**
  * Handle awaiting time
  */
 function handleAwaitingTime(text, replyToken, userId) {
-  var tempData = getUserState(userId).context;
-
-  // Validate time
-  if (!validateTime(text)) {
-    sendLineReply(replyToken, '時間の形式が正しくありません。もう一度入力してください（例: 10:00）。');
+  if (text === FALLBACK_RETRY_TEXT) {
+    sendTimePromptWithQuickReply(replyToken);
     return;
   }
 
-  tempData.reserved_start = text;
-  tempData.reserved_end = calculateEndTime(text);
+  var tempData = getUserState(userId).context;
+
+  var normalized = normalizeTimeInput(text);
+  if (!validateTime(normalized)) {
+    sendFallbackWithContact(replyToken, '時間の形式が正しくありません。もう一度入力してください（例: 10:00 または 10時）。');
+    return;
+  }
+
+  tempData.reserved_start = normalized;
+  tempData.reserved_end = calculateEndTime(normalized);
 
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
@@ -232,19 +309,23 @@ function handleAwaitingTreatment(text, replyToken, userId) {
   // Create reservation
   var result = createReservation(tempData);
 
-  // Move to payment awaiting state
-  setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
-    reservation_id: result.id
-  });
-
-  // Send confirmation with payment link
-  var paymentLink = createPaymentLink(
-    result.id,
-    tempData.patient_name,
-    getDepositAmount()
-  );
+  // Send confirmation with payment link（先にリンク取得してから状態を移す）
+  var paymentLink = null;
+  try {
+    paymentLink = createPaymentLink(
+      result.id,
+      tempData.patient_name,
+      getDepositAmount()
+    );
+  } catch (e) {
+    Logger.log('createPaymentLink error: ' + e.message);
+  }
 
   if (paymentLink) {
+    setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
+      reservation_id: result.id,
+      payment_link: paymentLink  // 再送用に保持
+    });
     var message = MessageTemplates.getDepositRequestMessage(
       result.id,
       tempData.reserved_date,
@@ -265,14 +346,17 @@ function handleAwaitingTreatment(text, replyToken, userId) {
 function handleAwaitingPayment(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
   var reservationId = tempData.reservation_id;
+  var storedLink = tempData.payment_link;
 
   var reservation = getReservationById(reservationId);
 
   if (reservation && reservation.deposit_status === DEPOSIT_STATUS.PAID) {
     sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！');
     clearUserState(userId);
+  } else if (storedLink) {
+    sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。');
   } else {
-    sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n先ほど送信したリンクからデポジットをお支払いください。');
+    sendLineReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。');
   }
 }
 
@@ -366,21 +450,93 @@ function clearUserState(userId) {
 }
 
 /**
- * Parse date input
+ * Parse date input (YYYY-MM-DD, MM/DD/YYYY, 今日, 明日, 明後日, 来週月曜...)
  */
 function parseDateInput(text) {
-  // Simple implementation - could be enhanced with natural language parsing
-  var patterns = [
-    /(\d{4})-(\d{1,2})-(\d{1,2})/, // YYYY-MM-DD
-    /(\d{1,2})\/(\d{1,2})\/(\d{4})/ // MM/DD/YYYY
-  ];
+  if (!text || typeof text !== 'string') return null;
+  var s = text.trim();
 
+  var patterns = [
+    /(\d{4})-(\d{1,2})-(\d{1,2})/,   // YYYY-MM-DD
+    /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // MM/DD/YYYY
+    /(\d{4})\/(\d{1,2})\/(\d{1,2})/   // YYYY/MM/DD
+  ];
   for (var i = 0; i < patterns.length; i++) {
-    var match = text.match(patterns[i]);
+    var match = s.match(patterns[i]);
     if (match) {
-      return match[0];
+      return match[0].indexOf('-') !== -1 ? match[0] : formatDateFromMatch(match, patterns[i]);
     }
   }
 
+  var tz = 'Asia/Tokyo';
+  var now = new Date();
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+
+  if (s === '今日') return todayStr;
+  if (s === '明日' || s === '翌日') return addDaysToDateStr(todayStr, 1);
+  if (s === '明後日') return addDaysToDateStr(todayStr, 2);
+
+  var weekdays = { '月': 1, '火': 2, '水': 3, '木': 4, '金': 5, '土': 6, '日': 7 };
+  var nextWeekMatch = s.match(/^来週([月火水木金土日])曜?/);
+  if (nextWeekMatch) {
+    var targetDow = weekdays[nextWeekMatch[1]];
+    var d = getNextWeekday(now, targetDow, tz);
+    return d ? Utilities.formatDate(d, tz, 'yyyy-MM-dd') : null;
+  }
+
+  var thisWeekMatch = s.match(/^(今週|今週の)?([月火水木金土日])曜?/);
+  if (thisWeekMatch) {
+    var targetDow2 = weekdays[thisWeekMatch[2]];
+    var d2 = getThisOrNextWeekday(now, targetDow2, tz);
+    return d2 ? Utilities.formatDate(d2, tz, 'yyyy-MM-dd') : null;
+  }
+
   return null;
+}
+
+function formatDateFromMatch(match, pattern) {
+  var str = match[0];
+  if (str.indexOf('-') !== -1 && str.length >= 10) return str;
+  var parts = str.split('/');
+  if (parts.length !== 3) return str;
+  var y, m, d;
+  if (parts[0].length === 4) {
+    y = parts[0];
+    m = parts[1].length === 1 ? '0' + parts[1] : parts[1];
+    d = parts[2].length === 1 ? '0' + parts[2] : parts[2];
+  } else {
+    y = parts[2];
+    m = parts[0].length === 1 ? '0' + parts[0] : parts[0];
+    d = parts[1].length === 1 ? '0' + parts[1] : parts[1];
+  }
+  return y + '-' + m + '-' + d;
+}
+
+function addDaysToDateStr(dateStr, days) {
+  var d = new Date(dateStr + 'T12:00:00+09:00');
+  d.setDate(d.getDate() + days);
+  return Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
+}
+
+function getNextWeekday(now, targetDow, tz) {
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var todayDate = new Date(todayStr + 'T12:00:00+09:00');
+  var day = todayDate.getDay();
+  var currentDow = day === 0 ? 7 : day;
+  var daysAhead = (targetDow - currentDow + 7) % 7;
+  if (daysAhead === 0) daysAhead = 7;
+  var d = new Date(todayDate);
+  d.setDate(d.getDate() + daysAhead);
+  return d;
+}
+
+function getThisOrNextWeekday(now, targetDow, tz) {
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var todayDate = new Date(todayStr + 'T12:00:00+09:00');
+  var day = todayDate.getDay();
+  var currentDow = day === 0 ? 7 : day;
+  var daysAhead = (targetDow - currentDow + 7) % 7;
+  var d = new Date(todayDate);
+  d.setDate(d.getDate() + daysAhead);
+  return d;
 }

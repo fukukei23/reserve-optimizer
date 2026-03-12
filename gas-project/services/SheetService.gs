@@ -41,6 +41,27 @@ function getWeeklySummarySheet() {
 }
 
 /**
+ * Get log sheet (creates with headers if missing)
+ */
+function getLogSheet() {
+  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var sheet = ss.getSheetByName(SHEET_NAMES.LOG);
+  if (!sheet) {
+    sheet = createSheetWithHeaders(ss, SHEET_NAMES.LOG, LOG_HEADERS);
+  }
+  return sheet;
+}
+
+/**
+ * Append a row to the log sheet. Message is truncated and newlines replaced to avoid cell issues.
+ */
+function appendLogRow(level, message) {
+  var safeMsg = (message || '').toString().replace(/\r?\n/g, ' ').substring(0, 500);
+  var sheet = getLogSheet();
+  sheet.appendRow([new Date(), level || 'INFO', safeMsg]);
+}
+
+/**
  * Create sheet with headers
  */
 function createSheetWithHeaders(ss, sheetName, headers) {
