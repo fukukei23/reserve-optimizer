@@ -1,0 +1,9 @@
+[
+  { "id": "broll_speedlines", "file": "assets/video/broll_speedlines.mp4", "usage": "Hook背景", "duration": 5, "notes": "シネマグラフ風スピードライン" },
+  { "id": "broll_dashboard", "file": "assets/video/broll_dashboard.mp4", "usage": "Headline1", "duration": 10, "notes": "OpenClawダッシュボード風モーショングラフィック" },
+  { "id": "broll_team", "file": "assets/video/broll_team.mp4", "usage": "Headline2", "duration": 10, "notes": "チーム会議・ホログラム調" },
+  { "id": "broll_terminal", "file": "assets/video/broll_terminal.mp4", "usage": "Headline3", "duration": 10, "notes": "CLI操作のループ" },
+  { "id": "broll_flowchart", "file": "assets/video/broll_flowchart.mp4", "usage": "DeepDive", "duration": 15, "notes": "自動化フロー図アニメ" },
+  { "id": "broll_keyboard", "file": "assets/video/broll_keyboard.mp4", "usage": "Quick Action", "duration": 8, "notes": "タイピングの手元" },
+  { "id": "logo_loop", "file": "assets/video/logo_loop.mp4", "usage": "Closing", "duration": 6, "notes": "Claw5 Flashロゴ回転" }
+]

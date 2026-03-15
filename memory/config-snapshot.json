@@ -1,0 +1,11 @@
+{
+  "lastCheck": "2026-03-15T03:31:00Z",
+  "timeoutSeconds": 60,
+  "primaryModel": "zai/glm-5",
+  "fallbackModels": ["openai/gpt-5-mini", "openai/gpt-5.1-codex"],
+  "hooksEnabled": true,
+  "fallbackNotifyEnabled": true,
+  "discordEnabled": true,
+  "braveSearchEnabled": true,
+  "hash": "3456883416a3237e45aba2412b57d4dd027b4a0745b7a8377e28e384515954ff"
+}

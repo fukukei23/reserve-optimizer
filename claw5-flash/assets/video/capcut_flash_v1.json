@@ -1,0 +1,20 @@
+{
+  "template": "claw5-flash-longform-v1",
+  "version": 1,
+  "timeline": [
+    { "slot": "hook", "duration": 5, "layers": ["broll_speedlines.mp4", "title"] },
+    { "slot": "headline1", "duration": 50, "layers": ["broll_dashboard.mp4", "lowerthird_headline"] },
+    { "slot": "headline2", "duration": 50, "layers": ["broll_team.mp4", "lowerthird_headline"] },
+    { "slot": "headline3", "duration": 50, "layers": ["broll_terminal.mp4", "lowerthird_headline"] },
+    { "slot": "deepdive", "duration": 80, "layers": ["broll_flowchart.mp4", "side_panel"] },
+    { "slot": "action", "duration": 30, "layers": ["broll_keyboard.mp4", "callout_box"] },
+    { "slot": "closing", "duration": 20, "layers": ["logo_loop.mp4", "cta_card"] }
+  ],
+  "placeholders": {
+    "title": { "type": "text", "style": "title-neon", "content": "{{hook_line}}" },
+    "lowerthird_headline": { "type": "text", "style": "lower-third", "content": "{{headline.title}}" },
+    "callout_box": { "type": "text", "style": "callout", "content": "{{action.tip}}" },
+    "cta_card": { "type": "text", "style": "cta", "content": "Claw5 Flash / 毎朝5分" },
+    "logo_loop.mp4": { "type": "video", "path": "assets/video/logo_loop.mp4" }
+  }
+}

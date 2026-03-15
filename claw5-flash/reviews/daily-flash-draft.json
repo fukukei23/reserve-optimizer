@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-03-11T06:53:57.837Z",
+  "hook_line": "今日のOpenClawはzennアップデートからスタート。5分で押さえよう。",
+  "headline_titles_joined": "OpenClaw系OSSを比較してみた — 5つのClawは何が違うのか / GitHubで見つけた「便利ツール」を解析したらマルウェアだった話 / ラズパイで育てる！自分だけのAI【基礎編】⑦ デフォルトポートの危険性とlocalhostバインド",
+  "headline1": {
+    "title": "OpenClaw系OSSを比較してみた — 5つのClawは何が違うのか",
+    "summary": "OpenClaw 系のOSSチャットAIアシスタント5種を公式ドキュメントで比較。",
+    "detail": "OpenClaw、NanoClaw、ZeroClaw、PicoClaw、IronClawの5つのOSSチャットAIアシスタントについて、公式ドキュメントとREADMEを基に比較。見た目は似ているが、機能や設計思想に大きな違いがある。OpenClawは多機能かつエコシステムが充実、NanoClawは最小構成でセキュリティ重視など特長が明確。",
+    "impact": "同ジャンルのOSSの違いを理解することで、用途や環境に適したチャットAIアシスタントを選択しやすくなる。コミュニティや開発効率にも影響する可能性がある。",
+    "links": [
+      "https://zenn.dev/ryok/articles/openclaw-oss-comparison"
+    ]
+  },
+  "headline2": {
+    "title": "GitHubで見つけた「便利ツール」を解析したらマルウェアだった話",
+    "summary": "ソーシャルエンジニアリングを利用したマルウェア配布の手法を継続して解説。",
+    "detail": "前回の記事では、ClaudeのArtifactsを悪用したマルウェア配布や、Open Clawの偽リポジトリを利用したマルウェア配布事例について紹介しました。これらは高度なソーシャルエンジニアリング技術を駆使した攻撃手法であり、特にMacユーザーを標的にした情報窃盗型マルウェアが確認されています。",
+    "impact": "新たな攻撃手法により、ソフトウェア開発者やエンドユーザーのセキュリティリスクが増大し、正規のツールやリポジトリを信頼できなくなる恐れがあります。",
+    "links": [
+      "https://zenn.dev/hiyoko_sauna/articles/74dd12a7cabafa"
+    ]
+  },
+  "headline3": {
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】⑦ デフォルトポートの危険性とlocalhostバインド",
+    "summary": "OpenClawのデフォルトポート設定がセキュリティリスクになる問題と簡単な対策方法を解説。",
+    "detail": "OpenClawをDockerで稼働させる際、デフォルトのdocker-compose.ymlのポート設定が原因で外部からの不正アクセスリスクが生じる可能性があります。具体的には、ポートバインドの設定が不適切なため、意図しない通信が許可されてしまう問題です。この記事では、その問題点の詳細と、設定ファイルの一行変更による安全対策の方法を説明します。",
+    "impact": "デフォルト設定のまま運用すると不正アクセスや情報漏洩のリスクが高まり、システムのセキュリティが脅かされます。適切なポート設定に変更することで、リスクを大幅に軽減可能です。",
+    "links": [
+      "https://zenn.dev/mrkm86/articles/openclaw-basic-7"
+    ]
+  },
+  "deepdive": {
+    "title": "Claw5 Flashパイプラインを公開",
+    "context": "長尺セミナーを追えない人向けに要約を自動生成したい",
+    "mechanism": "Cronでネタ収集→要約スクリプトで台本化→CapCut/TTSテンプレで整形",
+    "actions": "リポジトリをForkしてフィードとテンプレだけ差し替えれば自分用Digestが作れる",
+    "links": [
+      "https://zenn.dev/ryok/articles/openclaw-oss-comparison",
+      "https://zenn.dev/hiyoko_sauna/articles/74dd12a7cabafa",
+      "https://zenn.dev/mrkm86/articles/openclaw-basic-7"
+    ]
+  },
+  "action": {
+    "tip": "各OSSの公式ドキュメントを参照し、自身の用途やセキュリティ要件に合うプロジェクトを選ぶこと。特に機能や構成の違いを把握し、適切なチャットAI環境を構築しよう。",
+    "resources": "https://zenn.dev/ryok/articles/openclaw-oss-comparison"
+  },
+  "closing": {
+    "teaser": "次回はUse Case Sprintで職種別テンプレを深掘り",
+    "shorts_cta": "Shortsで超要約版をチェック",
+    "main_cta": "チャンネル登録で毎朝5分の自動化ニュースを受け取ろう"
+  }
+}

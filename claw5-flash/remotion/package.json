@@ -1,0 +1,19 @@
+{
+  "name": "claw5-flash-remotion",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "remotion preview",
+    "build": "remotion render Claw5Flash out/video.mp4",
+    "render": "remotion render"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/player": "^4.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.4.0"
+  }
+}

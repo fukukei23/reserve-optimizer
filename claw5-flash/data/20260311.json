@@ -1,0 +1,501 @@
+[
+  {
+    "id": "zenn-openclaw-https-zenn-dev-ryok-articles-openclaw-oss-comparis",
+    "source": "zenn-openclaw",
+    "title": "OpenClaw系OSSを比較してみた — 5つのClawは何が違うのか",
+    "url": "https://zenn.dev/ryok/articles/openclaw-oss-comparison",
+    "content": "はじめに\nOpenClaw 系の OSS、ぱっと見どれも同じに見えませんか？ 「自分のマシンで動かす、チャット経由の AI アシスタント」という点では確かに共通しています。ただ、公式 docs を一通り読んでみたら、思った以上に別物でした。\nこの記事では OpenClaw・NanoClaw・ZeroClaw・PicoClaw・IronClaw の 5 つを、公式 docs と README ベースで比較してみます。\n\n 先に結論\nざっくりまとめると、こんな感じです。\n\n\nOpenClaw → 全部入りの本流。機能もエコシステムも最大\n\nNanoClaw → 最小構成で隔離重視。全コー...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T19:49:37.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-hiyoko-sauna-articles-74dd12a7cabaf",
+    "source": "zenn-openclaw",
+    "title": "GitHubで見つけた「便利ツール」を解析したらマルウェアだった話",
+    "url": "https://zenn.dev/hiyoko_sauna/articles/74dd12a7cabafa",
+    "content": "はじめに\nこの記事は前回の記事の続きです。\n前回はソーシャルエンジニアリングの手法として「ClaudeのArtifacts悪用したマルウェア配布」や「Open Clawの偽リポジトリでのマルウェア配布」についての記事を紹介しました。\nhttps://www.bleepingcomputer.com/news/security/claude-llm-artifacts-abused-to-push-mac-infostealers-in-clickfix-attack/\nhttps://pushsecurity.com/blog/installfix/#id-a-broader-tre...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T13:36:29.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-7",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】⑦ デフォルトポートの危険性とlocalhostバインド",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-7",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nOpenClawインストール・onboardが完了している方\nOpenClaw が稼働中だが、セキュリティ設定が正しいか気になる方\nDocker のポートバインドについて理解を深めたい方\n\nこの記事では、OpenClaw のデフォルトポート設定がなぜ危険なのか、そして 1 行の変更でどう解決できるのかを解説します。\n\n\n 問題：デフォルトのままだと何が起きるか\nOpenClaw の docker-compose.yml はポートをこのように定義しています。\nports:\n  - \"${OPENCLAW_GATEWAY_PORT:-18789}:1...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T13:11:50.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-techsfree-articles-2026-03-05-youtu",
+    "source": "zenn-openclaw",
+    "title": "YouTube 2026 AIツールマトリクス完全解説：4大モジュールを使いこなすための戦略思考",
+    "url": "https://zenn.dev/techsfree/articles/2026-03-05-youtube-ai-tools-matrix",
+    "content": "title: \"YouTube 2026 AIツールマトリクス完全解説：4大モジュールを使いこなすための戦略思考\"\ndate: 2026-03-05\nauthor: \"学習君\"\ncategory: \"youtube\"\ntags: [\"YouTube\", \"AIツール\", \"コンテンツ制作\", \"Veo\", \"Auto-dubbing\", \"クリエイターエコノミー\"]\nreadingTime: 11\nsummary: \"YouTubeのCEOが「AIはクリエイターツールの次なる進化」と宣言──しかし何が進化したのか？動画生成から肖像保護、自動吹き替えからStudioスイートまで、20...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T13:08:14.000Z"
+  },
+  {
+    "id": "discord-ai-zenn-1480911948475269190",
+    "source": "discord-ai-zenn",
+    "title": "**AIニュースダイジェスト: 2026-03-10 21:00 JST**",
+    "url": "https://discord.com/channels/1479832235044769872/1480559453538484375/1480911948475269190",
+    "content": "**AIニュースダイジェスト: 2026-03-10 21:00 JST**\n\n**OpenClaw 関連**\n- 中国のテックハブがセキュリティ懸念の中でも OpenClaw AIエージェントを推進 - Reuters\n- Tencent・Zhipu の株価が OpenClaw 連携の AIエージェント発表で急騰 - Bloomberg\n\n**GLM 関連**\n- 最新オープンアーティファクト: Qwen 3.5、GLM 5、MiniMax 2.5 — 中国ラボの新展開 - Interconnects AI\n- 中国AIスタートアップ Zhipu が新フラッグシップモデル GLM-5 をリリース - Reuters\n\n**OpenCode 関連**\n- OpenCode、Cline、Aider などのオープンソースコーディングエージェントが開発者の頭痛の種を解決 - The New Stack\n- GitHub Copilot が OpenCode をサポート開始 - The GitHub Blog\n\n**Cursor 関連**\n- Cursor が AIコーディング覇権を巡る戦争に参戦 - Forbes\n- 「300億ドルのAIコードエディタ」は既に陳腐化している可能性 - Boing Boing",
+    "tags": [
+      "discord",
+      "ai",
+      "zenn"
+    ],
+    "capturedAt": "2026-03-10T12:55:22.530000+00:00"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-iototaku-articles-c7f87e5ba76c5f",
+    "source": "zenn-openclaw",
+    "title": "夜中もOpenClawに働かせ続けよう🌜🦞",
+    "url": "https://zenn.dev/iototaku/articles/c7f87e5ba76c5f",
+    "content": "暗闇の中でロボットに仕事をさせよう\n中国では夜間にも工場のロボットを稼働させるのが当たり前になってきていますが、ソフトウェア開発も同じであるべきです。\nApple Silicon Macを常時起動し、AIを稼働させておけば、我々も就寝中に開発プロジェクトを前に進めることができます。\n\n\nこの記事では、私が実際に回している OpenClaw + cron + GitHub看板運用 のやり方を、実運用ベースでまとめます。\n\n\n 必要なもの\n\nApple Silicon Mac\nOpenClaw\ngh\nCoding Agent用のモデルを利用可能なAI（今回はgpt-5.4をExtra h...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T10:00:05.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-aoikuro-articles-2026-03-03-opencla",
+    "source": "zenn-openclaw",
+    "title": "OpenClawでのバックグラウンドプロセス管理：process toolの活用ガイド",
+    "url": "https://zenn.dev/aoikuro/articles/2026-03-03-openclaw-process-management",
+    "content": "この記事は AIエージェントのクロちゃんが代筆しています。\nクロちゃんの他の記事は Zenn でもご覧いただけます。\n\n\n 問題設定\nOpenClawで自動化を構築していると、避けられないのが「長時間実行ジョブの管理」です。\narXiv論文の日次収集、大容量ファイルの並列処理、複数チャンネルへのメッセージ配信——これらのタスクを exec tool で background: true で実行しても、実は管理方法を知らないと以下の問題が起きます：\n\nプロセスがゾンビ化して CPU リソースを消費し続ける\nログが標準出力に流れて、セッション履歴に混在する\nタイムアウト時刻を設定しないと無...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T05:08:00.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-daming-cafe-articles-blog-auto-pipe",
+    "source": "zenn-openclaw",
+    "title": "AIで小さなブログパイプラインを作った：英語ドラフトからZenn + 掘金まで（ほぼ）自動化",
+    "url": "https://zenn.dev/daming_cafe/articles/blog-auto-pipeline-openclaw",
+    "content": "英語の記事を書き終えた後、こんな気持ちになったことはないだろうか：\n\n翻訳しなきゃ……でも面倒だな。\n画像も入れたいけど……ちょっと後で。\nZennに出したっけ？掘金はどうする？\n\nおめでとう、それは普通の人間だ。\nこの記事では、OpenClawを使って作った小さな自動パイプラインを紹介する。英語で一度書けば、あとはcronジョブが面倒な作業を全部やってくれる。具体的には画像生成、Zennへの日本語投稿、掘金向けの中国語ステージングだ。\n\n\n 目次\n\n何が問題なのか？\nパイプライン全体像\n「ファイナライズ」とは何か（画像プレースホルダーを本物の画像にする）\nZenn + 掘金への配信\nハ...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T01:37:50.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-flinters-blog-articles-c78685790e85",
+    "source": "zenn-openclaw",
+    "title": "2026-03-09 AIソムリエ: ClawX で OpenClaw に入門したらセキュリティ談義になった話",
+    "url": "https://zenn.dev/flinters_blog/articles/c78685790e858d",
+    "content": "はじめに\nこんにちは。FLINTERS の河内です。\nAI エージェントが話題になるなか、「実際に自分のマシンで動かしてみたらどうなるのか」は気になるところです。今回の AIソムリエ[1]では、川上さんが話題のオープンソース AI エージェント「OpenClaw」の GUI ラッパーである「ClawX」のセットアップをライブで実演してくれました。\n参加者みんなで画面を見ながら設定を調べ、エラーを潰していく過程はまさにモブデバッグ。動く姿を確認できた一方で、AI エージェントを業務環境で動かす際のセキュリティリスクについても議論が白熱しました。\n本記事は勉強会の内容を AI を活用しな...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-10T00:03:28.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mizutamari-articles-local-llm-vol2",
+    "source": "zenn-openclaw",
+    "title": "Openclaw体験記 vol.2 — 3つの壁と、動いた瞬間",
+    "url": "https://zenn.dev/mizutamari/articles/local-llm-vol2",
+    "content": "!\nこの記事は初心者がOpenclawをセットアップした体験記である。\n技術的な正確さより、体験の正直さを優先して書いています。\n\nvol.1では、Openclawを知って「やってみたかった」という衝動の話を書いた。\nそこで経験は知識だということで今回は実際に手を動かした話。\nまあ手を動かしたという大それたことはしていなくてほぼAI任せだけど。\n\nまず「WSL2が必要です」ということ。\nほー、WSL2ね。\n以前インターネットとかPCって一体何？と思ってラズベリーパイというのを買って意味も分からず何となく触っていた時にリモート接続云々でたしか入れたな。\n何者か調べた。要するに**「Wind...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T22:23:39.000Z"
+  },
+  {
+    "id": "discord-ai-zenn-1480560319683231788",
+    "source": "discord-ai-zenn",
+    "title": "📌 Zenn AI Picks（#2 / 2026-03-09）",
+    "url": "https://discord.com/channels/1479832235044769872/1480559453538484375/1480560319683231788",
+    "content": "📌 Zenn AI Picks（#2 / 2026-03-09）\n\n1. Claude Code が RAG を捨てた理由 -「Agentic Search」という選択肢\n   大規模RAGをあえて外し、Agentic Searchに振り切った理由と評価指標をまとめた記事。長文タスクの検索体験を改善したいときのヒントになる。\n   https://zenn.dev/acntechjp/articles/c1296f425baf03\n\n2. Linear と Devin の真の連携を手に入れた話\n   Linear APIとDevinを組み合わせて「チケット起点の自律実装」を走らせる手順を公開。タスク管理とAIエージェントを繋ぐ実例として参考になる。\n   https://zenn.dev/edash_tech_blog/articles/32bd53e763a75a\n\n3. OpenClaw vs LangChain：なぜフレームワークを使わないのか\n   OpenClawの設計思想をLangChainと比較しながら解説。自前エージェント基盤を選ぶときの判断材料になりそう。\n   https://zenn.dev/orangeclaw/articles/openclaw-vs-langchain-ja",
+    "tags": [
+      "discord",
+      "ai",
+      "zenn"
+    ],
+    "capturedAt": "2026-03-09T13:38:07.693000+00:00"
+  },
+  {
+    "id": "discord-ai-zenn-1480559904849789122",
+    "source": "discord-ai-zenn",
+    "title": "📌 Zenn AI Picks（#1 / 2026-03-09）",
+    "url": "https://discord.com/channels/1479832235044769872/1480559453538484375/1480559904849789122",
+    "content": "📌 Zenn AI Picks（#1 / 2026-03-09）\n\n1. まだAIコードをレビューするか、しないかで言い争ってるの？\n   AIレビューを巡る賛否と、リスク把握・レビュー体制の実例を整理。チームでLLMレビューを取り入れる際の論点チェックに使えます。\n   https://zenn.dev/nuits_jp/articles/2026-03-08-reviewing-ai-code\n\n2. Claude Codeを組織導入するためのプラン選定ガイド\n   Claude Codeの料金プラン別にできること・制約・導入手順をまとめ。社内トライアルや契約判断の参考になりそう。\n   https://zenn.dev/knowledgework/articles/claude-code-organization-plan-guide\n\n3. json-render + MCP Apps で始める Declarative Generative UI\n   MCP Appsとjson-renderで生成UIを組むチュートリアル。エージェントUIを素早く試作したいときに役立つ構成です。\n   https://zenn.dev/tsuboi/articles/json-render-mcp-apps-declarative-generative-ui",
+    "tags": [
+      "discord",
+      "ai",
+      "zenn"
+    ],
+    "capturedAt": "2026-03-09T13:36:28.789000+00:00"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-techsfree-articles-2026-03-04-jack-",
+    "source": "zenn-openclaw",
+    "title": "メッセージバスのウェイク通知バグを直した話：全AgentをSlackへ統一",
+    "url": "https://zenn.dev/techsfree/articles/2026-03-04_jack_msgbus-wake-slack-fix-ja",
+    "content": "title: \"メッセージバスのウェイク通知バグを直した話：全AgentをSlackへ統一\"\nemoji: \"🔧\"\ntype: \"tech\"\ntopics: [\"openclaw\", \"multiagent\", \"slack\", \"python\", \"自動化\"]\npublished: true\ncategory: programming\ntags: [\"openclaw\", \"multiagent\", \"slack\", \"python\", \"automation\"]\n\n メッセージバスのウェイク通知バグを直した話：全AgentをSlackへ統一\n\n TL;DR\n\n16個のAI Ag...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T12:33:21.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-8",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】⑧ 最新版に保つ更新手順",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-8",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nOpenClawインストール・onboard が完了している方\nOpenClaw を Raspberry Pi で稼働中で、最新版に追従したい方\n\nOpenClaw は 日次リリースで活発に開発が続いています。バージョン形式は YYYY.M.DD（例: 2026.2.17）で、ほぼ毎日新しいバージョンが公開されます。\nこの記事では、Raspberry Pi 上の OpenClaw を安全かつ確実に最新版へ更新する方法を解説します。\n\n\n 更新フロー全体像\n更新は 5 ステップです。\n① git pull          — GitHub から最...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T09:43:54.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-4",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】④ pass+GPGで安全にトークン管理",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-4",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nクレデンシャルが危ない理由を読んで、クレデンシャルの危険性を理解した方\nDiscord Bot Token や API キーを安全に管理したい方\nRaspberry Pi に SSH で作業する環境がある方\n\n前提知識: Docker 動作済み（Dockerセットアップ）、OpenClaw のセキュリティリスクを把握済み\n\n前回はクレデンシャルが「チャット履歴に残る」「設定ファイルに平文で書かれる」というリスクを見てきました。\nでは、どうすれば安全に管理できるのか。この記事では pass（Unix Password Store） を使って Dis...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T09:43:45.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-9",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】⑨ フォルダ構成を理解する",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-9",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\n最新版に保つ更新手順 までが完了している方\nWindows に慣れていて、CLI のフォルダ構成がピンとこない方\n「今どのフォルダにいるのか」「どのファイルを触ればいいのか」が分からず不安な方\n\n前提環境:\n\n\n\n項目\n確認済み内容\n\n\n\n\nOpenClaw\ngateway コンテナが Up になっている\n\n\nSSH\n\nssh pi@pi01 で Pi にログインできる\n\n\n\n\nWindowsだとエクスプローラーを開けば「アプリがどこにある」「設定ファイルはどこだ」が視覚的にわかります。でもラズパイはすべてコマンドライン。\n「なんかエラーが出た、...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T09:43:33.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-beginning",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【はじめに】AIは「使う」から「育てる」へ",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-beginning",
+    "content": "はじめに\n🎯 この記事はこんな人に向けて書いています\n\n引き出しの奥にラズパイが眠っている\nChatGPT や Claude を使っているが「自分のもの」という感じがしない\nローカルAIやエージェント系ツールに興味がある\nAIを「使う」だけじゃなく「育てる」という感覚を試してみたい\n\nこの記事は、シリーズ「ラズパイで育てる！自分だけのAI」の 動機編 です。\n「なぜこのシリーズを始めたか」「OpenClawの何が刺さったか」を語ります。\n具体的なセットアップ手順は 基礎編① からスタートします。\n\n\n 引き出しに眠っていたラズパイ\n📦 「さすがにもったいない」と思った瞬間がありました...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-09T09:43:18.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20309240890244710",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.3.8 🦞\n\n🔒 ACP provenance — your agent finally knows who's talking to it\n💾 openclaw backup — because YOLO deploys need a safety net\n📱 Telegram dupes killed\n🛡️ 12+ security fixes\n\nWe fixed more things than we broke. Progress. https://github.com/openclaw/openclaw/releases/tag/v2026.3.8",
+    "url": "https://nitter.net/openclaw/status/2030924089024471045#m",
+    "content": "OpenClaw 2026.3.8 🦞\ngithub.com/openclaw/openclaw…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-09T08:30:10.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-techsfree-articles-2026-03-03-web-e",
+    "source": "zenn-openclaw",
+    "title": "ERPシステムにAIエージェントを組み込む：OpenClaw Gateway × LINE Bot × 権限連携の実装記録",
+    "url": "https://zenn.dev/techsfree/articles/2026-03-03_web_erp-ai-agent-integration",
+    "content": "ERPシステムにAIエージェントを組み込む：OpenClaw Gateway × LINE Bot × 権限連携の実装記録\n\n 背景\nTechsFreeで構築しているERP/Shopシステムに、今日一気に3つの機能を実装した。\n\nPi4 AIエージェントをチャットAPIに接続\nLINE Bot を OpenClaw Gateway 経由で稼働\nLINE ユーザーと ERPアカウントの権限バインドシステム\n\nそれぞれ「つながった瞬間」の気持ちよさがあったので、実装のポイントと詰まった部分をまとめておく。\n\n\n 1. AIエージェントをチャットAPIに繋ぐ：消息总線 vs HTTP直接呼...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-08T11:09:36.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-onusoz-status-2030569684840460760",
+    "source": "x-openclaw",
+    "title": "RT by @openclaw: Use Claude Code, Codex, and other coding agents directly in Telegram topics and Discord channels, through Agent Client Protocol (ACP), in the new release of OpenClaw\n\nPreviously this was limited to temporary Discord threads, but now you can bind them to top level Discord channels and Telegram topics in a persistent way!\n\nThis way, you can use Claude Code freely in OpenClaw without ever worrying about getting your account banned!\n\nStill make sure to use a non-Anthropic account and model for the default OpenClaw agent, if you want zero requests to go from OpenClaw harness to Anthropic. For the ACP binding to Claude Code, the risk should be zero!\n\nYou can see this from the screenshot. After binding, \"Who are you?\" responds with \"I am Claude\", since OpenClaw pi harness is not in the way anymore",
+    "url": "https://nitter.net/onusoz/status/2030569684840460760#m",
+    "content": "Use Claude Code, Codex, and other coding agents directly in Telegram topics and Discord channels, through Agent Client Protocol (ACP), in the new release of OpenClaw\nOpenClaw🦞 (@openclaw)\n\nOpenClaw 2026.3.7 🦞\ngithub.com/openclaw/openclaw…\nhttps://nitter.net/openclaw/status/2030522386894946620#m",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-08T09:01:53.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-3",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】③ Discord Bot作成・トークン取得",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-3",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nクレデンシャルが危ない理由を読んで、クレデンシャル管理の重要性を理解した方\nOpenClaw を Discord で動かすために Bot を用意したい方\nDiscord Developer Portal を初めて触る方\n\n前提知識: Discord アカウント保持済み、シリーズ①②を参照済み\n\nこの記事では OpenClaw を Discord に接続するために必要な Bot の作成とトークンの取得 を行います。\n次の記事でこのトークンを pass（GPG 暗号化）を使って安全に保管する流れになります。\n\n\n ステップ 1: Discord De...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-08T08:39:42.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-2",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】② クレデンシャルが危ない理由",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-2",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nDockerセットアップを読んで Docker セットアップを済ませた方\nこれから OpenClaw を設定しようとしている方\n「とりあえず動けばいい」と設定を始める前に立ち止まってほしい方\n\n前提知識: Docker 動作済み、OpenClaw がどんなものかざっくり知っている\n\n実は OpenClaw、使い方を間違えると API キーがあちこちに平文で残ってしまう 構造になっています。\n「そんなの当たり前じゃないの？」と思うかもしれませんが、特にチャット経由での設定という OpenClaw 特有の使い方によって、気づかないうちにシークレットが...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-08T08:39:42.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-mrkm86-articles-openclaw-basic-10",
+    "source": "zenn-openclaw",
+    "title": "ラズパイで育てる！自分だけのAI【基礎編】⑩ よく使うコマンドまとめ",
+    "url": "https://zenn.dev/mrkm86/articles/openclaw-basic-10",
+    "content": "はじめに\n🎯 この記事の対象読者\n\n\nフォルダ構成を理解する を読んだ方\nOpenClaw は動いているけど「何を打てばいいか分からない」方\nコマンドを忘れたときにサッと確認したい方\n\n前提環境:\n\n\n\n項目\n確認済み内容\n\n\n\n\nOpenClaw\ngateway コンテナが Up になっている\n\n\nSSH\n\nssh pi@pi01 で Pi にログインできる\n\n\nフォルダ理解\n\n~/projects/openclaw/ と ~/.openclaw/ の違いが分かる\n\n\n\n\n⑨ でフォルダ構成の「地図」を手に入れました。今回はその地図を使いながら「実際にどのコマンドを打つのか」を整理...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-08T08:39:17.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-4shadowed-status-2030526305624813",
+    "source": "x-openclaw",
+    "title": "RT by @openclaw: Tons of good Discord fixes in this one... too sleepy to make a good list but my agent says:\n\nallowBots set to \"mentions\" kills bot loops, slash commands no longer hang, mentions got smarter, chunk sends keep order + retry on 429/5xx, voice chats are smoother, DM sessions repaired",
+    "url": "https://nitter.net/4shadowed/status/2030526305624813655#m",
+    "content": "Tons of good Discord fixes in this one... too sleepy to make a good list but my agent says:\nOpenClaw🦞 (@openclaw)\n\nOpenClaw 2026.3.7 🦞\ngithub.com/openclaw/openclaw…\nhttps://nitter.net/openclaw/status/2030522386894946620#m",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-08T06:09:31.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20305226921478309",
+    "source": "x-openclaw",
+    "title": "R to @openclaw: 196 contributors in this release.\nThat wall of avatars is getting thicc 🦞",
+    "url": "https://nitter.net/openclaw/status/2030522692147830966#m",
+    "content": "196 contributors in this release.\nThat wall of avatars is getting thicc 🦞",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-08T05:55:09.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20305223868949466",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.3.7 🦞\n\n⚡ GPT-5.4 + Gemini 3.1 Flash-Lite\n🤖 ACP bindings survive restarts\n🐳 Slim Docker multi-stage builds\n🔐 SecretRef for gateway auth\n🔌 Pluggable context engines\n📸 HEIF image support\n💬 Zalo channel fixes\n\nWe don't do small releases. https://github.com/openclaw/openclaw/releases/tag/v2026.3.7",
+    "url": "https://nitter.net/openclaw/status/2030522386894946620#m",
+    "content": "OpenClaw 2026.3.7 🦞\ngithub.com/openclaw/openclaw…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-08T05:53:56.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-kamechan-usagi-articles-8777db954b2",
+    "source": "zenn-openclaw",
+    "title": "Proxmox上のOpenClawをNginx Proxy Manager経由でアクセスできるようにする（ハマりどころ付き）",
+    "url": "https://zenn.dev/kamechan_usagi/articles/8777db954b27f1",
+    "content": "この記事でやること\nProxmox上のVMで動かしたOpenClawダッシュボードを、Nginx Proxy Manager（NPM）経由でHTTPSアクセスできるようにした手順をまとめます。\n⚠️Public公開ではなく、VPN接続で自分のみが接続できるような状態です！！\n実際にハマったポイント（default page / unauthorized / pairing required）も解決ログ付きで残します。\n\n構築時は次の記事を参考にしつつ、自環境向けに調整しました。\nhttps://www.nightlyventures.com/p/self-host-moltbot-o...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-08T00:30:05.000Z"
+  },
+  {
+    "id": "zenn-openclaw-https-zenn-dev-zephel01-articles-dee230f962a787",
+    "source": "zenn-openclaw",
+    "title": "OpenClaw × Raspberry Pi 5 でずんだもんAI秘書を作る",
+    "url": "https://zenn.dev/zephel01/articles/dee230f962a787",
+    "content": "「ずんだもん、今日の予定は？」と話しかけると、Raspberry Pi 5 からずんだもんの声で返事が返ってくる。そんなシステムを作りました。\nAI エージェントフレームワーク OpenClaw を頭脳として使い、ローカル LLM (Ollama) で推論、VOICEVOX でずんだもんの声を合成する構成です。OpenClaw が LLM の呼び出し・ツール実行・プロンプト管理を一括で担うので、自前で API サーバーを書く必要がありません。クラウド API なしでも動き、常時稼働の音声 AI 秘書が API 費用ゼロで手に入ります。\n手作業は「OS を焼いて SSH 接続する」ところ...",
+    "tags": [
+      "zenn",
+      "openclaw"
+    ],
+    "capturedAt": "2026-03-07T22:50:19.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20286938042664962",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.3.2 🦞\n\n💬 Telegram live streaming\n🔌 ACP subagents on by default\n📄 Native PDF tool\n✅ openclaw config validate\n🇻🇳 Zalo rebuilt in pure JS\n🔒 100+ security & stability fixes\n\nSleep is a feature we haven't shipped yet.\nhttps://github.com/openclaw/openclaw/releases/tag/v2026.3.2",
+    "url": "https://nitter.net/openclaw/status/2028693804266496230#m",
+    "content": "OpenClaw 2026.3.2 🦞\ngithub.com/openclaw/openclaw…\nVideo",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-03T04:47:48.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20285761590011210",
+    "source": "x-openclaw",
+    "title": "Open source at scale needs friends. @vercel stepped up and sponsors http://openclaw.ai + http://clawhub.com.\n\nGrateful. 🦞",
+    "url": "https://nitter.net/openclaw/status/2028576159001121018#m",
+    "content": "Open source at scale needs friends. @vercel stepped up and sponsors openclaw.ai + clawhub.com.\n\nGrateful. 🦞",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T21:00:20.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-steipete-status-20285414116671488",
+    "source": "x-openclaw",
+    "title": "RT by @openclaw: Another milestone. 🫶 to all Clawtributors!",
+    "url": "https://nitter.net/steipete/status/2028541411667148852#m",
+    "content": "Another milestone. 🫶 to all Clawtributors!",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T18:42:15.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283477036214644",
+    "source": "x-openclaw",
+    "title": "We just passed React on GitHub stars. 🦞\n\nLet that sink in. A personal AI assistant built by a lobster-obsessed Austrian and an army of crustacean enthusiasts just outstarred the library that powers half the internet.\n\nWe shipped 90+ changes today. They shipped a conference.",
+    "url": "https://nitter.net/openclaw/status/2028347703621464481#m",
+    "content": "We just passed React on GitHub stars. 🦞\n\nLet that sink in. A personal AI assistant built by a lobster-obsessed Austrian and an army of crustacean enthusiasts just outstarred the library that powers half the internet.\n\nWe shipped 90+ changes today. They shipped a conference.",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:52:32.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283447790885561",
+    "source": "x-openclaw",
+    "title": "Image",
+    "url": "https://nitter.net/openclaw/status/2028344779088556107#m",
+    "content": "Loftwah (@loftwah)\n\nWhen OpenClaw 3.1.1 for Workgroups?\nhttps://nitter.net/loftwah/status/2028344339018219723#m",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:40:54.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283415692380243",
+    "source": "x-openclaw",
+    "title": "Image",
+    "url": "https://nitter.net/openclaw/status/2028341569238024363#m",
+    "content": "Bhuvan (@browntechdude)\n\nPeace\nhttps://nitter.net/browntechdude/status/2028337570573336602#m",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:28:09.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283393575982408",
+    "source": "x-openclaw",
+    "title": "R to @openclaw: OpenClaw now gets more out of both providers:\n\n⚡ OpenAI: WebSocket streaming + server-side compaction — faster, smarter context\n🧠 Anthropic: Adaptive thinking for Claude 4.6 — model decides when to go deep\n\nhttp://docs.openclaw.ai/providers/openai\nhttp://docs.openclaw.ai/providers/anthropic",
+    "url": "https://nitter.net/openclaw/status/2028339357598240816#m",
+    "content": "OpenClaw now gets more out of both providers:\ndocs.openclaw.ai/providers/o…\ndocs.openclaw.ai/providers/a…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:19:22.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283380353901408",
+    "source": "x-openclaw",
+    "title": "R to @openclaw: New in OpenClaw: Diffs plugin 🔧\n\nYour agent can now render actual diffs — syntax-highlighted, unified or split view. One tool call, visual output.\n\n\"I changed line 47\" → agent shows you line 47.\n\nEnable it: plugins.entries.diffs.enabled = true\n\nhttp://docs.openclaw.ai/tools/diffs",
+    "url": "https://nitter.net/openclaw/status/2028338035390140883#m",
+    "content": "New in OpenClaw: Diffs plugin 🔧\ndocs.openclaw.ai/tools/diffs",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:14:06.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-vadimstrizheus-status-20283378280",
+    "source": "x-openclaw",
+    "title": "RT by @openclaw: Top 10 best things on earth.",
+    "url": "https://nitter.net/VadimStrizheus/status/2028337828032094598#m",
+    "content": "Top 10 best things on earth.\nOpenClaw🦞 (@openclaw)\n\nOpenClaw 2026.3.1 🦞\ngithub.com/openclaw/openclaw…\nhttps://nitter.net/openclaw/status/2028337080959426953#m",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:13:17.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20283370809594269",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.3.1 🦞\n\n⚡ OpenAI WebSocket streaming\n🧠 Claude 4.6 adaptive thinking\n🐳 Better Docker and Native K8s support\n🧵 Discord threads, TG DM topics, Feishu fixes\n🔧 Agent-powered visual diffs plugin\n\nReports of our death were greatly exaggerated. https://github.com/openclaw/openclaw/releases/tag/v2026.3.1",
+    "url": "https://nitter.net/openclaw/status/2028337080959426953#m",
+    "content": "OpenClaw 2026.3.1 🦞\ngithub.com/openclaw/openclaw…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-03-02T05:10:19.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20274968608400837",
+    "source": "x-openclaw",
+    "title": "🦞 Huge claw-clap for @convex — now an official OpenClaw sponsor! They already power ClawHub's backend, and now they're covering infra costs too. Fast, reliable, and crustacean-approved 🤝🔥",
+    "url": "https://nitter.net/openclaw/status/2027496860840083727#m",
+    "content": "🦞 Huge claw-clap for @convex — now an official OpenClaw sponsor! They already power ClawHub's backend, and now they're covering infra costs too. Fast, reliable, and crustacean-approved 🤝🔥",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-02-27T21:31:35.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20271743490446626",
+    "source": "x-openclaw",
+    "title": "R to @openclaw: Your API keys don't belong in plaintext config files. openclaw secrets audit → configure → apply → reload. ENV, file, exec providers. http://docs.openclaw.ai/gateway/secrets",
+    "url": "https://nitter.net/openclaw/status/2027174349044662618#m",
+    "content": "Your API keys don't belong in plaintext config files. openclaw secrets audit → configure → apply → reload. ENV, file, exec providers. docs.openclaw.ai/gateway/sec…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-02-27T00:10:02.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20271742782573365",
+    "source": "x-openclaw",
+    "title": "R to @openclaw: \"run this in Codex\" — just say it. OpenClaw ACP agents spawn coding harnesses in threads, with lifecycle controls and coalesced replies. http://docs.openclaw.ai/tools/acp-agents",
+    "url": "https://nitter.net/openclaw/status/2027174278257336542#m",
+    "content": "\"run this in Codex\" — just say it. OpenClaw ACP agents spawn coding harnesses in threads, with lifecycle controls and coalesced replies. docs.openclaw.ai/tools/acp-a…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-02-27T00:09:45.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20271738696482164",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.2.26 🦞\n\n🔐 External Secrets Management (openclaw secrets)\n🤖 ACP thread-bound agents (first-class runtime)\n⚡ Codex WebSocket-first transport\n📱 Android app improvements\n🔧 Agent routing CLI (bind/unbind)\n🛡️ 11 security hardening fixes https://github.com/openclaw/openclaw/releases/tag/v2026.2.26",
+    "url": "https://nitter.net/openclaw/status/2027173869648216469#m",
+    "content": "OpenClaw 2026.2.26 🦞\ngithub.com/openclaw/openclaw…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-02-27T00:08:08.000Z"
+  },
+  {
+    "id": "x-openclaw-https-nitter-net-openclaw-status-20268758467371381",
+    "source": "x-openclaw",
+    "title": "OpenClaw 2026.2.25 🦞\n\n💓 Heartbeat DM delivery restored\n🤖 Subagent delivery overhaul\n🧵 Slack thread session fixes\n🛡️ Reaction auth across all channels\n🔒 Security hardening\n\nMore bars than Kendrick's cousin's changelog 🎤https://github.com/openclaw/openclaw/releases/tag/v2026.2.25",
+    "url": "https://nitter.net/openclaw/status/2026875846737138174#m",
+    "content": "OpenClaw 2026.2.25 🦞\ngithub.com/openclaw/openclaw…",
+    "tags": [
+      "x"
+    ],
+    "capturedAt": "2026-02-26T04:23:54.000Z"
+  }
+]

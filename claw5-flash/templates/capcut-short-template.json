@@ -1,0 +1,22 @@
+{
+  "projectName": "claw5-short-template",
+  "timeline": {
+    "resolution": "1080x1920",
+    "fps": 30,
+    "tracks": {
+      "video": [
+        { "slot": "hook", "asset": "../assets/broll/hook.mp4", "start": 0, "duration": 5 },
+        { "slot": "main", "asset": "../assets/broll/main.mp4", "start": 5, "duration": 40 },
+        { "slot": "cta", "asset": "../assets/broll/cta.mp4", "start": 45, "duration": 15 }
+      ],
+      "audio": [
+        { "slot": "voice-hook", "asset": "../assets/audio/voice-hook.mp3", "start": 0 },
+        { "slot": "voice-body", "asset": "../assets/audio/voice-body.mp3", "start": 5 },
+        { "slot": "voice-cta", "asset": "../assets/audio/voice-cta.mp3", "start": 45 }
+      ],
+      "subtitle": {
+        "file": "../reviews/shorts-YYYYMMDD.srt"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "claw5-flash",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "summarize": "npx ts-node scripts/flash_summarizer.ts",
+    "render": "npx ts-node scripts/apply_template.ts",
+    "captions": "npx ts-node scripts/shorts_caption_builder.ts",
+    "postlog": "npx ts-node scripts/build_postlog.ts",
+    "remotion:props": "npx ts-node scripts/build_remotion_props.ts",
+    "publish": "npx ts-node scripts/youtube_upload.ts",
+    "collect": "npx ts-node scripts/collect_feeds.ts"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "googleapis": "^171.4.0",
+    "mustache": "^4.2.0",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.76.1",
+    "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}

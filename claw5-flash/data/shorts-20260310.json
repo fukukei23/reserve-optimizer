@@ -1,0 +1,12 @@
+{
+  "date": "20260310",
+  "hook": "OpenClawのリマインダー、今朝から遅延ゼロ。",
+  "points": [
+    "Cron Wake に immediate モード登場",
+    "Slack通知がほぼ秒で飛ぶ",
+    "Retry制御もジョブ単位で指定"
+  ],
+  "tip": "Wake-Now を障害一次連絡に設定しよう",
+  "resource": "概要欄で cron wake サンプルコード配布",
+  "cta": "本編は Claw5 Flash で検索"
+}

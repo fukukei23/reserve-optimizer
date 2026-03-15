@@ -1,0 +1,22 @@
+[
+  {
+    "name": "claw5-flash:collect",
+    "schedule": { "kind": "cron", "expr": "0 20 * * 0-4", "tz": "Asia/Tokyo" },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Run rss-harvester skill for Claw5 Flash feeds",
+      "model": "openai/gpt-4o-mini"
+    },
+    "sessionTarget": "isolated"
+  },
+  {
+    "name": "claw5-flash:summarize",
+    "schedule": { "kind": "cron", "expr": "10 20 * * 0-4", "tz": "Asia/Tokyo" },
+    "payload": {
+      "kind": "agentTurn",
+      "message": "Execute npm run summarize -- $(date +%Y%m%d) && npm run render",
+      "model": "openai/gpt-4o-mini"
+    },
+    "sessionTarget": "isolated"
+  }
+]

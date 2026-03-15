@@ -1,0 +1,32 @@
+{
+  "name": "Claw5 Flash Default Feeds",
+  "updated": "2026-03-09T23:34:00Z",
+  "sources": [
+    {
+      "id": "zenn-openclaw",
+      "type": "rss",
+      "url": "https://zenn.dev/topics/openclaw/feed",
+      "tags": ["zenn", "openclaw"]
+    },
+    {
+      "id": "github-openclaw",
+      "type": "github",
+      "repo": "openclaw/openclaw",
+      "filters": { "events": ["push", "release"] },
+      "tags": ["github", "release"]
+    },
+    {
+      "id": "discord-ai-zenn",
+      "type": "discord",
+      "channelId": "1480559453538484375",
+      "guildId": "1479832235044769872",
+      "tags": ["discord", "ai", "zenn"]
+    },
+    {
+      "id": "x-openclaw",
+      "type": "rss",
+      "url": "https://nitter.net/openclaw/rss",
+      "tags": ["x"]
+    }
+  ]
+}
