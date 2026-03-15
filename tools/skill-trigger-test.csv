@@ -1,0 +1,11 @@
+テストID,テスト文言,期待されるスキル,結果,備考
+1,APIのテストして,testing-api-tester,,
+2,このコードレビューして,engineering-code-reviewer,,
+3,セキュリティチェックして,engineering-security-engineer,,
+4,採用プロセスの改善案を出して,specialized-recruitment-specialist,,
+5,パフォーマンステストして,testing-performance-benchmarker,,
+6,CI/CDパイプライン構築して,engineering-devops-automator,,
+7,監査して,specialized-compliance-auditor,,
+8,動作確認して,testing-api-tester,,
+9,実装して,engineering-senior-developer,,
+10,コンプライアンスチェックして,specialized-compliance-auditor,,
