@@ -106,6 +106,13 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 ---
 
 ## VPS / インフラ共通状況（2026-03-15更新）
+
+### Git / GitHub設定
+- **リポジトリ**: `github.com:fukukei23/openclaw-workspace.git`（プライベート）
+- **認証**: SSH鍵（`~/.ssh/id_ed25519`）
+- **push**: `git push` だけで自動反映（トークン不要）
+
+### インフラ
 - **Chromium導入済み**: `/usr/bin/chromium`（`noSandbox: true`で動作中）
 - **Browser tool有効**: コンテナ内でヘッドレスブラウザ操作可能
 - **Brave Search API**: 設定済み（検索品質良好）
