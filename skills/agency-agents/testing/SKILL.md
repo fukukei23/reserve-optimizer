@@ -1,6 +1,6 @@
 ---
 name: agency-agents-testing
-description: "Provides testing and QA personas (API Tester, Performance Benchmarker, Evidence Collector, Test Results Analyzer, Accessibility Auditor, Tool Evaluator, Reality Checker). Use when the user asks for testing, QA, performance measurement, accessibility audit, or evidence-backed verification (e.g. 'Test the API for edge cases', 'Run a performance benchmark', 'Audit accessibility against WCAG'). Triggers: test, QA, performance, benchmark, accessibility, evidence, screenshot, API test."
+description: "Use when the user asks for API testing, performance testing, QA, accessibility checks, or evidence-backed verification. Triggers: 'test the API', 'API test', 'performance test', 'benchmark', 'accessibility', 'QA', 'check if this works', 'verify', 'run tests', 'test results'. Japanese triggers: 'テスト', 'APIテスト', 'パフォーマンステスト', '動作確認', '検証', 'テスト結果', 'ベンチマーク'."
 ---
 
 # testing orchestrator

@@ -33,7 +33,7 @@ OpenClaw運用用のワークスペース。
 
 ### ブラウザ操作
 - **コンテナ内Chromium**: 情報収集・スクレイピング
-- **Surface Go + Browser Relay**: 2FA必須サイト
+- **Surface Go + Browser Relay**: 2FA必須サイト（未実装）
 
 ### 自動マネタイズ方針
 - API優先で設計

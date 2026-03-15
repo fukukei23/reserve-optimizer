@@ -152,17 +152,17 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 |------|-----------|
 | 情報収集・スクレイピング | コンテナ内Chromium |
 | ログイン不要の操作 | コンテナ内Chromium |
-| 2FA必須サイト | Surface Go + Browser Relay |
-| 既存ログイン状態維持 | Surface Go + Browser Relay |
+| 2FA必須サイト | Surface Go + Browser Relay（未実装） |
+| 既存ログイン状態維持 | Surface Go + Browser Relay（未実装） |
 
 ### 自動マネタイズの方針
 
 **推奨フロー**:
 1. まずAPIで実装（安定・高速・安価）
 2. API制限にぶつかったらブラウザに切り替え
-3. 2FAが必要ならSurface Go起動
+3. 2FAが必要ならSurface Go起動（未実装）
 
-**Surface Go**: 常時起動不要。「いつでも使える」状態にしておく
+**Surface Go**: 未実装（実装後は常時起動不要。「いつでも使える」状態にしておく）
 
 ---
 

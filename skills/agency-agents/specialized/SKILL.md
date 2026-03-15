@@ -1,6 +1,6 @@
 ---
 name: agency-agents-specialized
-description: "Provides specialized domain agent personas (Compliance Auditor, Blockchain Security Auditor, Government Digital Presales Consultant, Identity Graph Operator, Healthcare Marketing Compliance Specialist, Recruitment Specialist, etc.). Use when the user asks to 'act as' or 'as <specialist>' for domain-specific tasks (e.g. 'As a Compliance Auditor, check SOC2 readiness', 'Act as Blockchain Security Auditor and review contract', 'Prepare presales materials for government RFP'). Triggers: domain names, compliance, audit, bid, presales, identity, healthcare compliance, recruitment, cultural intelligence, model QA."
+description: "Use when the user asks for compliance checks, audits, blockchain review, healthcare/medical compliance, recruitment, government/presales, or domain-specific analysis. Triggers: 'compliance', 'audit', 'SOC2', 'HIPAA', 'ISO27001', 'blockchain', 'smart contract', 'healthcare', 'recruitment', 'hiring', 'presales', 'government', 'RFP', 'bid'. Japanese triggers: 'コンプライアンス', '監査', 'ブロックチェーン', '医療', '採用', '入札', '官公庁', '提案書', 'RFP'."
 ---
 
 # specialized orchestrator

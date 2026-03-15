@@ -1,6 +1,6 @@
 ---
 name: agency-agents-engineering
-description: "Provides engineering-focused agent personas (AI Engineer, Backend Architect, DevOps Automator, Security Engineer, SRE, Code Reviewer, Technical Writer, Rapid Prototyper, etc.). Use when the user asks to 'act as' or 'as <role>' for engineering tasks (e.g. 'As an AI Engineer, design and deploy...', 'Act as a Code Reviewer and review this PR', 'Perform incident response', 'Design API architecture', 'Create CI/CD pipeline'). Triggers: role names or requests for architecture, implementation, testing, infra automation, security review, code review, SRE/runbook, rapid prototype."
+description: "Use when the user asks for code implementation, architecture design, security review, code review, DevOps, CI/CD, backend/frontend development, SRE, or incident response. Triggers: 'implement', 'build', 'design', 'code review', 'security', 'CI/CD', 'pipeline', 'deploy', 'architecture', 'refactor', 'fix bug', 'incident', 'runbook'. Japanese triggers: '実装', '構築', '設計', 'レビュー', 'セキュリティ', 'デプロイ', 'CI/CD', 'バグ修正', 'インシデント', 'インフラ'."
 ---
 
 # engineering orchestrator
