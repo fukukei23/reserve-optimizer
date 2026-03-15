@@ -1,5 +1,15 @@
 import React from "react";
-import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig, spring, interpolate, Sequence } from "remotion";
+import { registerFont } from "canvas";
+import notoFontPath from "./fonts/NotoSansJP-Regular.otf";
+
+// Node.js環境でフォントを登録
+try {
+  registerFont(notoFontPath, { family: "Noto Sans JP" });
+  console.log("Noto Sans JP registered for canvas/Remotion");
+} catch (e) {
+  console.warn("registerFont failed (canvas may be unavailable):", e);
+}
 
 export const Claw5FlashVideo: React.FC<{
   hook: string;
@@ -8,21 +18,59 @@ export const Claw5FlashVideo: React.FC<{
 }> = ({ hook, headlines, action }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const bg = interpolateColors(frame, [0, fps * 5], ["#0B1220", "#1F1F3A"]);
+  const bg = interpolateColors(frame, [0, fps * 35], ["#0B1220", "#1F1F3A"]);
+
+  // フックのアニメーション
+  const hookOpacity = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
+  const hookY = interpolate(frame, [0, 15], [-50, 0], { extrapolateRight: "clamp" });
+
+  // アクションのアニメーション
+  const actionOpacity = interpolate(frame, [fps * 30, fps * 33], [0, 1], { extrapolateRight: "clamp" });
+  const actionScale = spring({ frame, fps, config: { damping: 10, stiffness: 100 } });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: bg, padding: 120, color: "white", fontFamily: "'Barlow', sans-serif" }}>
-      <div style={{ fontSize: 64, fontWeight: 700 }}>{hook}</div>
-      <div style={{ marginTop: 60, display: "grid", gap: 32 }}>
-        {headlines.map((h, idx) => (
-          <div key={h.title} style={{ borderLeft: "6px solid #FF3FA4", paddingLeft: 24 }}>
-            <div style={{ fontSize: 38, fontWeight: 600 }}>{idx + 1}. {h.title}</div>
-            <div style={{ fontSize: 28, opacity: 0.8 }}>{h.impact}</div>
-          </div>
-        ))}
+    <AbsoluteFill style={{ backgroundColor: bg, padding: 80, color: "white", fontFamily: "'Noto Sans JP', sans-serif" }}>
+      {/* Hook */}
+      <div style={{
+        fontSize: 48,
+        fontWeight: 700,
+        marginBottom: 40,
+        opacity: hookOpacity,
+        transform: `translateY(${hookY}px)`,
+      }}>
+        {hook}
       </div>
-      <div style={{ position: "absolute", bottom: 80, fontSize: 32 }}>
-        行動: {action}
+
+      {/* Headlines */}
+      <div style={{ display: "grid", gap: 24 }}>
+        {headlines.map((h, idx) => {
+          const delay = idx * 10 + 20;
+          const opacity = interpolate(frame, [delay, delay + 10], [0, 1], { extrapolateRight: "clamp" });
+          const x = interpolate(frame, [delay, delay + 10], [-30, 0], { extrapolateRight: "clamp" });
+
+          return (
+            <div key={h.title} style={{
+              borderLeft: "6px solid #FF3FA4",
+              paddingLeft: 20,
+              opacity,
+              transform: `translateX(${x}px)`,
+            }}>
+              <div style={{ fontSize: 32, fontWeight: 600 }}>{idx + 1}. {h.title}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Action */}
+      <div style={{
+        position: "absolute",
+        bottom: 60,
+        fontSize: 28,
+        fontWeight: 600,
+        opacity: actionOpacity,
+        transform: `scale(${actionScale})`,
+      }}>
+        ✅ {action}
       </div>
     </AbsoluteFill>
   );
