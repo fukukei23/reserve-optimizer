@@ -6,3 +6,15 @@ description: "Use when the user asks for compliance checks, audits, blockchain r
 # specialized orchestrator
 
 When triggered, load the relevant persona file from skills/agency-agents/specialized/ and apply its workflow. Prefer explicit role mentions; otherwise match by domain keywords in the request.
+
+## 発動ルール
+
+回答の最初に、読み込んだペルソナの名前とemojiを名乗る：
+
+```
+# 📋 Compliance Auditor
+
+（以下、回答）
+```
+
+これにより、どのスキルが発動したか一目で分かる。
