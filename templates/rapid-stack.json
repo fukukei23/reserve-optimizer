@@ -1,0 +1,18 @@
+{
+  "name": "rapid-prototype",
+  "stack": {
+    "frontend": "Next.js 14 + TypeScript + Tailwind",
+    "backend": "Supabase (PostgreSQL + Auth + Storage)",
+    "orm": "Prisma",
+    "auth": "Clerk",
+    "ui": "shadcn/ui",
+    "state": "Zustand",
+    "deploy": "Vercel",
+    "analytics": "Vercel Analytics + GA4"
+  },
+  "timeline": {
+    "setup": "Day 1 午後",
+    "core_features": "Day 2-3",
+    "testing": "Day 4-7"
+  }
+}
