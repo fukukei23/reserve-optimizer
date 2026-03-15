@@ -163,3 +163,29 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 ### 参考
 - Coding Plan ドキュメント: https://docs.bigmodel.cn/cn/coding-plan/overview
 - 対象ツール: Claude Code, Kilo Code, OpenClaw, Cline 等
+
+---
+
+## GLM使用量モニター（2026-03-15調査結果）
+
+### 現状
+- **API使用量エンドポイントなし** — Z.AIには使用量をAPIで取得する機能がない
+- **使用量確認方法**: ブラウザで `https://z.ai/manage-apikey/subscription` を開くのみ
+- **自動化の壁**: ログイン時にCAPTCHA（スライダーパズル）が出現 → 自動突破不可
+
+### 試したこと
+1. コンテナ内Chromiumで自動ログイン → CAPTCHAで止まる
+2. Chrome Browser Relay（PAIO版）の利用検討 → PAIOアカウント設定が必要
+
+### 自動化する場合の選択肢
+
+| 方法 | 必要な作業 | 自動化レベル |
+|-----|----------|-------------|
+| **PAIO設定** | PAIOアカウント作成 + 拡張機能設定 | ✅ 完全自動 |
+| **2FA無効化** | Z.AIで2FAをOFF | ✅ 完全自動（リスクあり） |
+| **スクショ方式** | 毎回手動でスクショ貼る | ❌ 手動（モニターとして意味ない） |
+
+### 結論
+**PAIO設定が必要** — 設定すれば完全自動モニター可能
+- 拡張機能: 「OpenClaw Browser Relay for Chrome - Powered by PAIO」
+- 設定手順: PAIOダッシュボードからGateway URL/Token取得 → 拡張機能に入力
