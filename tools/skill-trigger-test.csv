@@ -1,8 +1,8 @@
 テストID,テスト文言,期待されるスキル,結果,備考
-1,APIのテストして,testing-api-tester,,
+1,APIのテストして,testing-api-tester,✅,GLM API残高不足エラー検出
 2,このコードレビューして,engineering-code-reviewer,,
 3,セキュリティチェックして,engineering-security-engineer,,
-4,採用プロセスの改善案を出して,specialized-recruitment-specialist,,
+4,採用プロセスの改善案を出して,specialized-recruitment-specialist,✅,Wantedly登録案内まで実施
 5,パフォーマンステストして,testing-performance-benchmarker,,
 6,CI/CDパイプライン構築して,engineering-devops-automator,,
 7,監査して,specialized-compliance-auditor,,
