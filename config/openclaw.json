@@ -1,0 +1,243 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.7",
+    "lastTouchedAt": "2026-03-13T12:26:59.997Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-02-26T14:55:39.473Z",
+    "lastRunVersion": "2026.2.18",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "browser": {
+    "executablePath": "/usr/bin/chromium",
+    "headless": true,
+    "noSandbox": true
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "zai": {
+        "baseUrl": "https://api.z.ai/api/coding/paas/v4",
+        "apiKey": "${API_KEY}",
+        "auth": "api-key",
+        "models": [
+          {
+            "id": "glm-5",
+            "name": "GLM-5",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 1.00,
+              "output": 3.20,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192,
+            "compat": {
+              "thinkingFormat": "zai"
+            }
+          },
+          {
+            "id": "glm-4.7",
+            "name": "GLM-4.7",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.60,
+              "output": 2.20,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      },
+      "openai": {
+        "baseUrl": "https://api.openai.com/v1",
+        "apiKey": "${API_KEY}",
+        "auth": "api-key",
+        "models": [
+          {
+            "id": "gpt-5.2",
+            "name": "GPT-5.2",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5.1-codex",
+            "name": "GPT-5.1 Codex",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5-mini",
+            "name": "GPT-5 mini",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0.25,
+              "output": 2.00,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "zai/glm-5",
+        "fallbacks": [
+          "openai/gpt-5-mini",
+          "openai/gpt-5.1-codex"
+        ]
+      },
+      "models": {
+        "openai/gpt-5.1-codex": {
+          "alias": "錬金術師"
+        },
+        "zai/glm-5": {
+          "alias": "賢者"
+        },
+        "openai/gpt-5.2": {},
+        "zai/glm-4.7": {
+          "alias": "忍者"
+        },
+        "openai/gpt-5-mini": {
+          "alias": "見習い"
+        }
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "timeoutSeconds": 60
+    },
+    "list": [
+      {
+        "id": "main",
+        "name": "main",
+        "workspace": "/home/node/.openclaw/workspace",
+        "agentDir": "/home/node/.openclaw/agents/main/agent",
+        "model": "zai/glm-5"
+      }
+    ]
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "brave"
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "fallback-notify": {
+          "enabled": true,
+          "config": {
+            "discord": {
+              "technicalChannelId": "1480704704349606021",   
+              "taskChannelId": "1482053801623163011",
+              "summaryChannelId": "1479832235610734664"
+            },
+            "notifyOn": ["fallback","all_models_failed","agent_crash"]
+          }
+        }
+      }
+    }
+  },
+  "channels": {
+    "discord": {
+      "enabled": true,
+      "token": "${TOKEN}",
+      "allowBots": false,
+      "groupPolicy": "allowlist",
+      "historyLimit": 20,
+      "textChunkLimit": 2000,
+      "chunkMode": "length",
+      "streaming": "off",
+      "dmPolicy": "pairing",
+      "guilds": {
+        "1479832235044769872": {
+          "requireMention": false,
+          "users": [
+            "1135078010899398727"
+          ]
+        }
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "controlUi": {
+      "allowedOrigins": [
+        "https://fopenclaw.com"
+      ]
+    },
+    "auth": {
+      "mode": "token",
+      "token": "${TOKEN}"
+    },
+    "trustedProxies": [
+      "172.30.0.10"
+    ],
+    "remote": {
+      "url": "ws://openclaw-gateway:18789",
+      "token": "${TOKEN}"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "device-pair": {
+        "config": {
+          "publicUrl": "https://fopenclaw.com"
+        }
+      },
+      "discord": {
+        "enabled": true
+      }
+    }
+  }
+}
