@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml">
+ <body>
+  <p xml:id="p1" begin="0s" end="3s" style="accent">OpenClawのデフォルト設定、そのまま使ってない？</p>
+  <p xml:id="p2" begin="3s" end="8s" style="body">デフォルトポート設定が外部アクセスを許可してるかも</p>
+  <p xml:id="p3" begin="8s" end="13s" style="body">docker-compose.ymlの1行変更で解決</p>
+  <p xml:id="p4" begin="13s" end="18s" style="body">ラズパイ運用なら特に要注意</p>
+  <p xml:id="p5" begin="18s" end="26s" style="tip">ポートバインドをlocalhostに限定すればリスク激減。具体的には、docker-compose.ymlで '127.0.0.1:18789:18789' のようにバインドアドレスを指定するだけ。</p>
+  <p xml:id="p6" begin="26s" end="33s" style="resource">https://zenn.dev/mrkm86/articles/openclaw-basic-7</p>
+  <p xml:id="p7" begin="33s" end="38s" style="cta">チャンネル登録で毎朝5分の自動化ニュースを受け取ろう</p>
+ </body>
+</tt>

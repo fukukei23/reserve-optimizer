@@ -1,0 +1,46 @@
+{
+  "captions": [
+    {
+      "start": 0,
+      "end": 3,
+      "text": "OpenClawのデフォルト設定、そのまま使ってない？",
+      "style": "accent"
+    },
+    {
+      "start": 3,
+      "end": 8,
+      "text": "デフォルトポート設定が外部アクセスを許可してるかも",
+      "style": "body"
+    },
+    {
+      "start": 8,
+      "end": 13,
+      "text": "docker-compose.ymlの1行変更で解決",
+      "style": "body"
+    },
+    {
+      "start": 13,
+      "end": 18,
+      "text": "ラズパイ運用なら特に要注意",
+      "style": "body"
+    },
+    {
+      "start": 18,
+      "end": 26,
+      "text": "ポートバインドをlocalhostに限定すればリスク激減。具体的には、docker-compose.ymlで '127.0.0.1:18789:18789' のようにバインドアドレスを指定するだけ。",
+      "style": "tip"
+    },
+    {
+      "start": 26,
+      "end": 33,
+      "text": "https://zenn.dev/mrkm86/articles/openclaw-basic-7",
+      "style": "resource"
+    },
+    {
+      "start": 33,
+      "end": 38,
+      "text": "チャンネル登録で毎朝5分の自動化ニュースを受け取ろう",
+      "style": "cta"
+    }
+  ]
+}

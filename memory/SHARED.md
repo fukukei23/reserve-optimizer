@@ -189,6 +189,13 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 
 ## GLM API エンドポイント注意点（2026-03-13）
 
+### ⚠️ 残高不足エラー（2026-03-15確認）
+- **エラーコード**: 1113 / HTTP 429
+- **メッセージ**: 「余额不足或无可用资源包,请充值」
+- **原因**: Coding Planの残高が尽きている
+- **確認先**: https://z.ai/manage-apikey/subscription
+- **対策**: チャージが必要
+
 ### 問題
 - GLMには**2種類のエンドポイント**がある：
   1. **従量課金API**: `https://open.bigmodel.cn/api/paas/v4/chat/completions`
