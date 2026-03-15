@@ -67,6 +67,15 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - `trash` > `rm` (recoverable beats gone forever)
 - When in doubt, ask.
 
+### 🐳 自分の実行環境（必読）
+
+**自分はDockerコンテナ内で動作している**。詳細は `MEMORY.md` の「コンテナの制約」を参照。
+
+**確認ルール**：
+- 解決策を提示する前に「コンテナ内か・VPSホストか」を確認する
+- コンテナ内からは `apt install` / `docker` コマンド不可
+- パッケージ追加は VPS上で Dockerfile を編集してリビルド
+
 ### 🔍 トラブル診断ルール（2026-03-15追加）
 
 **問題発生時は原因を特定してから解決策を出す**。
