@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "lastChecked": "2026-03-17T13:51:00Z",
+    "createdAt": "2026-03-17T07:28:13Z",
+    "note": "長時間タスク監視用ファイル",
+    "fatalErrorsDetectedAt": null,
+    "fatalErrorSample": [],
+    "healthNotifiedAt": null,
+    "healthNotifiedChannels": [],
+    "lastScanSummary": "スキャン実行: total=0。アクティブなサブエージェントなし。JST: 2026-03-17 22:51",
+    "checkedBy": "agent:main:cron:c1bbf2ea-2de3-4f5b-b35b-70c2abf8a884",
+    "runLog": [
+      {"at": "2026-03-17T13:51:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントなし。表示時刻（JST）: 2026-03-17 22:51:00+09:00"},
+      {"at": "2026-03-17T13:50:00Z", "summary": "スキャン実行: total=0。アクティブなサブエージェントなし。JST: 2026-03-17 22:50"},
+      {"at": "2026-03-17T13:49:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:49:00+09:00"},
+      {"at": "2026-03-17T13:48:10Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:48:10+09:00"},
+      {"at": "2026-03-17T13:46:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:46:00+09:00"},
+      {"at": "2026-03-17T13:45:19Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:45:19+09:00"}
+    ],
+    "lastScanSummaryShort": "total=0; no active subagents; checked 2026-03-17 22:51 JST"
+  },
+  "tasks": {}
+}

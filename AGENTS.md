@@ -62,6 +62,38 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
 
+## Skills & Agents
+
+### 🔎 Skill・エージェントの探し方
+
+**「〜のエージェントいる？」と聞かれたら、以下のコマンドで全検索すること。**
+
+#### 全 SKILL.md を再帰検索
+```bash
+find /home/node/.openclaw/workspace/skills -name "SKILL.md" -type f
+```
+
+#### 全 .md ファイルを検索（エージェント定義含む）
+```bash
+find /home/node/.openclaw/workspace/skills -name "*.md" -type f
+```
+
+#### キーワードで検索
+```bash
+grep -r "キーワード" /home/node/.openclaw/workspace/skills/ --include="*.md"
+```
+
+#### ディレクトリ構造を確認
+```bash
+ls -R /home/node/.openclaw/workspace/skills/
+```
+
+**よくあるミス**:
+- `ls` だけだとサブディレクトリが見えない
+- `agency-agents` 内の `marketing/`, `design/` などを見落とさないこと
+
+---
+
 ## Safety
 
 - Don't exfiltrate private data. Ever.

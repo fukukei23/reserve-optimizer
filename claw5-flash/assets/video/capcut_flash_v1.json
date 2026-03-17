@@ -16,5 +16,39 @@
     "callout_box": { "type": "text", "style": "callout", "content": "{{action.tip}}" },
     "cta_card": { "type": "text", "style": "cta", "content": "Claw5 Flash / 毎朝5分" },
     "logo_loop.mp4": { "type": "video", "path": "assets/video/logo_loop.mp4" }
+  },
+  "styles": {
+    "title-neon": {
+      "fontFamily": "Noto Sans JP",
+      "fontSize": 120,
+      "fontWeight": 700,
+      "color": "#FFFFFF",
+      "stroke": { "color": "#000000", "width": 6 },
+      "shadow": { "color": "#000000", "opacity": 0.4, "y": 6, "blur": 12 }
+    },
+    "lower-third": {
+      "fontFamily": "Noto Sans JP",
+      "fontSize": 48,
+      "fontWeight": 600,
+      "color": "#FFFFFF",
+      "borderLeft": { "color": "#FF3FA4", "width": 6 },
+      "background": { "color": "#000000", "opacity": 0.32, "padding": 20, "cornerRadius": 8 },
+      "stroke": { "color": "#000000", "width": 3 }
+    },
+    "callout": {
+      "fontFamily": "Noto Sans JP",
+      "fontSize": 44,
+      "fontWeight": 600,
+      "color": "#FFFFFF",
+      "background": { "color": "#000000", "opacity": 0.28, "padding": 18, "cornerRadius": 8 },
+      "stroke": { "color": "#000000", "width": 3 }
+    },
+    "cta": {
+      "fontFamily": "Noto Sans JP",
+      "fontSize": 40,
+      "fontWeight": 700,
+      "color": "#FFFFFF",
+      "background": { "color": "#FF3FA4", "opacity": 1, "padding": 24, "cornerRadius": 12 }
+    }
   }
 }

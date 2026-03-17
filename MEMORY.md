@@ -14,7 +14,33 @@
 - **Browser**: Not installed (Chromium needed for browser automation)
 - **Install Chromium**: `apt update && apt install -y chromium`
 
-### ⚠️ コンテナの制約（重要）
+### SSH鍵の運用ルール（2026-03-17）
+
+#### 鍵情報
+- **秘密鍵（コンテナ内）**: /home/node/.ssh/id_ed25519（読み取り専用マウント）
+- **秘密鍵（VPS実体）**: /home/op/openclaw-stack/openclaw_config/.ssh/id_ed25519
+- **公開鍵**: `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwKgT8/7WN6A/G7kdJHveKXpTkdQUfoNibwb/XEu6YE openclaw-container`
+
+#### 永続化仕組み
+- コンテナ内の /home/node/.ssh/ は揮発性（docker compose down && up で消える）
+- VPS上の openclaw_config/.ssh をマウントすることで永続化
+- **重要**: SSH鍵をコンテナ内で生成・保存してはいけない（消えるため）
+
+#### 新しいリポジトリへのアクセス追加手順
+1. https://github.com/fukukei23/<リポジトリ名>/settings/keys を開く
+2. Add deploy key をクリック
+3. Title: `openclaw-container`
+4. Key: 上記公開鍵を貼り付け
+5. 書き込みが必要なら「Allow write access」にチェック
+6. Add key をクリック
+- **※ ふくけいにDeploy key登録を依頼すること**（GitHubの操作はふくけいが行う）
+
+#### 登録済みリポジトリ
+- fukukei23/openclaw-workspace（write権限あり）
+
+#### 機密扱い
+- 公開鍵: 公開OK（GitHub登録用）
+- 秘密鍵:  절대禁止（出力・送信・公開一切不可）
 - **コンテナ内からDocker操作はできない**（dockerコマンドなし、権限なし）
 - Docker socketはマウントされているが、nodeユーザー（uid=1000）には権限がない
 - `sudo`も入っていないため、権限昇格も不可
