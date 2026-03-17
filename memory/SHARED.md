@@ -115,6 +115,19 @@
 
 ---
 
+## GitHub リポジトリ情報
+
+### ワークスペースリポジトリ
+- **URL**: `git@github.com:fukukei23/openclaw-workspace.git`
+- **HTTPS**: `https://github.com/fukukei23/openclaw-workspace.git`
+- **ブランチ**: `master`
+
+### SSH鍵（コンテナ再用時に要再設定）
+- 鍵パス: `/home/node/.ssh/id_ed25519`
+- **注意**: コンテナ再作成时会消失。VPS側で鍵を永続化するか、マウントが必要。
+
+---
+
 ## モデル優先順（公式）
 記録日: 2026-03-17 14:27 JST
 - primary: zai/glm-5
