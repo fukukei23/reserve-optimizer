@@ -117,6 +117,10 @@
 
 ## GitHub リポジトリ情報
 
+### 運用ルール
+- **新リポジトリ追加時**: このセクションにを追記
+- **SSH鍵**: コンテナ再用時に要再設定（VPS側マウント推奨）
+
 ### ワークスペースリポジトリ
 - **URL**: `git@github.com:fukukei23/openclaw-workspace.git`
 - **HTTPS**: `https://github.com/fukukei23/openclaw-workspace.git`
