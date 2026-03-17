@@ -132,18 +132,6 @@
 
 ---
 
-## SSH鍵設定（2026-03-17追加）
-- **github-workspace** → id_ed25519（openclaw-workspace用）
-- **github-reserve** → id_ed25519_reserve（reserve-optimizer用）
-
-**リモートURL**:
-- openclaw-workspace: `git@github-workspace:fukukei23/openclaw-workspace.git`
-- reserve-optimizer: `git@github-reserve:fukukei23/reserve-optimizer.git`
-
-push時は必ず該当URLを使用。
-
----
-
 ## モデル優先順（公式）
 記録日: 2026-03-17 14:27 JST
 - primary: zai/glm-5
