@@ -1,16 +1,12 @@
-[2026-03-16T20:13:00Z] subagents total=0, tasks=0, notifications=0.
-[2026-03-16T20:24:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されず。通知発生なし。表示時刻（JST）: 2026-03-17 05:24 JST.
-[2026-03-16T20:31:40Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントなし。通知なし。 表示時刻（JST）: 2026-03-17 05:31 JST. 
-[2026-03-16T21:13:40Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されず。通知発生なし。表示時刻（JST）: 2026-03-17 06:13 JST.
-[2026-03-16T22:19:56Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されず。通知発生なし。表示時刻（JST）: 2026-03-17 07:19 JST.
-[2026-03-16T23:26:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 08:26 JST.
-[2026-03-17T00:42:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 09:42 JST.
-[2026-03-17T02:09:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知発生なし。表示時刻（JST）: 2026-03-17 11:09 JST.
-[2026-03-17T03:18:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブ=0、failed=0、完了=0。通知発生なし。表示時刻（JST）: 2026-03-17 12:18 JST.
-[2026-03-17T04:26:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知発生なし。表示時刻（JST）: 2026-03-17 13:26 JST.
-[2026-03-17T05:28:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知発生なし。表示時刻（JST）: 2026-03-17 14:28 JST.
-[2026-03-17T06:35:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 15:35 JST.
-[2026-03-17T06:37:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 15:37 JST.
-[2026-03-17T06:40:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 15:40 JST.
-[2026-03-17T12:12:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知は発生せず。表示時刻（JST）: 2026-03-17 21:12 JST.
-[2026-03-17T15:27:00Z] subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。通知発生なし。表示時刻（JST）: 2026-03-17 24:27 JST.
+# Long Task Watcher 実行ログ
+- 実行時刻: 2026-03-18 16:53:00+09:00 (JST)
+- サブエージェント総数: 0
+- 実行中タスク: 0
+- 通知送信数: 0
+- 致命的エラー: なし
+
+## 詳細
+- 実行中タスク: なし
+- 完了したタスク: なし
+- 新規開始タスク: なし
+- 致命的エラー: なし

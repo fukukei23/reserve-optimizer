@@ -2,116 +2,38 @@
   "_meta": {
     "note": "長時間タスク監視用ファイル（自動更新）",
     "createdAt": "2026-03-17T19:02:45Z",
-    "lastChecked": "2026-03-18T02:48:02Z",
-    "lastCheckedJST": "2026-03-18 11:48:02+09:00",
-    "lastScanSummary": "サブエージェント監視: 実行中タスクなし (total=0)",
-    "checkedBy": "agent:main:cron:452813b9-6158-4a6a-a166-80fbdb28ad56"
+    "lastChecked": "2026-03-18T07:13:18Z",
+    "lastCheckedJST": "2026-03-18 16:13:18+09:00",
+    "lastScanSummary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
+    "checkedBy": "agent:main:cron:c1bbf2ea-2de3-4f5b-b35b-70c2abf8a884"
   },
   "tasks": {},
   "_runLog": [
     {
-      "timestamp": "2026-03-18T02:48:02Z",
-      "timestampJST": "2026-03-18 11:48:02+09:00",
+      "timestamp": "2026-03-18T07:11:20Z",
+      "timestampJST": "2026-03-18 16:11:20+09:00",
       "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
       "subagentsTotal": 0,
       "activeTasks": 0,
       "notificationsSent": 0,
       "errors": []
     },
     {
-      "timestamp": "2026-03-18T02:46:00Z",
-      "timestampJST": "2026-03-18 11:46:00+09:00",
+      "timestamp": "2026-03-18T07:12:21Z",
+      "timestampJST": "2026-03-18 16:12:21+09:00",
       "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
       "subagentsTotal": 0,
       "activeTasks": 0,
       "notificationsSent": 0,
       "errors": []
     },
     {
-      "timestamp": "2026-03-18T02:45:00Z",
-      "timestampJST": "2026-03-18 11:45:00+09:00",
+      "timestamp": "2026-03-18T07:13:18Z",
+      "timestampJST": "2026-03-18 16:13:18+09:00",
       "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:44:13Z",
-      "timestampJST": "2026-03-18 11:44:13+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:43:00Z",
-      "timestampJST": "2026-03-18 11:43:00+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:31:00Z",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:32:00Z",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:35:03Z",
-      "timestampJST": "2026-03-18 11:35:03+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:37:00Z",
-      "timestampJST": "2026-03-18 11:37:00+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:39:00Z",
-      "timestampJST": "2026-03-18 11:39:00+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
-      "subagentsTotal": 0,
-      "activeTasks": 0,
-      "notificationsSent": 0,
-      "errors": []
-    },
-    {
-      "timestamp": "2026-03-18T02:40:00Z",
-      "timestampJST": "2026-03-18 11:40:00+09:00",
-      "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
       "subagentsTotal": 0,
       "activeTasks": 0,
       "notificationsSent": 0,

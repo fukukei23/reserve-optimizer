@@ -2,18 +2,38 @@
   "_meta": {
     "note": "長時間タスク監視用ファイル（自動更新）",
     "createdAt": "2026-03-17T19:02:45Z",
-    "lastChecked": "2026-03-18T03:47:16Z",
-    "lastCheckedJST": "2026-03-18 12:47:16+09:00",
-    "lastScanSummary": "サブエージェント監視: 実行中タスクなし (total=0)",
+    "lastChecked": "2026-03-18T16:23:00Z",
+    "lastCheckedJST": "2026-03-19 01:23:00+09:00",
+    "lastScanSummary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
     "checkedBy": "agent:main:cron:452813b9-6158-4a6a-a166-80fbdb28ad56"
   },
   "tasks": {},
   "_runLog": [
     {
-      "timestamp": "2026-03-18T03:47:16Z",
-      "timestampJST": "2026-03-18 12:47:16+09:00",
+      "timestamp": "2026-03-18T16:23:00Z",
+      "timestampJST": "2026-03-19 01:23:00+09:00",
       "event": "scan_complete",
-      "summary": "サブエージェント監視: 実行中タスクなし (total=0)",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T16:22:00Z",
+      "timestampJST": "2026-03-19 01:22:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T16:20:00Z",
+      "timestampJST": "2026-03-19 01:20:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし (total=0)。致命的エラー: なし",
       "subagentsTotal": 0,
       "activeTasks": 0,
       "notificationsSent": 0,
