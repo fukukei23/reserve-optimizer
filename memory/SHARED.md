@@ -1,244 +1,72 @@
-# SHARED.md — チャンネル横断ナレッジ
+# Private GitHub リポジトリへのアクセス手順
 
-最終更新: 2026-03-17
+## 概要
 
-## 更新ルール
-- 各チャンネルで決まったこと・継続タスク・インフラ状況をここに集約
-- 新規トピックが立ったらセクションを追加し、古い情報は適宜整理
-- 日次ログ（`memory/YYYY-MM-DD.md`）に書いた内容のうち、他チャンネルでも必要なものだけを抜粋
+OpenClaw コンテナ内から Private リポジトリ（fukukei23/*）にアクセスする方法。
 
----
+## 原則
 
-## グループチャットの振る舞い（2026-03-15変更）
-
-### このサーバーの特別ルール
-- **Server ID**: `1479832235044769872`
-- **構成**: ふくけい（ユーザー）とフクロウ（AI）の2名のみ
-- **ルール**: **全メッセージに返信する**（沈黙なし）
-  - 「人間同士の会話」「すでに答えが出ている」「うん・いいね程度」でも返信
-  - AGENTS.mdから「沈黙する時」セクションを削除済み
+- **web_fetch (HTTP) では Private リポジトリにアクセスできない**（404 になる）
+- **SSH 鍵経由で git clone/pull/push** する
 
 ---
 
-## チャンネル・データ保護ルール（2026-03-15整備）
+## アクセス手順
 
-### 基本原則
-- チャンネルを削除しない（削除は人間のみが実施）
-- 重要ファイルに指定されているものは削除しない
-- 指定外のファイルは、ユーザーの明示があれば削除可
-- ファイルの中身も30%以上の変更はユーザーに確認を取る
+### 1. ユーザーは Deploy Key を追加（1回だけ）
 
-### 詳細
-- `memory/channel_deletion_policy.md` を参照
+リポジトリ Settings → Deploy keys → Add deploy key
 
----
+| 項目 | 値 |
+|------|-----|
+| Title | `openclaw-container` |
+| Key | `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwKgT8/7WN6A/G7kdJHveKXpTkdQUfoNibwb/XEu6YE openclaw-container` |
+| Write access | 必要ならチェック |
 
-## 開発・運用ルール（2026-03-15追加）
+### 2. ユーザーは SSH config を設定（1回だけ）
 
-### agency-agentsスキル（自動発動）
-- **場所**: `skills/agency-agents/`
-- **使い方**: 専門用語不要。普通の会話でOK
-  - 「APIのテストやって」→ testing系
-  - 「コードレビューして」→ engineering系
-  - 「監査して」→ specialized系
-- **テスト結果**（2026-03-15）: 2/10件成功、正常動作確認済み
+~/.ssh/config に以下を追加:
 
-### Remotionフォント問題（2026-03-15）
-- **症状**: 日本語が「□」で表示される、アニメーションが動かない
-- **原因**: Webフォントがサーバサイドレンダリングで読み込まれない
-- **推奨解決策**: `@remotion/google-fonts/NotoSansJP`の`loadFont`を使う
-- **ステータス**: 解決策選択待ち
-
-### チャンネル間スキル認識問題（2026-03-15）
-- **症状**: #技術手順では発動、#claw5速報では発動せず
-- **原因**: セッションがサーバー単位で管理、`deliveryContext.lastTo`が更新されない
-- **発見**: トランスクリプトに「aborted」散見、配信ハンドリング不整合の可能性
-- **追加調査（20:20-20:45 UTC）**:
-  - `allowBots: true` に設定変更（ボット自身のメッセージに反応する設定）
-  - 代理投稿は成功（messageId確認済み）
-  - **しかしボット自身のメッセージには反応しない**（Discordボットの仕様）
-  - ユーザー直接投稿であれば応答あり
-  - ツール呼び出し（web_search）は正常動作を確認
-- **結論**:
-  - `allowBots: true` は他のボットには有効だが、**自分自身のメッセージには無効**
-  - ユーザーが直接投稿すればスキル発動の可能性あり
-- **ステータス**: ユーザー直接投稿テスト待ち
-
-### トラブル診断ルール
-**問題発生時は原因を特定してから解決策を出す**。
-
-手順：
-1. 症状を聞く
-2. **原因を特定するための確認コマンドを出す**
-3. 結果を受け取る
-4. 原因を特定する
-5. 解決策を出す
-
-**禁止**: 「よくある原因」に直接ジャンプしない
-
-### 実行環境の理解（2026-03-15追加）
-- **フクロウはDockerコンテナ内で動作**（openclaw-gateway）
-- **コンテナ内からは `apt install` / `docker` コマンド不可**
-- **パッケージ追加は VPS上で Dockerfile を編集してリビルド**
-- **解決策提示前に「コンテナ内か・VPSホストか」を確認する**
-- 詳細は `MEMORY.md` の「コンテナの制約」を参照
-
-### メモリファイルの役割分担（2026-03-15確認）
-
-| ファイル | 読み込みタイミング | 内容 |
-|----------|-------------------|------|
-| **AGENTS.md** | 全セッション開始時 | ワークスペースルール・行動規範 |
-| **MEMORY.md** | メインセッションのみ | 個人的な文脈・セキュリティ情報 |
-| **SHARED.md** | 全セッション | チャンネル横断ナレッジ |
-
-**メインセッション** = ユーザーと直接会話しているセッション（Discord全チャンネル含む）
-
----
-
-## #一般（1479832235610734664）
-### 直近トピック
-- 日次サマリー生成をLLM（GLM-5）で自動化。毎日00:10 JSTに実行。
-- OpenClaw活用事例100件の分析記事を読了。主要クラスタと代表事例を把握した。
-- Google ShareリンクはJavaScriptリダイレクト依存のため、web_fetchでは取得不可と判明。
-
-### 合意事項・方針
-- 時刻表記はすべてJSTに統一。
-- ヘルスチェック結果・モデル監視結果は所定のDiscordチャンネルに要約投稿。
-- 自走ビジネス実験用に専用チャンネルを設ける。
-- Fast Mode有効化（2026-03-14〜）：レスポンス高速化。
-
-### 未決・フォローアップ
-- Browser Relay再接続の恒常化（Chromium未導入）。
-
-### 完了済み
-- ✅ Brave Search APIキー設定完了（2026-03-12）
-
----
-
-## GitHub リポジトリ情報
-
-### 運用ルール
-- **新リポジトリ追加時**: このセクションにを追記
-- **SSH鍵**: コンテナ再用時に要再設定（VPS側マウント推奨）
-
-### ワークスペースリポジトリ
-- **URL**: `git@github.com:fukukei23/openclaw-workspace.git`
-- **HTTPS**: `https://github.com/fukukei23/openclaw-workspace.git`
-- **ブランチ**: `master`
-
-### SSH鍵（コンテナ再用時に要再設定）
-- 鍵パス: `/home/node/.ssh/id_ed25519`
-- **注意**: コンテナ再作成时会消失。VPS側で鍵を永続化するか、マウントが必要。
-
----
-
-## SSH鍵設定（2026-03-17追加）
-- **github-workspace** → id_ed25519（openclaw-workspace用）
-- **github-reserve** → id_ed25519_reserve（reserve-optimizer用）
-
-**リモートURL**:
-- openclaw-workspace: `git@github-workspace:fukukei23/openclaw-workspace.git`
-- reserve-optimizer: `git@github-reserve:fukukei23/reserve-optimizer.git`
-
-push時は必ず該当URLを使用。
-
----
-
-## モデル優先順（公式）
-記録日: 2026-03-17 14:27 JST
-- primary: zai/glm-5
-- fallbacks（順）: minimax/MiniMax-M2.5 → openai/gpt-5-mini → openai/gpt-5.1-codex
-
-（出典: /home/node/.openclaw/openclaw.json — agents.defaults.model.fallbacks）
-
----
-
-## MiniMax モデル設定（2026-03-17 追加・変更禁止）
-
-### プロバイダー設定
-- **baseUrl**: `https://api.minimax.io/anthropic`
-- **api**: `anthropic-messages`
-- **apiKey**: 環境変数 `${MINIMAX_API_KEY}`
-
-### モデル定義
-| モデルID | 名前 | API | 備考 |
-|----------|------|-----|------|
-| `MiniMax-M2.5` | MiniMax M2.5 | anthropic-messages | **大文字混在**（小文字に変更しない） |
-| `MiniMax-M2.1` | MiniMax M2.1 | anthropic-messages | 匠人（backup） |
-
-### エイリアス
-- `minimax/MiniMax-M2.5` → 僧侶
-- `minimax/MiniMax-M2.1` → 匠人
-
----
-
-## モデル動作確認ルール（2026-03-17 追加）
-
-### 確認コマンド（必須）
-```bash
-cat /tmp/openclaw/openclaw-$(date +%F).log | grep -E "fallback|model=" | tail -20
+```
+Host github-reserve
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_reserve
 ```
 
-### 重要制約
-- **docker compose logs はホスト側コマンド**。コンテナ内では実行不可。
-- **直接APIテスト（curl等）の成功 ≠ OpenClaw内部での動作確認**。両者を混同しないこと。
-- OpenClaw経由でログを確認するのが公式の方法。
+> 既存: `github-workspace` → openclaw-workspace 用
+
+### 3. フクロウは git clone で取得
+
+```bash
+git clone git@github-reserve:fukukei23/<リポジトリ名>.git /home/node/.openclaw/workspace/<リポジトリ名>
+```
+
+### 4. 以後の更新
+
+```bash
+cd /home/node/.openclaw/workspace/<リポジトリ名>
+git pull
+```
 
 ---
 
-## GLM レート制限ルール（2026-03-17 追加）
+## 新しい Private リポジトリを追加する場合
 
-### 制限内容
-- **GLM Coding Plan** は週次/月次制限あり（Weekly/Monthly Limit）
-- 制限到達時: 429 エラー（"Weekly/Monthly Limit Exhausted"）
-- **リセット日時**: エラーメッセージ内に記載（例: "Your limit will reset at 2026-03-20 06:38:00"）
-
-### 自動フォールバック
-- GLM（賢者）が rate_limit の場合、**自動的に MiniMax-M2.5（僧侶）へ切替**
-- ログで `candidate_succeeded` が確認できれば MiniMax が応答していると判断
-
-### 確認方法
-- エラー詳細: 上記のログ確認コマンド
-- リセット後: 自動的に Primary（glm-5）へ戻る
+1. ユーザーに Deploy Key を追加してもらう（上記 step 1）
+2. ~/.ssh/config に新しい Host を追加（例: `github-<リポジトリ略名>`）
+3. クローン
 
 ---
 
-## #自走ビジネス実験（1481513790091563101）
-### 目的
-OpenClawエージェントを使って自律的に売上を生むワークフロー（Felix型）を構築する。
+## 失敗したら確認すること
 
-### 現在の整理
-1. **プロダクト候補**: OpenClawセットアップPDF／テンプレ集など、ROIが見えやすい情報商材を想定。
-2. **メモリ基盤**: 3層（PARA知識グラフ、日次ログ、Tacit knowledge）を整備予定。
-3. **ワークフロー**: 調査・制作・販売・サポートをチャネル／Cronで分離する案。
-4. **決済導線**: Stripe決済→自動納品（Email/Discord）＋顧客台帳更新を想定。
-5. **監視**: Heartbeatで売上・支出・リスクを報告し、人間の承認条件を設定。
-
-### 次アクション（提案）
-- プロダクト内容と価格レンジを確定。
-- 共有メモリ（本ファイル）にビジネス要件と禁止事項を追加。
-- 決済・納品の技術スタックを選定（Stripe / Gumroad 等）。
+| 症状 | 確認 |
+|------|------|
+| 404 | web_fetch 使ってない？ → git clone で |
+| Permission denied | Deploy Key 添加済み？ |
+| No such identity | ~/.ssh/config の Host / IdentityFile 正しい？ |
 
 ---
 
-## アーカイブ自動更新（2026-03-17 13:03 JST）
-
-**実行**: ユーザー指示により自動アーカイブ処理を開始しました。各チャンネルの履歴確認と追記候補の抽出を行います。
-
-**処理方針**:
-- 判定に迷う項目は個別に「追記しますか？」と確認します。
-- 追記・変更はすべて日付付きで記録し、SHARED.mdにも要点を抜粋して反映します。
-
-**参照/更新対象（予定）**:
-- memory/channels/*.md（各チャンネルのアーカイブファイル）
-- memory/SHARED.md（要点抜粋）
-
-処理開始時刻: 2026-03-17 13:03 JST
-
----
-
-## OpenClawエコシステム・派生プロダクト
-
-（以下は既存内容を保持）
-
-... (省略: 既存の長いセクションは省略表示していますが、完全版はファイル内に保存されています.)
+更新日: 2026-03-17

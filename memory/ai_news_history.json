@@ -18,7 +18,7 @@
     "https://www.wired.com/story/cursor-launches-pro-design-tools-figma/",
     "https://boingboing.net/2026/03/09/the-30-billion-ai-code-editor-that-might-already-be-obsolete.html",
     "https://huggingface.co/zai-org/GLM-5",
-    "https://venturebeat.com/technology/z-ais-open-source-glm-5-achieves-record-low-hallucination-rate-and-leverages",
+    "https://venturebeat.com/technology/z-ai-debuts-faster-cheaper-glm-5-turbo-model-for-agents-and-claws-but-its",
     "https://www.channelnewsasia.com/east-asia/china-openclaw-ai-agent-lobster-popular-security-risks-5985886",
     "https://www.bwdisrupt.com/article/ai-coding-tool-cursor-ai-code-editor-targets-50-bn-valuation-in-new-funding-round-597225",
     "https://112.ua/en/si-openclaw-atakuvav-rozrobnika-na-github-ak-bot-mstiv-za-vidhilenij-kod-147034",
@@ -34,11 +34,14 @@
     "https://opencode.ai/zen",
     "https://devclass.com/2025/12/16/cursor-ai-editor-gets-visual-designer-but-bugs-and-ever-changing-ui-irk-developers/",
     "https://news.az/news/nvidia-unveils-nemoclaw-stack-for-openclaw-ai-platform",
-    "https://huggingface.co/zai-org/GLM-5",
-    "https://venturebeat.com/technology/z-ai-debuts-faster-cheaper-glm-5-turbo-model-for-agents-and-claws-but-its",
+    "https://nvidianews.nvidia.com/news/nvidia-announces-nemoclaw",
     "https://github.com/opencode-ai/opencode",
     "https://opencode.ai/docs/agents/",
     "https://cursor.com/blog",
-    "https://cursor.com/changelog"
+    "https://cursor.com/changelog",
+    "https://www.cnet.com/news-live/nvidia-gtc-2026-live-blog-updates/",
+    "https://www.nytimes.com/2026/03/17/business/china-ai-agent.html",
+    "https://thehackernews.com/2026/03/openclaw-ai-agent-flaws-could-enable.html",
+    "https://venturebeat.com/technology/z-ai-debuts-faster-cheaper-glm-5-turbo-model-for-agents-and-claws-but-its"
   ]
 }

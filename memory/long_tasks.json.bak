@@ -1,23 +1,121 @@
 {
   "_meta": {
-    "lastChecked": "2026-03-17T13:51:00Z",
-    "createdAt": "2026-03-17T07:28:13Z",
-    "note": "長時間タスク監視用ファイル",
-    "fatalErrorsDetectedAt": null,
-    "fatalErrorSample": [],
-    "healthNotifiedAt": null,
-    "healthNotifiedChannels": [],
-    "lastScanSummary": "スキャン実行: total=0。アクティブなサブエージェントなし。JST: 2026-03-17 22:51",
-    "checkedBy": "agent:main:cron:c1bbf2ea-2de3-4f5b-b35b-70c2abf8a884",
-    "runLog": [
-      {"at": "2026-03-17T13:51:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントなし。表示時刻（JST）: 2026-03-17 22:51:00+09:00"},
-      {"at": "2026-03-17T13:50:00Z", "summary": "スキャン実行: total=0。アクティブなサブエージェントなし。JST: 2026-03-17 22:50"},
-      {"at": "2026-03-17T13:49:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:49:00+09:00"},
-      {"at": "2026-03-17T13:48:10Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:48:10+09:00"},
-      {"at": "2026-03-17T13:46:00Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:46:00+09:00"},
-      {"at": "2026-03-17T13:45:19Z", "summary": "スキャン実行: subagents(action:list, recentMinutes=1440) → total=0。アクティブなサブエージェントは検出されませんでした。表示時刻（JST）: 2026-03-17 22:45:19+09:00"}
-    ],
-    "lastScanSummaryShort": "total=0; no active subagents; checked 2026-03-17 22:51 JST"
+    "note": "長時間タスク監視用ファイル（自動更新）",
+    "createdAt": "2026-03-17T19:02:45Z",
+    "lastChecked": "2026-03-18T02:48:02Z",
+    "lastCheckedJST": "2026-03-18 11:48:02+09:00",
+    "lastScanSummary": "サブエージェント監視: 実行中タスクなし (total=0)",
+    "checkedBy": "agent:main:cron:452813b9-6158-4a6a-a166-80fbdb28ad56"
   },
-  "tasks": {}
+  "tasks": {},
+  "_runLog": [
+    {
+      "timestamp": "2026-03-18T02:48:02Z",
+      "timestampJST": "2026-03-18 11:48:02+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:46:00Z",
+      "timestampJST": "2026-03-18 11:46:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:45:00Z",
+      "timestampJST": "2026-03-18 11:45:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:44:13Z",
+      "timestampJST": "2026-03-18 11:44:13+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:43:00Z",
+      "timestampJST": "2026-03-18 11:43:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:31:00Z",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:32:00Z",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:35:03Z",
+      "timestampJST": "2026-03-18 11:35:03+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:37:00Z",
+      "timestampJST": "2026-03-18 11:37:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:39:00Z",
+      "timestampJST": "2026-03-18 11:39:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    },
+    {
+      "timestamp": "2026-03-18T02:40:00Z",
+      "timestampJST": "2026-03-18 11:40:00+09:00",
+      "event": "scan_complete",
+      "summary": "サブエージェント監視: 実行中タスクなし",
+      "subagentsTotal": 0,
+      "activeTasks": 0,
+      "notificationsSent": 0,
+      "errors": []
+    }
+  ]
 }

@@ -19,7 +19,7 @@ except ImportError:
     OpenAI = None
 
 TZ = ZoneInfo("Asia/Tokyo")
-YT_DLP = Path.home() / ".local" / "bin" / "yt-dlp"
+YT_DLP = Path("/usr/bin/yt-dlp")
 
 # Target AI YouTubers
 YOUTUBERS = [

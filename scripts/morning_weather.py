@@ -69,7 +69,11 @@ def get_weather(location):
     url = f"https://wttr.in/{urllib.parse.quote(location)}?format=j1"
     try:
         with urllib.request.urlopen(url, timeout=10) as response:
-            return json.loads(response.read().decode())
+            data = json.loads(response.read().decode())
+            # 新しいwttr.inのレスポンス形式対応（dataキーでラップされている）
+            if "data" in data:
+                return data["data"]
+            return data
     except Exception as e:
         print(f"Error fetching weather: {e}")
         return None
