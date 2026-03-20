@@ -4,23 +4,33 @@
 - このファイルは OpenClaw の環境変数、再起動手順、重要注意事項を正本（canonical）としてまとめたものです。
 
 重要パス
+| 項目 | パス |
+|------|------|
+| VPS側（唯一の編集先） | `/home/op/openclaw-stack/.env` |
+| コンテナ内（自動反映） | `/home/node/.openclaw/.env` 相当（マウント経由） |
+
+⚠️ `/home/op/openclaw-stack/openclaw_config/.env` は使用しない
+- docker-compose.yml は `env_file: .env`（ルート）しか読まない
+- `openclaw_config/.env` を編集してもコンテナに反映されない
+
+重要パス（旧・誤記）
 - コンテナ内の表記: /home/node/.openclaw/.env
-- VPS 側の実体（編集先）: /home/op/openclaw-stack/openclaw_config/.env
+- ~~VPS 側の実体（編集先）: /home/op/openclaw-stack/openclaw_config/.env~~ → 誤記のため削除
 - ワークスペース（このリポジトリ）: workspace/docs/openclaw-config.md（このファイル）
 
-編集・追加手順（推奨）
-1. VPS に SSH 接続
-2. 適切な権限でファイルを編集
-   - sudo nano /home/op/openclaw-stack/openclaw_config/.env
-3. 保存後、反映のために再起動
-   - docker compose restart openclaw-gateway
-   - 必要なら: docker compose up -d
+編集・再起動手順（推奨）
+1. VPS に SSH接続
+2. ファイルを編集
+   - `nano /home/op/openclaw-stack/.env`
+3. 保存後、反映のためにコンテナを再起動
+   - `docker compose stop openclaw-gateway && docker compose up -d openclaw-gateway`
+   - ※ `restart` ではなく `stop && up -d` を使うこと（設定が確実に再読み込みされる）
 
 反映確認（コンテナ内）
 - コンテナ内環境変数確認例:
-  - env | grep -E "API|KEY|TOKEN|SECRET|ZAI|BRAVE|DISCORD|OPENAI|KIMI|GLM"
+  - `docker compose exec openclaw-gateway printenv | grep <KEY_NAME> | sed 's/=.*/=***/'`
 - VPS 側（コンテナに exec して確認）:
-  - docker compose exec openclaw-gateway env | grep -E "BRAVE|DISCORD|OPENAI|KIMI|GLM"
+  - `docker compose exec openclaw-gateway env | grep -E "BRAVE|DISCORD|OPENAI|KIMI|GLM"`
 
 セキュリティ注意
 - API キー等の機密情報はこのチャンネル（Discord）にプレーンテキストで貼らないこと。必ずマスクする（例: sk-abc...xyz）。
@@ -31,13 +41,14 @@
 - 編集者: VPS にアクセス権のある管理者のみ（@fukukei）
 - 反映確認: 編集者が反映後にこのチャンネルで「反映済み」を報告すること
 
-変更履歴（例）
+変更履歴
 - 2026-03-17: 初版作成 — フクロウ
+- 2026-03-19: 編集先パス・再起動手順を修正 — @fukukei の報告により更新
 
 付録: よく使うコマンド
-- ファイルの編集（VPS）: sudo nano /home/op/openclaw-stack/openclaw_config/.env
-- Gateway 再起動: docker compose restart openclaw-gateway
-- コンテナ内での確認: docker compose exec openclaw-gateway env | grep GLM
+- ファイルの編集（VPS）: `nano /home/op/openclaw-stack/.env`
+- Gateway 再起動: `docker compose stop openclaw-gateway && docker compose up -d openclaw-gateway`
+- コンテナ内での確認: `docker compose exec openclaw-gateway printenv | grep GLM`
 
 運用ルール（短く）
 - 正本はこのファイル（workspace/docs/openclaw-config.md）。Discord には要約＋リンクを貼ってピン固定する。
