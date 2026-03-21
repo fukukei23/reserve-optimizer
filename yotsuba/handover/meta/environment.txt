@@ -1,0 +1,12 @@
+Machine:     Surface Go 第1世代
+CPU:         Pentium 4415Y
+RAM:         8GB
+Storage:     57GB (/dev/mapper/ubuntu--vg-ubuntu--lv)
+OS:          Ubuntu 24.04.4 LTS (CUI)
+Hostname:    claw-node
+User:        user
+Local IP:    192.168.1.7 (Wi-Fi / wlp1s0)
+Swap:        4GB (/swap.img)
+Docker:      29.3.0
+OpenClaw:    2026.3.11 (openclaw-surface:local)
+Setup date:  2026-03-20
