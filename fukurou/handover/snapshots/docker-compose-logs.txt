@@ -1,0 +1,600 @@
+openclaw-cli-1  |   [38;5;209mqr[39m                Generate iOS pairing QR/setup code
+openclaw-cli-1  |   [38;5;209mreset[39m             Reset local config/state (keeps the CLI installed)
+openclaw-cli-1  |   [38;5;209msandbox *[39m         Manage sandbox containers for agent isolation
+openclaw-cli-1  |   [38;5;209msecurity *[39m        Security tools and local config audits
+openclaw-cli-1  |   [38;5;209msessions[39m          List stored conversation sessions
+openclaw-cli-1  |   [38;5;209msetup[39m             Initialize local config and agent workspace
+openclaw-cli-1  |   [38;5;209mskills *[39m          List and inspect available skills
+openclaw-cli-1  |   [38;5;209mstatus[39m            Show channel health and recent session recipients
+openclaw-cli-1  |   [38;5;209msystem *[39m          System events, heartbeat, and presence
+openclaw-cli-1  |   [38;5;209mtui[39m               Open a terminal UI connected to the Gateway
+openclaw-cli-1  |   [38;5;209muninstall[39m         Uninstall the gateway service + local data (CLI remains)
+openclaw-cli-1  |   [38;5;209mupdate *[39m          Update OpenClaw and inspect update channel status
+openclaw-cli-1  |   [38;5;209mwebhooks *[39m        Webhook helpers and integrations
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mExamples:[39m[22m
+openclaw-cli-1  |   [38;5;209mopenclaw models --help[39m
+openclaw-cli-1  |     [38;5;138mShow detailed help for the models command.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw channels login --verbose[39m
+openclaw-cli-1  |     [38;5;138mLink personal WhatsApp Web and show QR + connection logs.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --target +15555550123 --message "Hi" --json[39m
+openclaw-cli-1  |     [38;5;138mSend via your web session and print JSON result.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --port 18789[39m
+openclaw-cli-1  |     [38;5;138mRun the WebSocket Gateway locally.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw --dev gateway[39m
+openclaw-cli-1  |     [38;5;138mRun a dev Gateway (isolated state/config) on ws://127.0.0.1:19001.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --force[39m
+openclaw-cli-1  |     [38;5;138mKill anything bound to the default gateway port, then start it.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway ...[39m
+openclaw-cli-1  |     [38;5;138mGateway control via WebSocket.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw agent --to +15555550123 --message "Run summary" --deliver[39m
+openclaw-cli-1  |     [38;5;138mTalk directly to the agent using the Gateway; optionally send the WhatsApp reply.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --channel telegram --target @mychat --message "Hi"[39m
+openclaw-cli-1  |     [38;5;138mSend via your Telegram bot.[39m
+openclaw-cli-1  | 
+openclaw-cli-1  | [38;5;138mDocs:[39m ]8;;https://docs.openclaw.ai/clidocs.openclaw.ai/cli]8;;
+openclaw-cli-1  | 
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209m🦞 OpenClaw[39m[22m [38;5;216m2026.2.18[39m [38;5;138m(unknown)[39m
+openclaw-cli-1  |    [38;5;167mIt's not "failing," it's "discovering new ways to configure the same thing wrong."[39m
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mUsage:[39m[22m openclaw [options] [command]
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mOptions:[39m[22m
+openclaw-cli-1  |   [38;5;215m--dev[39m             Dev profile: isolate state under ~/.openclaw-dev, default gateway port 19001, and shift derived ports (browser/canvas)
+openclaw-cli-1  |   [38;5;215m-h, --help[39m        Display help for command
+openclaw-cli-1  |   [38;5;215m--no-color[39m        Disable ANSI colors
+openclaw-cli-1  |   [38;5;215m--profile <name>[39m  Use a named profile (isolates OPENCLAW_STATE_DIR/OPENCLAW_CONFIG_PATH under ~/.openclaw-<name>)
+openclaw-cli-1  |   [38;5;215m-V, --version[39m     output the version number
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mCommands:[39m[22m
+openclaw-cli-1  |   [38;5;138mHint: commands suffixed with * have subcommands. Run <command> --help for details.[39m
+openclaw-cli-1  |   [38;5;209macp *[39m             Agent Control Protocol tools
+openclaw-cli-1  |   [38;5;209magent[39m             Run one agent turn via the Gateway
+openclaw-cli-1  |   [38;5;209magents *[39m          Manage isolated agents (workspaces, auth, routing)
+openclaw-cli-1  |   [38;5;209mapprovals *[39m       Manage exec approvals (gateway or node host)
+openclaw-cli-1  |   [38;5;209mbrowser *[39m         Manage OpenClaw's dedicated browser (Chrome/Chromium)
+openclaw-cli-1  |   [38;5;209mchannels *[39m        Manage connected chat channels (Telegram, Discord, etc.)
+openclaw-cli-1  |   [38;5;209mclawbot *[39m         Legacy clawbot command aliases
+openclaw-cli-1  |   [38;5;209mcompletion[39m        Generate shell completion script
+openclaw-cli-1  |   [38;5;209mconfig *[39m          Non-interactive config helpers (get/set/unset). Default: starts setup wizard.
+openclaw-cli-1  |   [38;5;209mconfigure[39m         Interactive setup wizard for credentials, channels, gateway, and agent defaults
+openclaw-cli-1  |   [38;5;209mcron *[39m            Manage cron jobs via the Gateway scheduler
+openclaw-cli-1  |   [38;5;209mdaemon *[39m          Gateway service (legacy alias)
+openclaw-cli-1  |   [38;5;209mdashboard[39m         Open the Control UI with your current token
+openclaw-cli-1  |   [38;5;209mdevices *[39m         Device pairing + token management
+openclaw-cli-1  |   [38;5;209mdirectory *[39m       Lookup contact and group IDs (self, peers, groups) for supported chat channels
+openclaw-cli-1  |   [38;5;209mdns *[39m             DNS helpers for wide-area discovery (Tailscale + CoreDNS)
+openclaw-cli-1  |   [38;5;209mdocs[39m              Search the live OpenClaw docs
+openclaw-cli-1  |   [38;5;209mdoctor[39m            Health checks + quick fixes for the gateway and channels
+openclaw-cli-1  |   [38;5;209mgateway *[39m         Run, inspect, and query the WebSocket Gateway
+openclaw-cli-1  |   [38;5;209mhealth[39m            Fetch health from the running gateway
+openclaw-cli-1  |   [38;5;209mhelp[39m              Display help for command
+openclaw-cli-1  |   [38;5;209mhooks *[39m           Manage internal agent hooks
+openclaw-cli-1  |   [38;5;209mlogs[39m              Tail gateway file logs via RPC
+openclaw-cli-1  |   [38;5;209mmemory *[39m          Search and reindex memory files
+openclaw-cli-1  |   [38;5;209mmessage *[39m         Send, read, and manage messages
+openclaw-cli-1  |   [38;5;209mmodels *[39m          Discover, scan, and configure models
+openclaw-cli-1  |   [38;5;209mnode *[39m            Run and manage the headless node host service
+openclaw-cli-1  |   [38;5;209mnodes *[39m           Manage gateway-owned node pairing and node commands
+openclaw-cli-1  |   [38;5;209monboard[39m           Interactive onboarding wizard for gateway, workspace, and skills
+openclaw-cli-1  |   [38;5;209mpairing *[39m         Secure DM pairing (approve inbound requests)
+openclaw-cli-1  |   [38;5;209mplugins *[39m         Manage OpenClaw plugins and extensions
+openclaw-cli-1  |   [38;5;209mqr[39m                Generate iOS pairing QR/setup code
+openclaw-cli-1  |   [38;5;209mreset[39m             Reset local config/state (keeps the CLI installed)
+openclaw-cli-1  |   [38;5;209msandbox *[39m         Manage sandbox containers for agent isolation
+openclaw-cli-1  |   [38;5;209msecurity *[39m        Security tools and local config audits
+openclaw-cli-1  |   [38;5;209msessions[39m          List stored conversation sessions
+openclaw-cli-1  |   [38;5;209msetup[39m             Initialize local config and agent workspace
+openclaw-cli-1  |   [38;5;209mskills *[39m          List and inspect available skills
+openclaw-cli-1  |   [38;5;209mstatus[39m            Show channel health and recent session recipients
+openclaw-cli-1  |   [38;5;209msystem *[39m          System events, heartbeat, and presence
+openclaw-cli-1  |   [38;5;209mtui[39m               Open a terminal UI connected to the Gateway
+openclaw-cli-1  |   [38;5;209muninstall[39m         Uninstall the gateway service + local data (CLI remains)
+openclaw-cli-1  |   [38;5;209mupdate *[39m          Update OpenClaw and inspect update channel status
+openclaw-cli-1  |   [38;5;209mwebhooks *[39m        Webhook helpers and integrations
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mExamples:[39m[22m
+openclaw-cli-1  |   [38;5;209mopenclaw models --help[39m
+openclaw-cli-1  |     [38;5;138mShow detailed help for the models command.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw channels login --verbose[39m
+openclaw-cli-1  |     [38;5;138mLink personal WhatsApp Web and show QR + connection logs.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --target +15555550123 --message "Hi" --json[39m
+openclaw-cli-1  |     [38;5;138mSend via your web session and print JSON result.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --port 18789[39m
+openclaw-cli-1  |     [38;5;138mRun the WebSocket Gateway locally.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw --dev gateway[39m
+openclaw-cli-1  |     [38;5;138mRun a dev Gateway (isolated state/config) on ws://127.0.0.1:19001.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --force[39m
+openclaw-cli-1  |     [38;5;138mKill anything bound to the default gateway port, then start it.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway ...[39m
+openclaw-cli-1  |     [38;5;138mGateway control via WebSocket.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw agent --to +15555550123 --message "Run summary" --deliver[39m
+openclaw-cli-1  |     [38;5;138mTalk directly to the agent using the Gateway; optionally send the WhatsApp reply.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --channel telegram --target @mychat --message "Hi"[39m
+openclaw-cli-1  |     [38;5;138mSend via your Telegram bot.[39m
+openclaw-cli-1  | 
+openclaw-cli-1  | [38;5;138mDocs:[39m ]8;;https://docs.openclaw.ai/clidocs.openclaw.ai/cli]8;;
+openclaw-cli-1  | 
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209m🦞 OpenClaw[39m[22m [38;5;216m2026.2.18[39m [38;5;138m(unknown)[39m
+openclaw-cli-1  |    [38;5;167mWelcome to the command line: where dreams compile and confidence segfaults.[39m
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mUsage:[39m[22m openclaw [options] [command]
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mOptions:[39m[22m
+openclaw-cli-1  |   [38;5;215m--dev[39m             Dev profile: isolate state under ~/.openclaw-dev, default gateway port 19001, and shift derived ports (browser/canvas)
+openclaw-cli-1  |   [38;5;215m-h, --help[39m        Display help for command
+openclaw-cli-1  |   [38;5;215m--no-color[39m        Disable ANSI colors
+openclaw-cli-1  |   [38;5;215m--profile <name>[39m  Use a named profile (isolates OPENCLAW_STATE_DIR/OPENCLAW_CONFIG_PATH under ~/.openclaw-<name>)
+openclaw-cli-1  |   [38;5;215m-V, --version[39m     output the version number
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mCommands:[39m[22m
+openclaw-cli-1  |   [38;5;138mHint: commands suffixed with * have subcommands. Run <command> --help for details.[39m
+openclaw-cli-1  |   [38;5;209macp *[39m             Agent Control Protocol tools
+openclaw-cli-1  |   [38;5;209magent[39m             Run one agent turn via the Gateway
+openclaw-cli-1  |   [38;5;209magents *[39m          Manage isolated agents (workspaces, auth, routing)
+openclaw-cli-1  |   [38;5;209mapprovals *[39m       Manage exec approvals (gateway or node host)
+openclaw-cli-1  |   [38;5;209mbrowser *[39m         Manage OpenClaw's dedicated browser (Chrome/Chromium)
+openclaw-cli-1  |   [38;5;209mchannels *[39m        Manage connected chat channels (Telegram, Discord, etc.)
+openclaw-cli-1  |   [38;5;209mclawbot *[39m         Legacy clawbot command aliases
+openclaw-cli-1  |   [38;5;209mcompletion[39m        Generate shell completion script
+openclaw-cli-1  |   [38;5;209mconfig *[39m          Non-interactive config helpers (get/set/unset). Default: starts setup wizard.
+openclaw-cli-1  |   [38;5;209mconfigure[39m         Interactive setup wizard for credentials, channels, gateway, and agent defaults
+openclaw-cli-1  |   [38;5;209mcron *[39m            Manage cron jobs via the Gateway scheduler
+openclaw-cli-1  |   [38;5;209mdaemon *[39m          Gateway service (legacy alias)
+openclaw-cli-1  |   [38;5;209mdashboard[39m         Open the Control UI with your current token
+openclaw-cli-1  |   [38;5;209mdevices *[39m         Device pairing + token management
+openclaw-cli-1  |   [38;5;209mdirectory *[39m       Lookup contact and group IDs (self, peers, groups) for supported chat channels
+openclaw-cli-1  |   [38;5;209mdns *[39m             DNS helpers for wide-area discovery (Tailscale + CoreDNS)
+openclaw-cli-1  |   [38;5;209mdocs[39m              Search the live OpenClaw docs
+openclaw-cli-1  |   [38;5;209mdoctor[39m            Health checks + quick fixes for the gateway and channels
+openclaw-cli-1  |   [38;5;209mgateway *[39m         Run, inspect, and query the WebSocket Gateway
+openclaw-cli-1  |   [38;5;209mhealth[39m            Fetch health from the running gateway
+openclaw-cli-1  |   [38;5;209mhelp[39m              Display help for command
+openclaw-cli-1  |   [38;5;209mhooks *[39m           Manage internal agent hooks
+openclaw-cli-1  |   [38;5;209mlogs[39m              Tail gateway file logs via RPC
+openclaw-cli-1  |   [38;5;209mmemory *[39m          Search and reindex memory files
+openclaw-cli-1  |   [38;5;209mmessage *[39m         Send, read, and manage messages
+openclaw-cli-1  |   [38;5;209mmodels *[39m          Discover, scan, and configure models
+openclaw-cli-1  |   [38;5;209mnode *[39m            Run and manage the headless node host service
+openclaw-cli-1  |   [38;5;209mnodes *[39m           Manage gateway-owned node pairing and node commands
+openclaw-cli-1  |   [38;5;209monboard[39m           Interactive onboarding wizard for gateway, workspace, and skills
+openclaw-cli-1  |   [38;5;209mpairing *[39m         Secure DM pairing (approve inbound requests)
+openclaw-cli-1  |   [38;5;209mplugins *[39m         Manage OpenClaw plugins and extensions
+openclaw-cli-1  |   [38;5;209mqr[39m                Generate iOS pairing QR/setup code
+openclaw-cli-1  |   [38;5;209mreset[39m             Reset local config/state (keeps the CLI installed)
+openclaw-cli-1  |   [38;5;209msandbox *[39m         Manage sandbox containers for agent isolation
+openclaw-cli-1  |   [38;5;209msecurity *[39m        Security tools and local config audits
+openclaw-cli-1  |   [38;5;209msessions[39m          List stored conversation sessions
+openclaw-cli-1  |   [38;5;209msetup[39m             Initialize local config and agent workspace
+openclaw-cli-1  |   [38;5;209mskills *[39m          List and inspect available skills
+openclaw-cli-1  |   [38;5;209mstatus[39m            Show channel health and recent session recipients
+openclaw-cli-1  |   [38;5;209msystem *[39m          System events, heartbeat, and presence
+openclaw-cli-1  |   [38;5;209mtui[39m               Open a terminal UI connected to the Gateway
+openclaw-cli-1  |   [38;5;209muninstall[39m         Uninstall the gateway service + local data (CLI remains)
+openclaw-cli-1  |   [38;5;209mupdate *[39m          Update OpenClaw and inspect update channel status
+openclaw-cli-1  |   [38;5;209mwebhooks *[39m        Webhook helpers and integrations
+openclaw-cli-1  | 
+openclaw-cli-1  | [1m[38;5;209mExamples:[39m[22m
+openclaw-cli-1  |   [38;5;209mopenclaw models --help[39m
+openclaw-cli-1  |     [38;5;138mShow detailed help for the models command.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw channels login --verbose[39m
+openclaw-cli-1  |     [38;5;138mLink personal WhatsApp Web and show QR + connection logs.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --target +15555550123 --message "Hi" --json[39m
+openclaw-cli-1  |     [38;5;138mSend via your web session and print JSON result.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --port 18789[39m
+openclaw-cli-1  |     [38;5;138mRun the WebSocket Gateway locally.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw --dev gateway[39m
+openclaw-cli-1  |     [38;5;138mRun a dev Gateway (isolated state/config) on ws://127.0.0.1:19001.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway --force[39m
+openclaw-cli-1  |     [38;5;138mKill anything bound to the default gateway port, then start it.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw gateway ...[39m
+openclaw-cli-1  |     [38;5;138mGateway control via WebSocket.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw agent --to +15555550123 --message "Run summary" --deliver[39m
+openclaw-cli-1  |     [38;5;138mTalk directly to the agent using the Gateway; optionally send the WhatsApp reply.[39m
+openclaw-cli-1  |   [38;5;209mopenclaw message send --channel telegram --target @mychat --message "Hi"[39m
+openclaw-cli-1  |     [38;5;138mSend via your Telegram bot.[39m
+openclaw-cli-1  | 
+openclaw-cli-1  | [38;5;138mDocs:[39m ]8;;https://docs.openclaw.ai/clidocs.openclaw.ai/cli]8;;
+openclaw-cli-1  | 
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | Invalid config at /home/node/.openclaw/openclaw.json:\n- gateway.bind: Invalid input
+openclaw-gateway-1  | - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  | - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Config ───────────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | │  Config invalid; doctor will run with best-effort config.  │
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | ├────────────────────────────────────────────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Unknown config keys ─╮
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | Invalid config at /home/node/.openclaw/openclaw.json:\n- gateway.bind: Invalid input
+openclaw-gateway-1  | - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  | - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Config ───────────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | │  Config invalid; doctor will run with best-effort config.  │
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | ├────────────────────────────────────────────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Unknown config keys ─╮
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | Invalid config at /home/node/.openclaw/openclaw.json:\n- gateway.bind: Invalid input
+openclaw-gateway-1  | - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  | - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Config ───────────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | │  Config invalid; doctor will run with best-effort config.  │
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | ├────────────────────────────────────────────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Unknown config keys ─╮
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | Invalid config at /home/node/.openclaw/openclaw.json:\n- gateway.bind: Invalid input
+openclaw-gateway-1  | - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  | - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Config ───────────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | │  Config invalid; doctor will run with best-effort config.  │
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | ├────────────────────────────────────────────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Unknown config keys ─╮
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | Invalid config at /home/node/.openclaw/openclaw.json:\n- gateway.bind: Invalid input
+openclaw-gateway-1  | - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  | - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Config ───────────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | │  Config invalid; doctor will run with best-effort config.  │
+openclaw-gateway-1  | │                                                            │
+openclaw-gateway-1  | ├────────────────────────────────────────────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Unknown config keys ─╮
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | │  - gateway.host       │
+openclaw-gateway-1  | │  - gateway.url        │
+openclaw-gateway-1  | │  - gateway.target     │
+openclaw-gateway-1  | │  - bind               │
+openclaw-gateway-1  | │                       │
+openclaw-gateway-1  | ├───────────────────────╯
+openclaw-gateway-1  | │
+openclaw-gateway-1  | ◇  Doctor ────────────────────────────────────────────╮
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | │  Run "openclaw doctor --fix" to remove these keys.  │
+openclaw-gateway-1  | │                                                     │
+openclaw-gateway-1  | ├─────────────────────────────────────────────────────╯
+openclaw-gateway-1  | Config invalid
+openclaw-gateway-1  | File: ~/.openclaw/openclaw.json
+openclaw-gateway-1  | Problem:
+openclaw-gateway-1  |   - gateway.bind: Invalid input
+openclaw-gateway-1  |   - gateway: Unrecognized keys: "host", "url", "target"
+openclaw-gateway-1  |   - <root>: Unrecognized key: "bind"
+openclaw-gateway-1  | 
+openclaw-gateway-1  | Run: openclaw doctor --fix
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.649Z[39m [35m[canvas][39m [36mhost mounted at http://0.0.0.0:18789/__openclaw__/canvas/ (root /home/node/.openclaw/canvas)[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.779Z[39m [36m[heartbeat][39m [36mstarted[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.783Z[39m [32m[health-monitor][39m [36mstarted (interval: 300s, grace: 60s)[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.785Z[39m [36m[gateway][39m [36magent model: openai/gpt-5.1-codex[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.786Z[39m [36m[gateway][39m [36mlistening on ws://0.0.0.0:18789 (PID 7)[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.787Z[39m [36m[gateway][39m [36mlog file: /tmp/openclaw/openclaw-2026-03-03.log[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:02.800Z[39m [35m[browser/service][39m [36mBrowser control service ready (profiles=2)[39m
+openclaw-gateway-1  | [90m2026-03-03T23:59:03.078Z[39m [36m[gateway][39m [36mupdate available (latest): v2026.3.2 (current v2026.2.18). Run: openclaw update[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:27.243Z[39m [36m[gateway][39m [36msignal SIGTERM received[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:27.245Z[39m [36m[gateway][39m [36mreceived SIGTERM; shutting down[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:27.271Z[39m [34m[reload][39m [36mconfig change detected; evaluating reload (models.providers.zai.models, agents.defaults.compaction, agents.list)[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:27.274Z[39m [34m[reload][39m [36mconfig change applied (dynamic reads: models.providers.zai.models, agents.defaults.compaction, agents.list)[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:27.279Z[39m [34m[gmail-watcher][39m [36mgmail watcher stopped[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.100Z[39m [35m[canvas][39m [36mhost mounted at http://0.0.0.0:18789/__openclaw__/canvas/ (root /home/node/.openclaw/canvas)[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.159Z[39m [36m[heartbeat][39m [36mstarted[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.165Z[39m [32m[health-monitor][39m [36mstarted (interval: 300s, grace: 60s)[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.167Z[39m [36m[gateway][39m [36magent model: openai/gpt-5.1-codex[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.168Z[39m [36m[gateway][39m [36mlistening on ws://0.0.0.0:18789 (PID 7)[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.170Z[39m [36m[gateway][39m [36mlog file: /tmp/openclaw/openclaw-2026-03-04.log[39m
+openclaw-gateway-1  | [90m2026-03-04T00:03:32.183Z[39m [35m[browser/service][39m [36mBrowser control service ready (profiles=2)[39m
+caddy-1             | {"level":"info","ts":1772626113.870248,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626113.8704429,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626113.8705494,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626113.8706095,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626174.1340415,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626174.1342072,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626174.134286,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626174.1343417,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626234.3541174,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626234.354277,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626234.3543043,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626234.3543458,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626294.5841303,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626294.5843446,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626294.5843847,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626294.5844495,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626354.8222563,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626354.8224678,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626354.8225088,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626354.822574,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626415.1316736,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626415.1319308,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626415.131972,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626415.1320424,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626475.3377705,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626475.3379278,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626475.3379562,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626475.3379936,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626535.5804446,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626535.5806575,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626535.5806947,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626535.5807579,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626595.8582788,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626595.8585002,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626595.85853,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626595.8585935,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626656.0904875,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626656.0907056,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626656.0907395,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626656.090787,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626716.3656433,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626716.3658605,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626716.36589,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626716.3659337,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626776.7487614,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626776.7489173,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626776.7489476,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626776.7489896,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626837.057748,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626837.0581293,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626837.0581677,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626837.0582817,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626897.3018155,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626897.3019607,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626897.301988,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626897.302028,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772626957.6710365,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772626957.6712298,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772626957.671279,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772626957.6713333,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627017.9250636,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627017.9252503,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627017.9252803,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627017.9253309,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627078.2935193,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627078.2936773,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627078.2937052,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627078.2937424,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627138.5768898,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627138.5770638,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627138.5771344,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627138.5772169,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627198.8299615,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627198.830176,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627198.8302147,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627198.8303163,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627259.1102507,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627259.1104097,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627259.1104383,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627259.1104841,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627319.3412669,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627319.3415086,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627319.3415425,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627319.3416035,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627379.6117787,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627379.6119676,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627379.6120107,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627379.6120784,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627439.9213471,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627439.9215207,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627439.9215796,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627439.921625,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627500.2352872,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627500.2355473,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627500.2355807,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627500.2356408,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627560.4746127,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627560.4748201,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627560.4748693,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627560.474911,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627620.7021272,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627620.7023194,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627620.7023497,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627620.7023914,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627680.912946,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627680.913172,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627680.9132047,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627680.9132736,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627741.2049909,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627741.205169,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627741.2051973,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627741.2052588,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627801.432893,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627801.4331076,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627801.4331477,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627801.4332175,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627861.6616452,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627861.661819,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627861.6618447,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627861.6618898,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627921.9400034,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627921.9401498,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627921.9401827,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627921.9402316,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772627982.2233481,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772627982.2235115,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772627982.2235382,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772627982.2235837,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628042.518072,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628042.518263,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628042.518353,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628042.518419,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628102.80286,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628102.8031259,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628102.8031623,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628102.8032243,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628163.0297477,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628163.0300033,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628163.030036,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628163.0300887,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628223.41429,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628223.414491,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628223.4145255,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628223.4145927,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628283.7043982,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628283.7045684,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628283.7045975,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628283.7046673,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628343.9348142,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628343.9349823,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628343.9350064,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628343.935057,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628404.2629192,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628404.2633722,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628404.2634254,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628404.2635038,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block
+caddy-1             | {"level":"info","ts":1772628464.4966023,"msg":"maxprocs: Leaving GOMAXPROCS=4: CPU quota undefined"}
+caddy-1             | {"level":"info","ts":1772628464.4967945,"msg":"GOMEMLIMIT is updated","package":"github.com/KimMachineGun/automemlimit/memlimit","GOMEMLIMIT":5586105139,"previous":9223372036854775807}
+caddy-1             | {"level":"info","ts":1772628464.4968283,"msg":"using config from file","file":"/etc/caddy/Caddyfile"}
+caddy-1             | {"level":"info","ts":1772628464.4968865,"msg":"maxprocs: No GOMAXPROCS change to reset"}
+caddy-1             | Error: adapting config using caddyfile: /etc/caddy/Caddyfile:7: parsed 'log' as a site address, but it is a known directive; directives must appear in a site block

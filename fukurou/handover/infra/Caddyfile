@@ -1,0 +1,21 @@
+fopenclaw.com {
+
+    # basic_auth {  # disabled-by-ops
+        admin $2a$14$b.F/jeVp3t5nEdZk2SS5/eUynl3.H5.qR0/xACT3Nh0bhDarQsGZC
+    }
+
+    log {
+        output file /var/log/caddy/access.log
+    }
+
+    reverse_proxy openclaw-gateway:18789 {
+    header_up X-Forwarded-Proto {http.request.scheme}
+    header_up X-Forwarded-Host  {http.request.host}
+    header_up X-Forwarded-For   {http.request.remote}
+    header_up Host              {http.request.host}
+}
+}
+
+www.fopenclaw.com {
+    redir https://fopenclaw.com{uri} permanent
+}
