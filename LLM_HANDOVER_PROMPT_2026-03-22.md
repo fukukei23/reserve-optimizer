@@ -233,3 +233,23 @@ ZIPファイルではなくGitHubを正として参照すること。
 | このプロンプト | yotsuba/handover/LLM_HANDOVER_PROMPT_2026-03-22.md |
 
 # END
+
+---
+
+## GitHubに繋がっていないLLMへの引き継ぎ方法
+
+このファイルの内容をLLMに渡すだけでよい。
+
+### 方法1: Raw URLからコピー（最速）
+以下のURLをブラウザで開き、全文コピーしてチャットに貼り付ける:
+https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOVER_PROMPT_2026-03-22.md
+
+### 方法2: Surface Go(claw-node)から取得
+SSHでSurface Goに接続して以下を実行:
+cat ~/.openclaw/workspace/LLM_HANDOVER_PROMPT_2026-03-22.md
+出力をコピーしてチャットに貼り付ける。
+
+### 方法3: ファイルをダウンロードしてアップロード
+GitHubからダウンロードしてLLMのファイルアップロード機能で渡す。
+
+このファイル1つで環境を把握するのに必要な情報は揃っている。
