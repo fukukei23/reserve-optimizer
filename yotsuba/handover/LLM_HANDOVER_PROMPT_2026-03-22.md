@@ -55,8 +55,9 @@
       └── handover/        ← よつば引き継ぎ資料一式
           ├── README_HANDOVER.md
           ├── LLM_HANDOVER_PROMPT_2026-03-21.md
+          ├── LLM_HANDOVER_PROMPT_2026-03-22.md
           ├── docs/        （discord_setup, troubleshooting等）
-          ├── infra/       （docker-compose.yml, openclaw.json, .env.template）
+          ├── infra/       （Dockerfile, docker-compose.yml, openclaw.json, .env.template）
           └── meta/
   ```
 
@@ -228,6 +229,7 @@ ZIPファイルではなくGitHubを正として参照すること。
 | VPS（フクロウ）引き継ぎ全般 | fukurou/handover/README_HANDOVER.md |
 | よつば引き継ぎ全般 | yotsuba/handover/README_HANDOVER.md |
 | よつば公式イメージ移行記録 | yotsuba/migration_summary_2026-03-21.md |
+| よつば Dockerfile | yotsuba/handover/infra/Dockerfile |
 | このプロンプト | yotsuba/handover/LLM_HANDOVER_PROMPT_2026-03-22.md |
 
 # END
