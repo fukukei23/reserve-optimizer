@@ -8,7 +8,7 @@
 
 ## 定期チェックタスク（30分おき）
 
-1. 静穏時間（23:00-08:00 JST）はスキャンをスキップ → `HEARTBEAT_OK` を返す。
+1. 静穏時間（22:00-06:00 JST）はスキャンをスキップ → `HEARTBEAT_OK` を返す。
 
 2. 通常時間のみ:
    - `python3 scripts/discord_context_scan.py` を実行。
