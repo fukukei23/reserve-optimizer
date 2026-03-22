@@ -1,7 +1,7 @@
 # LLM引き継ぎ資料 — OpenClaw環境 完全版
 
 **作成日**: 2026-03-22（openclaw-workspace の各資料を統合）
-**最終更新**: 2026-03-22（CVE確認・LLM設定・コンテナ名を実態に合わせて修正）
+**最終更新**: 2026-03-23（tmux自動起動設定・SSH鍵設定・よつばMiniMax baseUrl修正）
 **対象**: LLM・ユーザー両方が記憶リセットされた状態でも引き継げる完全な状態記録
 
 ---
@@ -96,6 +96,8 @@
 | `~/.claude/settings.json` | Claude Code 設定 |
 | `~/.claude/channels/discord/access.json` | Discord アクセス制御 |
 | `~/.bashrc` | 環境変数（GITHUB_TOKEN, MINIMAX_API_KEY） |
+| `~/.ssh/config` | SSH接続設定（openclaw-vps / claw-node / claw-node-tailscale） |
+| `~/.ssh/id_ed25519` | SSH秘密鍵（フクロウ・よつば両機に登録済み） |
 | `~/Documents/krokod-setup/` | セットアップ資料（Linux側） |
 | `/mnt/c/Users/USER/Documents/krokod-setup/` | セットアップ資料（Windows側） |
 
@@ -220,11 +222,11 @@ Internet → Caddy（172.30.0.10, TLS終端） → openclaw-gateway（172.30.0.2
 | プロバイダー | エンドポイント | モデル | 用途 |
 |------------|--------------|--------|------|
 | zai（GLM） | `https://api.z.ai/api/coding/paas/v4` | glm-5 / glm-4.7 | プライマリ |
-| minimax | `https://api.minimax.io/v1` | MiniMax-M2.7 | フォールバック |
+| minimax | `https://api.minimax.io/anthropic` | MiniMax-M2.7 | フォールバック |
 
 **フォールバック順序**: `zai/glm-5` → `minimax/MiniMax-M2.7`
 
-⚠️ **よつばのMiniMax baseUrlはフクロウと異なる**（`/v1` = openai互換）。意図的な差異か未確認。要確認。
+**MiniMax APIタイプ**: `anthropic-messages`（フクロウと同一。2026-03-23修正済み）
 
 ### 4-4. 権威ファイル（よつば）
 
@@ -322,14 +324,14 @@ DISPLAY=:1 x11vnc -display :1 -rfbauth /home/user/.vnc/passwd -rfbport 5900 -for
 | 問題 | 状況 | 対処 |
 |------|------|------|
 | ~~**CVE-2026-25253（OpenClaw RCE）**~~ | **✅ 2026-03-22 対応済み**。バージョン2026.3.12（修正版2026.1.29より新しい）。allowedOrigins設定も確認済み（`https://fopenclaw.com` のみ） | 対応不要 |
-| ~~**MiniMax baseUrl不一致（フクロウ）**~~ | **✅ 2026-03-22 確認済み**。フクロウは `https://api.minimax.io/anthropic`（anthropic互換）が正。よつばは `https://api.minimax.io/v1`（openai互換）で別設定 | よつば側の意図確認が残タスク（🟡中）に移行 |
+| ~~**MiniMax baseUrl不一致（フクロウ・よつば）**~~ | **✅ 2026-03-23 解決済み**。フクロウ・よつば両機とも `https://api.minimax.io/anthropic`（anthropic互換）に統一 | 対応不要 |
 | **workspaceパス問題（よつば）** | sessions.jsonに旧パスキャッシュが残ると `/sandbox` への権限エラーが発生 | `sessions.json`を削除して `docker compose down && up` |
 
 ### 🟡 中程度
 
 | 問題 | 状況 | 対処 |
 |------|------|------|
-| **よつばMiniMax baseUrl要確認** | よつばは `https://api.minimax.io/v1`（openai互換）を使用。フクロウの`/anthropic`と異なる。意図的か否か未確認 | よつばのopenclaw.jsonを確認して意図を記録 |
+| ~~**よつばMiniMax baseUrl要確認**~~ | **✅ 2026-03-23 修正済み**。`/v1` → `/anthropic` に変更。フクロウと統一（同一APIキー使用のため） | 対応不要 |
 | **VNC自動起動未設定（よつば）** | 再起動後に手動でVNC起動が必要 | systemdサービス化が未完了 |
 | **Wi-Fiチップ不安定（よつば）** | ath10k_pci AERエラーによるSSH切断が発生 | 有線LANアダプター（USB-C to LAN）で根本解決 |
 | **cronジョブ重複リスク** | 過去にLong Task Watcherが22件重複→約5USD消費 | 登録前に必ず同名ジョブの存在確認 |
@@ -436,12 +438,12 @@ tailscale ip -4
 |--------|--------|------|
 | ~~🔴 高~~ | ~~CVE-2026-25253対応~~ | **✅ 2026-03-22 対応済み（v2026.3.12）** |
 | ~~🔴 高~~ | ~~MiniMax baseUrl確認（フクロウ openclaw.jsonの実際の値）~~ | **✅ 2026-03-22 確認済み（`/anthropic`が正）** |
+| ~~🟡 中~~ | ~~tmuxセッション自動起動（WSL2起動時）~~ | **✅ 2026-03-23 完了（systemdユーザーサービス: tmux-krokod.service）** |
+| ~~🟡 中~~ | ~~よつばMiniMax baseUrl意図確認（`/v1` vs `/anthropic`）~~ | **✅ 2026-03-23 修正済み（`/anthropic`に統一）** |
 | 🔴 高 | Discord 全チャンネル応答設定（チャンネルID追加） | 対応待ち |
-| 🟡 中 | よつばMiniMax baseUrl意図確認（`/v1` vs `/anthropic`） | 要確認 |
 | 🟡 中 | VNC自動起動 systemdサービス化（よつば） | 未着手 |
 | 🟡 中 | Wi-Fiチップ不安定問題（有線LANアダプター購入） | 根本未解決 |
 | 🟡 中 | sudoers設定の確認・記録（クロコド） | 未確認 |
-| 🟡 中 | tmuxセッション自動起動（WSL2起動時） | 未着手 |
 | 🟢 低 | sandbox=on移行検討（よつば、実験進展後） | 未着手 |
 | 🟢 低 | krokod-setupリポジトリへの継続更新 | 進行中 |
 
@@ -495,3 +497,4 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 
 *このドキュメントは 2026-03-22 の作業終了時点の状態を記録。openclaw-workspaceの各引き継ぎ資料を統合したものです。*
 *2026-03-22 更新: CVE-2026-25253対応済み確認、フクロウLLM設定を実ファイルに合わせて修正、コンテナ名を正式名称に修正、MiniMax baseUrl確認済み。*
+*2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。*
