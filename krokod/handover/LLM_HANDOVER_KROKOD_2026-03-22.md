@@ -1,7 +1,7 @@
 # LLM引き継ぎ資料 — OpenClaw環境 完全版
 
 **作成日**: 2026-03-22（openclaw-workspace の各資料を統合）
-**最終更新**: 2026-03-23（tmux自動起動設定・SSH鍵設定・よつばMiniMax baseUrl修正）
+**最終更新**: 2026-03-23（tmux自動起動設定・SSH鍵設定・よつばMiniMax baseUrl修正・Remote Control設定完了）
 **対象**: LLM・ユーザー両方が記憶リセットされた状態でも引き継げる完全な状態記録
 
 ---
@@ -63,6 +63,23 @@
 **MCPサーバー**: brave-search / plugin:discord / plugin:context7 / plugin:playwright
 
 **起動時リソース**: 19 plugins / 14 skills / 24 agents / 18 hooks / 6 plugin MCP servers / 3 plugin LSP servers
+
+**/config設定（2026-03-23 確認済み）**
+
+| 設定項目 | 値 | 備考 |
+|---------|-----|------|
+| Language | 日本語 | Claude Codeの応答言語 |
+| Enable Remote Control for all sessions | true | 起動時から自動でRemote Control有効 |
+| Theme | Dark mode | |
+| Auto-update channel | latest | 常に最新版に自動更新 |
+| Default permission mode | Default | コマンド実行前に都度確認 |
+
+**Remote Control（2026-03-23 設定完了）**
+
+- 起動方法: セッション中に `/rc` または自動起動（全セッション有効化済み）
+- スマホ接続: Claudeアプリ → Codeタブ → セッション選択
+- 用途: 確認ダイアログのスマホからの承認・セッション監視
+- 注意: リサーチプレビューのため不安定な場合あり。Discordと併用する
 
 ### 2-3. Discord チャンネル設定（Claude Code側）
 
@@ -442,7 +459,7 @@ tailscale ip -4
 | ~~🟡 中~~ | ~~よつばMiniMax baseUrl意図確認（`/v1` vs `/anthropic`）~~ | **✅ 2026-03-23 修正済み（`/anthropic`に統一）** |
 | ~~🔴 高~~ | ~~Discord 全チャンネル応答設定（チャンネルID追加）~~ | **✅ 2026-03-23 完了（メンションで呼び分け運用に決定）** |
 | ~~🔴 高~~ | ~~クロコ Discord Channels設定（Botとの紐付け）~~ | **✅ 2026-03-23 動作確認済み** |
-| 🟡 中 | CLAUDE.md作成・配置（クロコ） | 草案あり・未配置 |
+| ~~🟡 中~~ | ~~CLAUDE.md作成・配置（クロコ）~~ | **✅ 2026-03-23 完了（OpenClaw環境操作・プロアクティブ提案ルール追記）** |
 | 🟡 中 | VNC自動起動 systemdサービス化（よつば） | 未着手 |
 | 🟡 中 | Wi-Fiチップ不安定問題（有線LANアダプター購入） | 根本未解決 |
 | 🟡 中 | sudoers設定の確認・記録（クロコド） | 未確認 |
@@ -549,7 +566,9 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 | tmux自動起動（systemd） | tmux-krokod.service ✅ |
 | SSH鍵（フクロウ・よつば） | 設定済み ✅ |
 | Discord Channels設定 | ✅ 動作中（メンションで呼び分け運用） |
-| CLAUDE.md | **未作成** |
+| Discord全チャンネル同期 | ✅ access.jsonに全チャンネル追加済み（requireMention: true） |
+| Remote Control | ✅ 動作確認済み・全セッション自動有効化済み |
+| CLAUDE.md | ✅ 作成済み（OpenClaw環境操作・プロアクティブ提案ルール追記） |
 
 ---
 
@@ -682,4 +701,4 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 
 *このドキュメントは 2026-03-22 の作業終了時点の状態を記録。openclaw-workspaceの各引き継ぎ資料を統合したものです。*
 *2026-03-22 更新: CVE-2026-25253対応済み確認、フクロウLLM設定を実ファイルに合わせて修正、コンテナ名を正式名称に修正、MiniMax baseUrl確認済み。*
-*2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。目標アーキテクチャ・運用方針・CLAUDE.md草案を追加。Discord Channels動作確認済み・メンション呼び分け運用に決定。各ノード権限情報を追加。*
+*2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。目標アーキテクチャ・運用方針・CLAUDE.md草案を追加。Discord Channels動作確認済み・メンション呼び分け運用に決定。各ノード権限情報を追加。Remote Control動作確認・全セッション自動有効化。CLAUDE.md作成完了。/config設定（言語を日本語に変更）。Discord全チャンネルをaccess.jsonに同期済み。*
