@@ -440,8 +440,8 @@ tailscale ip -4
 | ~~🔴 高~~ | ~~MiniMax baseUrl確認（フクロウ openclaw.jsonの実際の値）~~ | **✅ 2026-03-22 確認済み（`/anthropic`が正）** |
 | ~~🟡 中~~ | ~~tmuxセッション自動起動（WSL2起動時）~~ | **✅ 2026-03-23 完了（systemdユーザーサービス: tmux-krokod.service）** |
 | ~~🟡 中~~ | ~~よつばMiniMax baseUrl意図確認（`/v1` vs `/anthropic`）~~ | **✅ 2026-03-23 修正済み（`/anthropic`に統一）** |
-| 🔴 高 | Discord 全チャンネル応答設定（チャンネルID追加） | 対応待ち |
-| 🔴 高 | クロコ Discord Channels設定（Botとの紐付け） | 未着手 |
+| ~~🔴 高~~ | ~~Discord 全チャンネル応答設定（チャンネルID追加）~~ | **✅ 2026-03-23 完了（メンションで呼び分け運用に決定）** |
+| ~~🔴 高~~ | ~~クロコ Discord Channels設定（Botとの紐付け）~~ | **✅ 2026-03-23 動作確認済み** |
 | 🟡 中 | CLAUDE.md作成・配置（クロコ） | 草案あり・未配置 |
 | 🟡 中 | VNC自動起動 systemdサービス化（よつば） | 未着手 |
 | 🟡 中 | Wi-Fiチップ不安定問題（有線LANアダプター購入） | 根本未解決 |
@@ -548,12 +548,77 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 | Bun | v1.3.11 ✅ |
 | tmux自動起動（systemd） | tmux-krokod.service ✅ |
 | SSH鍵（フクロウ・よつば） | 設定済み ✅ |
-| Discord Channels設定 | **未完了** |
+| Discord Channels設定 | ✅ 動作中（メンションで呼び分け運用） |
 | CLAUDE.md | **未作成** |
 
 ---
 
-## 13. ふくけいの運用方針・要望
+## 13. 各ノードの権限情報（2026-03-23 確認）
+
+### 権限とは何か（素人向け説明）
+
+| 用語 | 意味 |
+|------|------|
+| **ユーザー** | そのマシンにログインしているアカウント名 |
+| **グループ** | ユーザーが所属する権限グループ。`docker`グループに入っていればDockerが使える、など |
+| **sudo** | 管理者権限でコマンドを実行する仕組み。Windowsの「管理者として実行」に相当 |
+| **NOPASSWD** | パスワードなしでsudoできるコマンド。これがあると自動化が楽になる |
+
+---
+
+### クロコ（自宅PC / WSL2）
+
+| 項目 | 内容 |
+|------|------|
+| ユーザー | `yn441611` |
+| UID/GID | 1000 |
+| 所属グループ | adm, cdrom, **sudo**, dip, plugdev, users, **docker** |
+| sudo権限 | **(ALL:ALL) ALL** — 全コマンドにsudo可能 |
+| パスワード不要のコマンド | `apt` `apt-get` `systemctl` `chown` `chmod` |
+
+**ポイント**: 最も強い権限。Dockerも使えてsudoもフル権限。Claude Codeが自律作業しやすい環境。
+
+---
+
+### フクロウ（VPS: 162.43.17.111）
+
+| 項目 | 内容 |
+|------|------|
+| ユーザー | `op` |
+| UID/GID | 1000 |
+| 所属グループ | **sudo**, users, **docker** |
+| sudo権限 | sudoグループ所属だが**パスワード必須** |
+| パスワード不要のコマンド | なし |
+
+**ポイント**: Dockerは使える。sudoはパスワードが必要なため、Claude CodeがSSH経由でsudoコマンドを自動実行することはできない。`docker compose`等の操作はパスワードなしで可能。
+
+---
+
+### よつば（Surface Go: 192.168.1.7 / Tailscale: 100.78.104.58）
+
+| 項目 | 内容 |
+|------|------|
+| ユーザー | `user` |
+| UID/GID | 1000 |
+| 所属グループ | adm, cdrom, **sudo**, dip, plugdev, **lxd**, **docker**, systemd-journal |
+| sudo権限 | sudoグループ所属だが**パスワード必須** |
+| パスワード不要のコマンド | なし |
+
+**ポイント**: フクロウと同様、sudoにはパスワードが必要。`lxd`グループ（軽量コンテナ操作）も所属。Docker操作はパスワードなしで可能。SSH接続はTailscale（100.78.104.58）経由が安定。LAN（192.168.1.7）はWi-Fiチップ不安定のため切断されることがある。
+
+---
+
+### 3ノード比較まとめ
+
+| ノード | sudo自動化 | Docker | 注意点 |
+|--------|-----------|--------|--------|
+| クロコ | ✅ 一部NOPASSWD | ✅ | 最も自由度が高い |
+| フクロウ | ❌ パスワード必須 | ✅ | docker compose操作は問題なし |
+| よつば | ❌ パスワード必須 | ✅ | SSH接続はTailscale推奨 |
+
+---
+
+## 14. ふくけいの運用方針・要望
 
 ### AI作業の基本方針
 
@@ -617,4 +682,4 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 
 *このドキュメントは 2026-03-22 の作業終了時点の状態を記録。openclaw-workspaceの各引き継ぎ資料を統合したものです。*
 *2026-03-22 更新: CVE-2026-25253対応済み確認、フクロウLLM設定を実ファイルに合わせて修正、コンテナ名を正式名称に修正、MiniMax baseUrl確認済み。*
-*2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。目標アーキテクチャ・運用方針・CLAUDE.md草案を追加。*
+*2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。目標アーキテクチャ・運用方針・CLAUDE.md草案を追加。Discord Channels動作確認済み・メンション呼び分け運用に決定。各ノード権限情報を追加。*
