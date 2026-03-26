@@ -795,3 +795,41 @@ krokod/
     ├── claude_fallback.py   # フォールバック本体
     └── fallback-config.json # フォールバック設定
 ```
+
+### 運用前提・確定設定（2026-03-27）
+
+#### デバイス構成
+| デバイス | 役割 |
+|---|---|
+| スマホA（回線用） | テザリング提供のみ。Surface Pro 8に接続。常時テザリングON |
+| スマホB（ふくけいが持つ） | Discordでクロタムに指示。モバイルデータ回線で動作 |
+| Surface Pro 8（クロコド） | Claude Code常時起動。スマホAのテザリングでネット接続 |
+
+#### Windows電源設定
+- 電源接続時スリープ：なし（設定済み）
+- バッテリー駆動時スリープ：なし（設定済み）
+- 理由：スリープするとWSLが死んでクロタムも停止するため
+
+#### Claude Code起動方針
+- 起動コマンド：`claude --dangerously-skip-permissions`
+- 理由：スマホからのリモート操作時に権限確認ダイアログで止まるのを防ぐ
+- セキュリティ対策：クロタムのallowlistでふくけいのDiscord IDのみ許可
+
+#### クロタムコマンド一覧（2026-03-27全機能版）
+| コマンド | 機能 |
+|---|---|
+| !help | 全コマンド一覧表示 |
+| !status | tmux現在画面表示 |
+| !screenshot | tmux直近100行表示 |
+| !abort | 実行中処理を中断（Ctrl+C） |
+| !restart | Claude Code再起動 |
+| !ls [パス] | ディレクトリ一覧 |
+| !cat <ファイル> | ファイル内容表示 |
+| !send <ファイル> | ファイルをDiscordに送信（8MB以下） |
+| !git | git status表示 |
+| !log | 直近10件のコマンドログ |
+| その他テキスト | Claude Codeに直接送信 |
+
+#### systemdサービス依存関係
+- `tmux-krokod.service` → `Requires=krotam.service`
+- tmuxセッション起動時にクロタムBotも自動起動
