@@ -253,3 +253,63 @@ cat ~/.openclaw/workspace/LLM_HANDOVER_PROMPT_2026-03-22.md
 GitHubからダウンロードしてLLMのファイルアップロード機能で渡す。
 
 このファイル1つで環境を把握するのに必要な情報は揃っている。
+
+---
+
+## 2026-03-27 更新分
+
+### クロコド追加設定
+
+| 項目 | 内容 |
+|---|---|
+| Claude Code バージョン | v2.1.83（v2.1.81から更新） |
+| GLM接続設定 | ANTHROPIC_BASE_URL を ~/.claude/.env に追加済み |
+| MiniMaxフォールバック | claude_fallback.py の無限ループ対策済み（固定バイナリパス） |
+| claude単体起動 | .bashrcエイリアスに`.`を追加済み |
+
+### ~/.claude/.env の現在の構成
+
+| 変数名 | 用途 |
+|---|---|
+| MINIMAX_API_KEY | MiniMaxフォールバック用 |
+| GITHUB_TOKEN | GitHub操作用 |
+| BRAVE_API_KEY | Brave Search用 |
+| ANTHROPIC_AUTH_TOKEN | GLM APIキー |
+| ANTHROPIC_BASE_URL | https://api.z.ai/api/anthropic |
+
+### WSLスリープ復帰後の復旧手順
+
+#### 症状
+- エラーコード: `Wsl/Service/0x8007274c`
+- Claude CodeやCursorがWSLに接続できない
+
+#### 復旧手順
+1. PowerShellで実行:
+   ```powershell
+   wsl --shutdown
+   wsl -d Ubuntu echo "test"
+   ```
+2. WSL内で環境変数を再読み込み:
+   ```bash
+   source ~/.claude/.env
+   ```
+3. tmuxセッション確認:
+   ```bash
+   tmux ls
+   ```
+4. krokodセッションがなければ再作成:
+   ```bash
+   tmux new-session -d -s krokod
+   ```
+5. Claude Code起動:
+   ```bash
+   claude
+   ```
+
+### デバイス構成の確定情報
+
+| デバイス | 役割 |
+|---|---|
+| スマホA（回線用） | テザリング提供のみ。Surface Pro 8に接続 |
+| スマホB（ふくけいが持つ） | Discord経由でClaude Codeを操作 |
+| クロコド（Surface Pro 8） | Claude Code常時起動。持ち運び運用 |

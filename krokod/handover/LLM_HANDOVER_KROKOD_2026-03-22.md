@@ -702,3 +702,63 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 *このドキュメントは 2026-03-22 の作業終了時点の状態を記録。openclaw-workspaceの各引き継ぎ資料を統合したものです。*
 *2026-03-22 更新: CVE-2026-25253対応済み確認、フクロウLLM設定を実ファイルに合わせて修正、コンテナ名を正式名称に修正、MiniMax baseUrl確認済み。*
 *2026-03-23 更新: tmux自動起動（systemdユーザーサービス）設定完了、SSH鍵設定（フクロウ・よつば）完了、よつばMiniMax baseUrlを`/anthropic`に修正・統一、クロコドSSH設定ファイルパスを追記。目標アーキテクチャ・運用方針・CLAUDE.md草案を追加。Discord Channels動作確認済み・メンション呼び分け運用に決定。各ノード権限情報を追加。Remote Control動作確認・全セッション自動有効化。CLAUDE.md作成完了。/config設定（言語を日本語に変更）。Discord全チャンネルをaccess.jsonに同期済み。*
+
+---
+
+## 15. 2026-03-27 更新分
+
+### クロコド追加設定
+
+| 項目 | 内容 |
+|---|---|
+| Claude Code バージョン | v2.1.83（v2.1.81から更新） |
+| GLM接続設定 | ANTHROPIC_BASE_URL を ~/.claude/.env に追加済み |
+| MiniMaxフォールバック | claude_fallback.py の無限ループ対策済み（固定バイナリパス） |
+| claude単体起動 | .bashrcエイリアスに`.`を追加済み |
+
+### ~/.claude/.env の現在の構成
+
+| 変数名 | 用途 |
+|---|---|
+| MINIMAX_API_KEY | MiniMaxフォールバック用 |
+| GITHUB_TOKEN | GitHub操作用 |
+| BRAVE_API_KEY | Brave Search用 |
+| ANTHROPIC_AUTH_TOKEN | GLM APIキー |
+| ANTHROPIC_BASE_URL | https://api.z.ai/api/anthropic |
+
+### WSLスリープ復帰後の復旧手順
+
+#### 症状
+- エラーコード: `Wsl/Service/0x8007274c`
+- Claude CodeやCursorがWSLに接続できない
+
+#### 復旧手順
+1. PowerShellで実行:
+   ```powershell
+   wsl --shutdown
+   wsl -d Ubuntu echo "test"
+   ```
+2. WSL内で環境変数を再読み込み:
+   ```bash
+   source ~/.claude/.env
+   ```
+3. tmuxセッション確認:
+   ```bash
+   tmux ls
+   ```
+4. krokodセッションがなければ再作成:
+   ```bash
+   tmux new-session -d -s krokod
+   ```
+5. Claude Code起動:
+   ```bash
+   claude
+   ```
+
+### デバイス構成の確定情報
+
+| デバイス | 役割 |
+|---|---|
+| スマホA（回線用） | テザリング提供のみ。Surface Pro 8に接続 |
+| スマホB（ふくけいが持つ） | Discord経由でClaude Codeを操作 |
+| クロコド（Surface Pro 8） | Claude Code常時起動。持ち運び運用 |
