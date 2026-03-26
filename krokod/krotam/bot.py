@@ -154,9 +154,21 @@ async def on_message(message):
 `!status` - tmuxセッションの現在の状態を表示
 `!restart` - Claude Codeを再起動
 `!help` - このヘルプを表示
+`!send <path>` - ファイルを送信（8MB以下）
 それ以外のメッセージはすべてClaude Codeに送信されます
 ファイルを添付すると~/krotam_inbox/に保存されます"""
         await message.channel.send(help_text)
+        return
+
+    if content.startswith("!send "):
+        file_path = Path(content[6:].strip()).expanduser()
+        if not file_path.exists():
+            await message.channel.send(f"ファイルが見つかりません: `{file_path}`")
+            return
+        if file_path.stat().st_size > 8 * 1024 * 1024:
+            await message.channel.send(f"ファイルサイズが8MBを超えています: `{file_path}`\nGitHubまたは別の方法で共有してください")
+            return
+        await message.channel.send(file=discord.File(str(file_path)))
         return
 
     # ファイル添付処理
