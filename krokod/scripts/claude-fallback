@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+CLAUDE_BIN="/home/yn441611/.local/share/fnm/node-versions/v22.22.1/installation/bin/claude"
+if [ $# -eq 0 ] || [ "$*" = "." ]; then
+    exec "$CLAUDE_BIN"
+else
+    python3 "$HOME/.claude/scripts/claude_fallback.py" "$@"
+fi

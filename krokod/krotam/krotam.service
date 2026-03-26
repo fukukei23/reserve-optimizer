@@ -1,0 +1,14 @@
+[Unit]
+Description=クロタム Discord Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/discord-bot/krotam
+ExecStart=/usr/bin/python3 %h/discord-bot/krotam/bot.py
+Restart=always
+RestartSec=10
+Environment=HOME=%h
+
+[Install]
+WantedBy=default.target

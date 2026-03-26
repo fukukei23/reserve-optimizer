@@ -762,3 +762,36 @@ https://raw.githubusercontent.com/fukukei23/openclaw-workspace/master/LLM_HANDOV
 | スマホA（回線用） | テザリング提供のみ。Surface Pro 8に接続 |
 | スマホB（ふくけいが持つ） | Discord経由でClaude Codeを操作 |
 | クロコド（Surface Pro 8） | Claude Code常時起動。持ち運び運用 |
+
+### クロタム（自作Discord Bot）
+
+| 項目 | 内容 |
+|---|---|
+| Bot名 | クロタム（クロコド-custom） |
+| 用途 | スマホのDiscordからClaude Codeをリモート操作 |
+| 実装場所 | `~/discord-bot/krotam/bot.py` |
+| トークン管理 | `~/.claude/krotam.env`（GitHubには上げない） |
+| 常時起動 | systemdユーザーサービス: `krotam.service` |
+| allowlist | 1135078010899398727（ふくけい）のみ |
+| 特殊コマンド | `!status` `!restart` `!help` |
+| ファイル受信先 | `~/.claude/krotam_inbox/` |
+
+#### 起動・停止コマンド
+```bash
+systemctl --user start krotam.service
+systemctl --user stop krotam.service
+systemctl --user status krotam.service
+```
+
+#### リポジトリ内のファイル構成
+```
+krokod/
+├── krotam/
+│   ├── bot.py          # Botメイン
+│   ├── krotam.service  # systemdサービス
+│   └── krotam.env.example  # トークン設定サンプル
+└── scripts/
+    ├── claude-fallback      # フォールバックラッパー
+    ├── claude_fallback.py   # フォールバック本体
+    └── fallback-config.json # フォールバック設定
+```
