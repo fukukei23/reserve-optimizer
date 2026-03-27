@@ -346,3 +346,49 @@ krokod/
     ├── claude_fallback.py   # フォールバック本体
     └── fallback-config.json # フォールバック設定
 ```
+
+### 2026-03-27 後半作業
+
+#### WSL復帰自動復旧設定
+- Windowsタスクスケジューラに`WSL-RestartServices`を登録
+  - トリガー：ログオン時・起動時・ロック解除時
+  - 実行内容：`wsl -d Ubuntu -- bash -c "systemctl --user start tmux-krokod.service krotam.service"`
+  - スクリプト場所：`C:\Users\USER\wsl-restart-services.ps1`
+- `.bashrc`にWSL復帰時サービス自動起動を追加済み
+
+#### .envバグ修正
+- `GLM_API_KEY`と`ANTHROPIC_BASE_URL`が改行なしでくっついていたバグを修正
+- 修正後の`.env`構成：
+  - `MINIMAX_API_KEY`
+  - `GITHUB_TOKEN`
+  - `BRAVE_API_KEY`
+  - `ANTHROPIC_AUTH_TOKEN`（GLMキー）
+  - `GLM_API_KEY`（GLMキー・同値）
+  - `ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic`
+
+#### クロタム LLM切り替えコマンド追加
+| コマンド | 機能 |
+|---|---|
+| `!mini` | MiniMaxに切り替えてClaude Codeを再起動 |
+| `!glm` | GLMに戻してClaude Codeを再起動 |
+
+**動作の仕組み：**
+- クロタムが直接`~/.claude/settings.json`のenvセクションを書き換える
+- tmuxセッション内のClaude Codeを再起動する
+- Claude Codeが落ちていても切り替え可能
+
+**GLMが落ちた時の手順：**
+1. Discordで`!mini`を送信
+2. MiniMaxで復旧
+3. GLM復活後は`!glm`で戻す
+
+#### claude-fallback設計方針の確定
+- `claude_fallback.py`による自動フォールバックは廃止方針
+- 理由：対話UIが壊れる・複雑すぎてデバッグ困難
+- 代替：`!mini` / `!glm`による手動切り替え
+- `settings.json`のenvセクションで直接LLMを管理
+
+#### Windows電源設定（確定）
+- 電源接続時スリープ：なし
+- バッテリー駆動時スリープ：なし
+- 理由：スリープするとWSL・クロタム・Claude Codeが全停止するため
