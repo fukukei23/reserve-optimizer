@@ -185,6 +185,10 @@ async def on_message(message):
 **Git操作**
 `!git` - git statusを表示
 
+**LLM切り替え**
+`!mini` - MiniMaxに切り替えてClaude Codeを再起動
+`!glm`  - GLMに戻してClaude Codeを再起動
+
 **その他**
 `!help` - このヘルプを表示
 
@@ -280,6 +284,54 @@ async def on_message(message):
             capture_output=True, text=True
         )
         await send_long_message(message.channel, result.stdout or result.stderr)
+        return
+
+    # !mini - MiniMaxに切り替え
+    if content == "!mini":
+        await message.channel.send("⏳ MiniMaxに切り替え中...")
+        settings_path = Path.home() / ".claude" / "settings.json"
+        try:
+            settings = json.loads(settings_path.read_text())
+            settings["env"]["ANTHROPIC_BASE_URL"] = "https://api.minimax.io/anthropic"
+            settings["env"]["ANTHROPIC_AUTH_TOKEN"] = os.environ.get("MINIMAX_API_KEY", "")
+            settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "MiniMax-M2.7"
+            settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "MiniMax-M2.7"
+            settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "MiniMax-M2.5-highspeed"
+            settings_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2))
+            # Claude Code再起動
+            tmux_interrupt()
+            await asyncio.sleep(2)
+            tmux_send("q")
+            await asyncio.sleep(2)
+            tmux_send("claude --dangerously-skip-permissions")
+            await asyncio.sleep(5)
+            await message.channel.send("✅ MiniMaxに切り替えました")
+        except Exception as e:
+            await message.channel.send(f"❌ エラー: {e}")
+        return
+
+    # !glm - GLMに戻す
+    if content == "!glm":
+        await message.channel.send("⏳ GLMに切り替え中...")
+        settings_path = Path.home() / ".claude" / "settings.json"
+        try:
+            settings = json.loads(settings_path.read_text())
+            settings["env"]["ANTHROPIC_BASE_URL"] = "https://api.z.ai/api/anthropic"
+            settings["env"]["ANTHROPIC_AUTH_TOKEN"] = os.environ.get("ANTHROPIC_AUTH_TOKEN", "")
+            settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "GLM-5-Turbo"
+            settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "GLM-5"
+            settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "GLM-4.7"
+            settings_path.write_text(json.dumps(settings, ensure_ascii=False, indent=2))
+            # Claude Code再起動
+            tmux_interrupt()
+            await asyncio.sleep(2)
+            tmux_send("q")
+            await asyncio.sleep(2)
+            tmux_send("claude --dangerously-skip-permissions")
+            await asyncio.sleep(5)
+            await message.channel.send("✅ GLMに切り替えました")
+        except Exception as e:
+            await message.channel.send(f"❌ エラー: {e}")
         return
 
     # ファイル添付処理
