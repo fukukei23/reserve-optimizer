@@ -1,0 +1,26 @@
+{
+  "name": "reserve-optimizer",
+  "version": "1.0.0",
+  "description": "このプロジェクトは、Claude Code での開発速度を維持しつつ、必要最小限の品質管理を実施するためのガイドラインです。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fukukei23/reserve-optimizer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fukukei23/reserve-optimizer/issues"
+  },
+  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme",
+  "devDependencies": {
+    "puppeteer": "^24.40.0"
+  }
+}

@@ -5,6 +5,25 @@
  *
  */
 
+// Test endpoint - GET request runs tests
+function doGet(e) {
+  var action = e && e.parameter && e.parameter.action ? e.parameter.action : 'info';
+
+  if (action === 'test') {
+    var results = runAllTests();
+    return ContentService.createTextOutput(JSON.stringify(results, null, 2))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'ok',
+    message: 'Reserve Optimizer API',
+    endpoints: {
+      test: '?action=test'
+    }
+  }, null, 2)).setMimeType(ContentService.MimeType.JSON);
+}
+
 // Webhook entry point - handles both LINE and Stripe webhooks
 function doPost(e) {
   var body = e.postData.contents;

@@ -12,6 +12,10 @@
 tmp/
 output/
 logs/
+check-projects/
+node_modules/
+*.js
+!gas-project/**/*.gs
 
 # OS
 .DS_Store
