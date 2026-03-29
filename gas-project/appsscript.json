@@ -5,6 +5,6 @@
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "executionApi": {
-    "access": "MYSELF"
+    "access": "ANYONE"
   }
 }
