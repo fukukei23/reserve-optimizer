@@ -16,6 +16,7 @@ check-projects/
 node_modules/
 *.js
 !gas-project/**/*.gs
+!gas-project/Code.js
 
 # OS
 .DS_Store
