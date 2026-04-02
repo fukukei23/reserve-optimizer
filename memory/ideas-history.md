@@ -41,4 +41,21 @@
     - 設定最適化: キャッシュ戦略の最適化
     - 運用ベストプラクティス: エージェント憲章署名監査
 
+- 2026-04-02: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025).
+  - 採取元URLサンプル:
+    - https://www.mindstudio.ai/blog/openclaw-best-practices-power-users-200-hours
+    - https://www.devshorts.in/p/openclaw-workflow-and-automation
+    - https://pub.towardsai.net/openclaw-complete-guide-setup-tutorial-2026-14dd1ae6d1c2
+    - https://github.com/openclaw/skills/blob/main/skills/kowl64/n8n-workflow-automation/SKILL.md
+    - https://github.com/slowmist/openclaw-security-practice-guide
+  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
+    - 定期実行: 日次PR/イシュー自動レビュー → Slack/Discord配信
+    - 定期実行: サブエージェント並列実行による高速化
+    - スキル/ワークフロー: エージェント単一責任の原則の導入
+    - スキル/ワークフロー: モデルルーティングのタスク別最適化
+    - 設定最適化: フリークエントワークフローのキャッシュ戦略
+    - 設定最適化: セキュリティ監査スキル（SlowMist版）の定期実行
+    - 運用ベストプラクティス: エージェントグラフの事前設計
+    - 運用ベストプラクティス: 独立タスクの並列化でレイテンシ削減
+
 # End
