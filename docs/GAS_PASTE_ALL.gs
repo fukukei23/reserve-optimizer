@@ -16,6 +16,13 @@
  *
  */
 
+// Health check entry point - handles GET requests
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({status: "ok"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 // Webhook entry point - handles both LINE and Stripe webhooks
 function doPost(e) {
   var body = e.postData.contents;
@@ -1050,7 +1057,7 @@ function handleRefund(charge) {
 // ========== Setup.gs ==========
 function runSetup() {
   Logger.log('=== Starting System Setup ===');
-  initializeDefaultProperties(); createAllSheets(); createDashboardSheet(); createWaitlistDashboard(); setupTriggers();
+  initializeDefaultProperties(); createAllSheets(); createDashboardSheet(); createWaitlistDashboard(); try { setupTriggers(); } catch(e) { Logger.log('トリガー設定スキップ: ' + e.message); }
   var validation = validateRequiredProperties(); if (!validation.valid) Logger.log('WARNING: Missing properties: ' + validation.missing.join(', '));
   Logger.log('=== Setup Complete ===');
 }
@@ -1101,10 +1108,10 @@ function createDashboardSheet() {
   sheet.getRange(1, 1).setValue('予約管理システム - ダッシュボード').setFontWeight('bold').setFontSize(18);
   var currentKPIs = getCurrentWeekKPIs(); var targets = compareKPIsToTargets(currentKPIs);
   var summaryData = [['', '今週', '前週', '変化'], ['総予約件数', currentKPIs.total_reservations, '-', '-'], ['無断件数', currentKPIs.total_no_shows, '-', '-'], ['無断率', currentKPIs.no_show_rate + '%', '-', '-'], ['当日キャンセル', currentKPIs.same_day_cancellations, '-', '-'], ['再販通知回数', currentKPIs.resale_notifications, '-', '-'], ['再販成功数', currentKPIs.resale_success_count, '-', '-'], ['推定回収額', currentKPIs.estimated_recovered_revenue + '円', '-', '-']];
-  sheet.getRange(4, 1, 11, 4).setValues(summaryData);
+  sheet.getRange(4, 1, 8, 4).setValues(summaryData);
   sheet.getRange(13, 1).setValue('【KPI目標達成状況】').setFontWeight('bold').setFontSize(14);
   var targetData = [['', '目標', '実績', '達成'], ['無断率', targets.no_show_rate.target + '%', targets.no_show_rate.actual + '%', targets.no_show_rate.achieved ? '✓' : '✗'], ['再販率', targets.resale_rate.target + '%', targets.resale_rate.actual + '%', targets.resale_rate.achieved ? '✓' : '✗']];
-  sheet.getRange(14, 1, 16, 4).setValues(targetData); sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date())).setFontStyle('italic').setFontSize(10);
+  sheet.getRange(14, 1, 3, 4).setValues(targetData); sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date())).setFontStyle('italic').setFontSize(10);
 }
 function updateDashboard() { var ss = SpreadsheetApp.openById(getSpreadsheetId()); var sheet = ss.getSheetByName('Dashboard'); if (!sheet) { createDashboardSheet(); return; } var currentKPIs = getCurrentWeekKPIs(); sheet.getRange(5, 2, 11, 2).setValues([[currentKPIs.total_reservations], [currentKPIs.total_no_shows], [currentKPIs.no_show_rate + '%'], [currentKPIs.same_day_cancellations], [currentKPIs.resale_notifications], [currentKPIs.resale_success_count], [currentKPIs.estimated_recovered_revenue + '円']]); var targets = compareKPIsToTargets(currentKPIs); sheet.getRange(15, 3).setValue(targets.no_show_rate.actual + '%'); sheet.getRange(15, 4).setValue(targets.no_show_rate.achieved ? '✓' : '✗'); sheet.getRange(16, 3).setValue(targets.resale_rate.actual + '%'); sheet.getRange(16, 4).setValue(targets.resale_rate.achieved ? '✓' : '✗'); sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date())); }
 function createWaitlistDashboard() {

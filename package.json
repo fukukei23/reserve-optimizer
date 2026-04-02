@@ -1,8 +1,8 @@
 {
   "name": "reserve-optimizer",
   "version": "1.0.0",
-  "description": "このプロジェクトは、Claude Code での開発速度を維持しつつ、必要最小限の品質管理を実施するためのガイドラインです。",
-  "main": "index.js",
+  "description": "整骨院予約管理システム（LINE Bot + GAS + Stripe）",
+  "main": "gas-project/Code.gs",
   "directories": {
     "doc": "docs"
   },
@@ -13,14 +13,11 @@
     "type": "git",
     "url": "git+https://github.com/fukukei23/reserve-optimizer.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["gas", "line-bot", "stripe", "reservation"],
+  "author": "fukukei23",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/fukukei23/reserve-optimizer/issues"
   },
-  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme",
-  "devDependencies": {
-    "puppeteer": "^24.40.0"
-  }
+  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme"
 }
