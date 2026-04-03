@@ -73,3 +73,18 @@
 - **状態**: ヘルスチェック全正常（200, 38-55ms）
 
 (追記者: フクロウ)
+
+---
+
+## 2026-04-03
+
+### v2026.4.2 リリース検知（2026-04-03 09:30 JST）
+- **リリース日**: 2026-04-02
+- **Breaking Changes**: xAI/x_search設定パスの移行
+  - 旧パス: `core.tools.web.x_search.*`
+  - 新パス: `plugins.entries.xai.config.xSearch.*`
+  - x_search認証がplugins.entries.xai.configへ統一
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.2
+- **当環境への影響**: 要確認（x_search使用状況による）
+
+(追記者: フクロウ)
