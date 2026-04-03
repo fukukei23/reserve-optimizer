@@ -61,3 +61,15 @@
 - **primaryModel**: minimax/MiniMax-M2.7（変更なし）
 
 (追記者: フクロウ)
+
+---
+
+## 2026-04-02
+
+### v2026.4.1 リリース検知（2026-04-02 09:31 JST）
+- **リリース日**: 2026-04-01
+- **内容**: Tasks/chat: /tasks チャットネイティブのバックグラウンドタスクボード追加、agent-local fallback counts等
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.1
+- **状態**: ヘルスチェック全正常（200, 38-55ms）
+
+(追記者: フクロウ)
