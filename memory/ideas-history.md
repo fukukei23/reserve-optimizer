@@ -58,4 +58,21 @@
     - 運用ベストプラクティス: エージェントグラフの事前設計
     - 運用ベストプラクティス: 独立タスクの並列化でレイテンシ削減
 
+- 2026-04-04: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025).
+  - 採取元URLサンプル:
+    - https://remoteopenclaw.com/blog/openclaw-use-cases-complete-guide
+    - https://www.mindstudio.ai/blog/openclaw-best-practices-power-users-200-hours
+    - https://github.com/VoltAgent/awesome-openclaw-skills
+    - https://github.com/openclaw/openclaw/releases
+    - https://thunderbit.com/blog/best-skills-for-openclaw
+  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
+    - 定期実行: モーニングブリーフィング（メール・カレンダー・ニュース一括要約→Telegram）
+    - 定期実行: Telegramスレッドによるコンテキスト分離
+    - スキル/ワークフロー: AetherLang V3 × Claude Code連携
+    - スキル/ワークフロー: agent-access-control（多層アクセス制御）
+    - スキル/ワークフロー: agent-chat-ux（マルチエージェントUI管理）
+    - 設定最適化: エージェントグラフの事前設計（図示化の習慣化）
+    - 設定最適化: エージェント単一責任原則（肥大化の防止）
+    - 運用ベストプラクティス: agent-audit-trail（改ざん検知可能ハッシュチェーン監査ログ）
+
 # End
