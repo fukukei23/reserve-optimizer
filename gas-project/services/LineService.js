@@ -40,9 +40,11 @@ function sendLineMessages(replyToken, messages) {
   };
 
   var response = UrlFetchApp.fetch(LINE_API_URL, options);
+  var statusCode = response.getResponseCode();
+  var responseBody = response.getContentText();
 
-  if (response.getResponseCode() !== 200) {
-    Logger.log('LINE API Error: ' + response.getContentText());
+  if (statusCode !== 200) {
+    console.error('[LINE API] Reply failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
     return false;
   }
 
@@ -76,10 +78,15 @@ function sendLinePush(userId, text) {
     muteHttpExceptions: true
   };
 
+  console.log('[LINE Push] Sending to userId: ' + userId.substring(0, 10) + '...');
   var response = UrlFetchApp.fetch(url, options);
+  var statusCode = response.getResponseCode();
+  var responseBody = response.getContentText();
 
-  if (response.getResponseCode() !== 200) {
-    Logger.log('LINE Push Error: ' + response.getContentText());
+  console.log('[LINE Push] Response status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+
+  if (statusCode !== 200) {
+    console.error('[LINE Push] ERROR - status: ' + statusCode + ', body: ' + responseBody);
     return false;
   }
 
@@ -104,7 +111,7 @@ function getLineProfile(userId) {
   var response = UrlFetchApp.fetch(url, options);
 
   if (response.getResponseCode() !== 200) {
-    Logger.log('LINE Profile Error: ' + response.getContentText());
+    console.error('[LINE Profile] Error: ' + response.getContentText());
     return null;
   }
 
@@ -163,5 +170,5 @@ function sendQuickReply(replyToken, text, quickReplies) {
  * Log LINE message for debugging
  */
 function logLineMessage(source, message) {
-  Logger.log('LINE Message from ' + source.userId + ': ' + message);
+  console.log('[LINE Message] from ' + source.userId + ': ' + message);
 }

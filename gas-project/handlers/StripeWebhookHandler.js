@@ -146,3 +146,49 @@ function handleRefund(charge) {
     }
   }
 }
+
+/**
+ * Handle checkout.session.completed event
+ * This is the primary event for Stripe Checkout Sessions
+ */
+function handleCheckoutSessionCompleted(session) {
+  Logger.log('[Stripe] Checkout session completed: ' + session.id);
+
+  var reservationId = session.metadata ? session.metadata.reservation_id : null;
+  if (!reservationId) {
+    Logger.log('[Stripe] No reservation_id in checkout session metadata');
+    return;
+  }
+
+  Logger.log('[Stripe] Processing checkout completion for reservation: ' + reservationId);
+
+  var reservation = getReservationById(reservationId);
+  if (!reservation) {
+    Logger.log('[Stripe] Reservation not found: ' + reservationId);
+    return;
+  }
+
+  // Update deposit status and reservation status
+  updateReservation(reservationId, {
+    deposit_status: DEPOSIT_STATUS.PAID,
+    status: RESERVATION_STATUS.CONFIRMED
+  });
+
+  // Send confirmation message to user
+  var message = MessageTemplates.getConfirmationMessage(reservation);
+  sendLinePush(reservation.line_display_name, message);
+
+  // Send notification to admin
+  var adminMessage = '新しい予約が確定しました。\n\n' +
+    'ID: ' + reservationId + '\n' +
+    '患者: ' + reservation.patient_name + '\n' +
+    '電話: ' + reservation.phone + '\n' +
+    '日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
+
+  var adminUserId = getLineAdminUserId();
+  if (adminUserId) {
+    sendLinePush(adminUserId, adminMessage);
+  }
+
+  Logger.log('[Stripe] Reservation confirmed via checkout: ' + reservationId);
+}

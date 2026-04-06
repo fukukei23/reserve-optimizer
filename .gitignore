@@ -18,6 +18,12 @@ node_modules/
 !gas-project/**/*.gs
 !gas-project/**/*.js
 
+# Worker
+worker/node_modules/
+worker/dist/
+worker/.dev.vars
+worker/.wrangler/
+
 # OS
 .DS_Store
 Thumbs.db

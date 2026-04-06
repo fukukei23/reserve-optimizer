@@ -1,0 +1,16 @@
+{
+  "name": "reserve-optimizer-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker - LINE/Stripe webhook proxy for GAS",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240529.0",
+    "typescript": "^5.4.5",
+    "wrangler": "^3.57.0"
+  }
+}

@@ -7,45 +7,41 @@
 var STRIPE_API_BASE = 'https://api.stripe.com/v1';
 
 /**
+ * Flatten nested object to Stripe-compatible form-encoded string
+ * {a: {b: 'c'}} → 'a[b]=c'
+ * {items: [{price: 100}]} → 'items[0][price]=100'
+ */
+function flattenForStripe(obj, prefix) {
+  var parts = [];
+  for (var key in obj) {
+    if (!obj.hasOwnProperty(key)) continue;
+    var fullKey = prefix ? prefix + '[' + key + ']' : key;
+    var val = obj[key];
+    if (val === null || val === undefined) continue;
+    if (Array.isArray(val)) {
+      for (var i = 0; i < val.length; i++) {
+        parts = parts.concat(flattenForStripe(val[i], fullKey + '[' + i + ']'));
+      }
+    } else if (typeof val === 'object') {
+      parts = parts.concat(flattenForStripe(val, fullKey));
+    } else {
+      parts.push(encodeURIComponent(fullKey) + '=' + encodeURIComponent(val));
+    }
+  }
+  return parts;
+}
+
+/**
  * Create payment link for reservation deposit
  */
 function createPaymentLink(reservationId, patientName, amount) {
   var apiKey = getStripeApiKey();
-
-  // Create payment intent first
-  var paymentIntentData = {
-    amount: amount,
-    currency: 'jpy',
-    metadata: {
-      reservation_id: reservationId,
-      patient_name: patientName
-    },
-    payment_method_types: ['card']
-  };
-
-  var intentOptions = {
-    method: 'post',
-    contentType: 'application/x-www-form-urlencoded',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey
-    },
-    payload: paymentIntentData,
-    muteHttpExceptions: true
-  };
-
-  var intentResponse = UrlFetchApp.fetch(
-    STRIPE_API_BASE + '/payment_intents',
-    intentOptions
-  );
-
-  if (intentResponse.getResponseCode() !== 200) {
-    Logger.log('Stripe Payment Intent Error: ' + intentResponse.getContentText());
+  if (!apiKey) {
+    Logger.log('[createPaymentLink] STRIPE_API_KEY not set');
     return null;
   }
 
-  var intent = JSON.parse(intentResponse.getContentText());
-
-  // Create payment link
+  // Build flattened payload for Stripe Payment Links API
   var linkData = {
     line_items: [{
       price_data: {
@@ -54,7 +50,7 @@ function createPaymentLink(reservationId, patientName, amount) {
           name: '予約デポジット - ' + reservationId,
           description: '患者: ' + patientName
         },
-        unit_amount: amount
+        unit_amount: String(amount)
       },
       quantity: 1
     }],
@@ -63,33 +59,35 @@ function createPaymentLink(reservationId, patientName, amount) {
     cancel_url: 'https://line.me/R/',
     metadata: {
       reservation_id: reservationId,
-      payment_intent_id: intent.id
+      patient_name: patientName
     }
   };
 
-  var linkOptions = {
+  var formBody = flattenForStripe(linkData).join('&');
+  Logger.log('[createPaymentLink] Payload: ' + formBody.substring(0, 200));
+
+  var options = {
     method: 'post',
     contentType: 'application/x-www-form-urlencoded',
     headers: {
       'Authorization': 'Bearer ' + apiKey
     },
-    payload: linkData,
+    payload: formBody,
     muteHttpExceptions: true
   };
 
-  var linkResponse = UrlFetchApp.fetch(
-    STRIPE_API_BASE + '/payment_links',
-    linkOptions
+  var response = UrlFetchApp.fetch(
+    STRIPE_API_BASE + '/checkout/sessions',
+    options
   );
 
-  if (linkResponse.getResponseCode() !== 200) {
-    Logger.log('Stripe Payment Link Error: ' + linkResponse.getContentText());
+  if (response.getResponseCode() !== 200) {
+    Logger.log('[createPaymentLink] Error ' + response.getResponseCode() + ': ' + response.getContentText());
     return null;
   }
 
-  var link = JSON.parse(linkResponse.getContentText());
-
-  Logger.log('Created payment link: ' + link.url + ' for reservation: ' + reservationId);
+  var link = JSON.parse(response.getContentText());
+  Logger.log('[createPaymentLink] Created: ' + link.url + ' for reservation: ' + reservationId);
 
   return link.url;
 }
@@ -140,12 +138,12 @@ function verifyStripeSignature(payload, signature, secret) {
     return false;
   }
 
-  // Create expected signature
+  // Create expected signature (byte array → hex string)
   var signedPayload = timestamp + '.' + payload;
-  var expectedSignature = Utilities.computeHmacSha256Signature(
-    signedPayload,
-    secret
-  );
+  var sigBytes = Utilities.computeHmacSha256Signature(signedPayload, secret);
+  var expectedSignature = sigBytes.map(function(b) {
+    return ('0' + (b & 0xff).toString(16)).slice(-2);
+  }).join('');
 
   // Compare signatures
   return v1Signature === expectedSignature;

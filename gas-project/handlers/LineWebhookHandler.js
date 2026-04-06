@@ -61,7 +61,7 @@ function handleLineEvent(event) {
       handleUnfollow(userId);
       break;
     default:
-      Logger.log('Unhandled event type: ' + eventType);
+      console.log('[handleLineEvent] Unhandled event type: ' + eventType);
   }
 }
 
@@ -187,8 +187,8 @@ function handleIdleState(text, replyToken, userId) {
   } else if (text === '当日空き枠通知を受け取る') {
     handleWaitlistFlow(replyToken, userId);
   } else {
-    var message = MessageTemplates.getWelcomeMessage();
-    sendLineReply(replyToken, message);
+    var welcomeData = MessageTemplates.getWelcomeMessage();
+    sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
   }
 }
 
@@ -350,7 +350,7 @@ function handleAwaitingTreatment(text, replyToken, userId) {
       getDepositAmount()
     );
   } catch (e) {
-    Logger.log('createPaymentLink error: ' + e.message);
+    console.error('[createPaymentLink] Error: ' + e.message);
   }
 
   if (paymentLink) {
@@ -380,13 +380,27 @@ function handleAwaitingPayment(text, replyToken, userId) {
   var reservationId = tempData.reservation_id;
   var storedLink = tempData.payment_link;
 
+  // Allow cancel/restart from payment state
+  if (text === 'キャンセル' || text === '取消' || text === 'やめる' || text === '最初から') {
+    clearUserState(userId);
+    sendLineReply(replyToken, '予約をキャンセルしました。もう一度「予約する」で始められます。');
+    return;
+  }
+
+  // Allow new reservation from payment state
+  if (text === '予約する' || text === '予約') {
+    clearUserState(userId);
+    startReservationFlow(replyToken, userId);
+    return;
+  }
+
   var reservation = getReservationById(reservationId);
 
   if (reservation && reservation.deposit_status === DEPOSIT_STATUS.PAID) {
     sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！');
     clearUserState(userId);
   } else if (storedLink) {
-    sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。');
+    sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。\n\n※やめる場合は「キャンセル」と返信してください。');
   } else {
     sendLineReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。');
   }
@@ -837,17 +851,17 @@ function handleFollow(userId) {
   var profile = getLineProfile(userId);
   var displayName = profile ? profile.displayName : '患者さん';
 
-  Logger.log('User followed: ' + userId + ' (' + displayName + ')');
+  console.log('[handleFollow] User followed: ' + userId + ' (' + displayName + ')');
 
-  var message = MessageTemplates.getWelcomeMessage();
-  sendLinePush(userId, message);
+  var welcomeData = MessageTemplates.getWelcomeMessage();
+  sendLinePush(userId, welcomeData.text);
 }
 
 /**
  * Handle unfollow event
  */
 function handleUnfollow(userId) {
-  Logger.log('User unfollowed: ' + userId);
+  console.log('[handleUnfollow] User unfollowed: ' + userId);
   clearUserState(userId);
 }
 

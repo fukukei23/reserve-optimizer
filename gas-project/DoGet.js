@@ -1,40 +1,62 @@
 /**
- * Web App GET handler (for gas-autopilot / gas-run.sh)
+ * Web App GET handler
  *
- * Specifies the function to execute via the query parameter "fn"
- * Only allowed functions can be executed (security)
- *
- * Usage: curl "<deployUrl>?fn=healthCheck"
+ * 2つのモードを処理:
+ * 1. Worker転送モード: x-verified=true & x-body=<body> → Webhook処理
+ * 2. gas-autopilotモード: fn=<functionName> → 関数実行
+ * 3. ヘルスチェック: パラメータなし → ステータス返却
  */
 function doGet(e) {
+  // === モード1: Worker転送 ===
+  var verified = e.parameter['x-verified'];
+  var source = e.parameter['x-source'] || '';
+  var body = e.parameter['x-body'] || '';
+
+  if (verified === 'true' && body) {
+    body = decodeURIComponent(body);
+    console.log('[doGet] Worker forwarding: source=' + source + ' body_length=' + body.length);
+
+    if (source === 'line') {
+      return handleLineWebhookVerified(body);
+    } else if (source === 'stripe') {
+      return handleStripeWebhookVerified(body);
+    } else {
+      return handleAutoDetect(body);
+    }
+  }
+
+  // === モード2: gas-autopilot ===
   var fnName = (e && e.parameter && e.parameter.fn) || '';
 
-  // List allowed functions here
   var allowedFunctions = {
     runSetup: runSetup,
     healthCheck: healthCheck,
     getSystemStatus: getSystemStatus,
     testConfig: testConfig,
     testCancelFlow: testCancelFlow,
-    testChangeFlow: testChangeFlow
+    testChangeFlow: testChangeFlow,
+    testLineReply: testLineReply,
+    debugDoPost: debugDoPost,
+    debugStripeLink: debugStripeLink
   };
 
-  if (!fnName || !(fnName in allowedFunctions)) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ error: 'Unknown function: ' + fnName + '. Allowed: ' + Object.keys(allowedFunctions).join(', ') })
-    ).setMimeType(ContentService.MimeType.JSON);
+  if (fnName && fnName in allowedFunctions) {
+    try {
+      var result = allowedFunctions[fnName]();
+      return ContentService.createTextOutput(
+        JSON.stringify({ ok: true, function: fnName, result: result || null })
+      ).setMimeType(ContentService.MimeType.JSON);
+    } catch (error) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ ok: false, function: fnName, error: error.message })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
   }
 
-  try {
-    var result = allowedFunctions[fnName]();
-    return ContentService.createTextOutput(
-      JSON.stringify({ ok: true, function: fnName, result: result || null })
-    ).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(
-      JSON.stringify({ ok: false, function: fnName, error: error.message })
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
+  // === モード3: ヘルスチェック ===
+  return ContentService.createTextOutput(
+    JSON.stringify({ status: 'ok', message: 'Reserve Optimizer GAS', timestamp: new Date().toISOString() })
+  ).setMimeType(ContentService.MimeType.JSON);
 }
 
 /**
@@ -44,8 +66,109 @@ function testConfig() {
   var props = PropertiesService.getScriptProperties();
   return {
     lineChannelSecret: props.getProperty('LINE_CHANNEL_SECRET') ? 'SET' : 'NOT_SET',
-    stripeSecretKey: props.getProperty('STRIPE_SECRET_KEY') ? 'SET' : 'NOT_SET',
+    lineChannelAccessToken: props.getProperty('LINE_CHANNEL_ACCESS_TOKEN') ? 'SET' : 'NOT_SET',
+    lineAdminUserId: props.getProperty('LINE_ADMIN_USER_ID') ? 'SET' : 'NOT_SET',
+    stripeApiKey: props.getProperty('STRIPE_API_KEY') ? 'SET' : 'NOT_SET',
     spreadsheetId: props.getProperty('SPREADSHEET_ID') ? 'SET' : 'NOT_SET',
     timestamp: new Date().toISOString()
   };
 }
+
+/**
+ * Test LINE push message to admin
+ */
+function testLineReply() {
+  var adminId = getLineAdminUserId();
+  var token = getLineAccessToken();
+  if (!adminId || !token) {
+    return { error: 'Admin ID or Token not set', adminId: adminId ? 'SET' : 'NOT_SET', token: token ? 'SET' : 'NOT_SET' };
+  }
+
+  var url = 'https://api.line.me/v2/bot/message/push';
+  var payload = {
+    to: adminId,
+    messages: [{ type: 'text', text: 'テストメッセージ from GAS ' + new Date().toISOString() }]
+  };
+
+  var options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + token },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  return {
+    statusCode: response.getResponseCode(),
+    responseBody: response.getContentText().substring(0, 200),
+    adminId: adminId.substring(0, 10) + '...'
+  };
+}
+
+/**
+ * Debug doPost - simulate LINE webhook event
+ */
+function debugDoPost() {
+  var adminId = getLineAdminUserId();
+  var testEvent = {
+    type: 'message',
+    replyToken: 'INVALID_TOKEN_FOR_TEST',
+    source: { userId: adminId, type: 'user' },
+    message: { type: 'text', text: '予約したい' }
+  };
+
+  try {
+    console.log('[debugDoPost] Starting...');
+    console.log('[debugDoPost] Test event: ' + JSON.stringify(testEvent));
+    handleLineEvent(testEvent);
+    return { success: true, note: 'handleLineEvent completed (reply will fail due to invalid token)' };
+  } catch (e) {
+    return { success: false, error: e.message, stack: e.stack || 'no stack' };
+  }
+}
+
+/**
+ * Debug Stripe payment link creation
+ */
+function debugStripeLink() {
+  try {
+    var apiKey = getStripeApiKey();
+    if (!apiKey) return { error: 'STRIPE_API_KEY not set' };
+
+    var linkData = {
+      line_items: [{
+        price_data: {
+          currency: 'jpy',
+          product_data: { name: 'テスト予約デポジット' },
+          unit_amount: '3000'
+        },
+        quantity: 1
+      }],
+      mode: 'payment',
+      success_url: 'https://line.me/R/',
+      cancel_url: 'https://line.me/R/'
+    };
+
+    var formBody = flattenForStripe(linkData).join('&');
+    var options = {
+      method: 'post',
+      contentType: 'application/x-www-form-urlencoded',
+      headers: { 'Authorization': 'Bearer ' + apiKey },
+      payload: formBody,
+      muteHttpExceptions: true
+    };
+
+    var response = UrlFetchApp.fetch('https://api.stripe.com/v1/checkout/sessions', options);
+    return {
+      statusCode: response.getResponseCode(),
+      body: response.getContentText().substring(0, 500),
+      payload: formBody.substring(0, 200)
+    };
+  } catch (e) {
+    return { error: e.message, stack: e.stack || 'no stack' };
+  }
+}
+
+// handleLineWebhookVerified, handleStripeWebhookVerified, handleAutoDetect
+// は Code.js で定義済み（GAS は全 .js ファイルでグローバル名前空間を共有）
