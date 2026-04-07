@@ -1,78 +1,28 @@
-# ideas-history
+# OpenClaw Ideas History
 
-# Created: 2026-03-13T18:36:00Z
-# Purpose: Archive of weekly OpenClaw idea suggestions collected by the Weekly OpenClaw Ideas Collector cron job.
+## 2026-04-07 Weekly Ideas Collector
 
-## Entries
+### 検索ソース
+- web_search: "OpenClaw tips tricks 2026", "OpenClaw workflow automation examples", "site:github.com openclaw skill workflow", "OpenClaw best practices configuration", "site:reddit.com openclaw setup guide"
+- web_fetch: devshorts.in, mindstudio.ai
 
-- 2026-03-13: Initial setup. Channel: #アイデア通知 (ID: 1482154983070634025). Cron job id: 54846eb9-2cd3-4633-95fb-6f832e87cd97. Next run scheduled: weekly Sunday 09:00 JST.
-- 2026-03-14: 初回アイデアレポート投稿（掲出先: #アイデア通知）。内容: Fast Mode活用案・TTSワークフロー・セキュリティ運用・定期チェック拡張・小規模自動化アイデア。除外キーワードを適用済み。
-- 2026-03-15: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025). Cron job id: 54846eb9-2cd3-4633-95fb-6f832e87cd97.
-  - 採取元URLサンプル:
-    - https://pub.towardsai.net/openclaw-complete-guide-setup-tutorial-2026-14dd1ae6d1c2
-    - https://github.com/openclaw/lobster
-    - https://github.com/VoltAgent/awesome-openclaw-skills
-    - https://docs.openclaw.ai/gateway/security
-    - https://www.reddit.com/r/openclaw/comments/1rfy0c7/the_ultimate_openclaw_setup_guide/
-  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
-    - 定期実行: AI ニュース要約のGmailラベル→WhatsApp配信
-    - 定期実行: 日次PR/運用レポート生成と配布
-    - スキル/ワークフロー: Lobsterマクロライブラリ化
-    - スキル/ワークフロー: マルチプラットフォーム投稿テンプレート生成
-    - 設定最適化: スキルのバージョンピンと自動更新ポリシー
-    - 設定最適化: mDNS/Bonjour無効化と環境変数管理
-    - 運用ベストプラクティス: エージェント監査ログ（tamper-evident）
-    - 運用ベストプラクティス: 定期セキュリティレビューと依存性検証
+### 抽出アイデア一覧
 
-- 2026-03-21: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025).
-  - 採取元URLサンプル:
-    - https://medium.com/@tentenco/seven-hard-won-lessons-for-running-openclaw-without-burning-out-65e3d97dda3d
-    - https://www.devshorts.in/p/openclaw-workflow-and-automation
-    - https://www.hostinger.com/tutorials/openclaw-use-cases
-    - https://www.mindstudio.ai/blog/openclaw-best-practices-power-users-200-hours
-    - https://github.com/openclaw/skills/blob/main/skills/kowl64/n8n-workflow-automation/SKILL.md
-  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
-    - 定期実行: ハイブリッドクラウド統合監視
-    - 定期実行: Gmail AIニュースダイジェスト → WhatsApp配信
-    - スキル/ワークフロー: n8nワークフロー自動生成
-    - スキル/ワークフロー: エージェント監査ログ（改ざん検知）
-    - スキル/ワークフロー: マルチプラットフォーム投稿テンプレート生成
-    - 設定最適化: Thinking Levelsの戦略的活用（コスト削減）
-    - 設定最適化: キャッシュ戦略の最適化
-    - 運用ベストプラクティス: エージェント憲章署名監査
+**定期実行・自動化**
+1. cronでPRチェッカー（マージ準備完了を検出）
+2. Gmail AIニュースレター→WhatsApp/Slack日次サマリー
+3. キャッシュ戦略で頻繁なcronジョブを最適化（TTL設定）
 
-- 2026-04-02: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025).
-  - 採取元URLサンプル:
-    - https://www.mindstudio.ai/blog/openclaw-best-practices-power-users-200-hours
-    - https://www.devshorts.in/p/openclaw-workflow-and-automation
-    - https://pub.towardsai.net/openclaw-complete-guide-setup-tutorial-2026-14dd1ae6d1c2
-    - https://github.com/openclaw/skills/blob/main/skills/kowl64/n8n-workflow-automation/SKILL.md
-    - https://github.com/slowmist/openclaw-security-practice-guide
-  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
-    - 定期実行: 日次PR/イシュー自動レビュー → Slack/Discord配信
-    - 定期実行: サブエージェント並列実行による高速化
-    - スキル/ワークフロー: エージェント単一責任の原則の導入
-    - スキル/ワークフロー: モデルルーティングのタスク別最適化
-    - 設定最適化: フリークエントワークフローのキャッシュ戦略
-    - 設定最適化: セキュリティ監査スキル（SlowMist版）の定期実行
-    - 運用ベストプラクティス: エージェントグラフの事前設計
-    - 運用ベストプラクティス: 独立タスクの並列化でレイテンシ削減
+**スキル・ワークフロー**
+4. n8nワークフロー自動化スキル（冪等性・リトライ・レビューキュー）
+5. Lobsterワークフローシェル（スキル/ツールのパイプライン化）
+6. agent-audit-trail（改ざん検知可能なハッシュチェーン監査ログ）
 
-- 2026-04-04: 週次収集実行。Channel: #アイデア通知 (ID: 1482154983070634025).
-  - 採取元URLサンプル:
-    - https://remoteopenclaw.com/blog/openclaw-use-cases-complete-guide
-    - https://www.mindstudio.ai/blog/openclaw-best-practices-power-users-200-hours
-    - https://github.com/VoltAgent/awesome-openclaw-skills
-    - https://github.com/openclaw/openclaw/releases
-    - https://thunderbit.com/blog/best-skills-for-openclaw
-  - 今回抽出したアイデア（タイトルのみ、重複回避用）:
-    - 定期実行: モーニングブリーフィング（メール・カレンダー・ニュース一括要約→Telegram）
-    - 定期実行: Telegramスレッドによるコンテキスト分離
-    - スキル/ワークフロー: AetherLang V3 × Claude Code連携
-    - スキル/ワークフロー: agent-access-control（多層アクセス制御）
-    - スキル/ワークフロー: agent-chat-ux（マルチエージェントUI管理）
-    - 設定最適化: エージェントグラフの事前設計（図示化の習慣化）
-    - 設定最適化: エージェント単一責任原則（肥大化の防止）
-    - 運用ベストプラクティス: agent-audit-trail（改ざん検知可能ハッシュチェーン監査ログ）
+**設定・セキュリティ**
+7. サードパーティAPI呼び出し・データ露出パスの確認を導入時ルール化
+8. 最新安定版（2026.4.5）への定期アップデート運用
 
-# End
+**運用・ベストプラクティス**
+9. エージェントグラフをビルド前に描く（紙/ホワイトボード）
+10. 単一責任原則を各エージェントに適用（5分岐以上は分割）
+11. セッションごとのモデル使い分け（コスト最適化）
