@@ -76,6 +76,24 @@
 
 ---
 
+## 2026-04-07
+
+### v2026.4.5 リリース検知（2026-04-07 09:31 JST）
+- **リリース日**: 2026-04-06
+- **Breaking Changes**: Config: レガシー公開設定エイリアスの削除
+  - `talk.voiceId` / `talk.apiKey`
+  - `agents.*.sandbox.perSession`
+  - `browser.ssrfPolicy.allowPrivateNetwork`
+  - `hooks.internal.handlers`
+  - channel/group系の旧エイリアス
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.5
+- **当環境への影響**: 要確認（旧エイリアス使用状況の確認が必要）
+- **ヘルスチェック状態**: 全て正常（200, 44-117ms）
+
+(追記者: フクロウ)
+
+---
+
 ## 2026-04-03
 
 ### v2026.4.2 リリース検知（2026-04-03 09:30 JST）
