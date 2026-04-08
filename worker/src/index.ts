@@ -88,8 +88,20 @@ async function handleStripeWebhook(request: Request, env: Env, ctx: ExecutionCon
     return new Response("Invalid signature", { status: 401 });
   }
 
-  // GAS に転送
-  return forwardToGAS(body, env, "stripe");
+  // 最小データのみ転送（URL長制限回避）
+  const event = JSON.parse(body);
+  const minimalData = {
+    type: event.type,
+    id: (event.data && event.data.object && event.data.object.id) || "",
+    reservation_id:
+      (event.data && event.data.object && event.data.object.metadata &&
+        event.data.object.metadata.reservation_id) ||
+      "",
+  };
+
+  console.log("[Stripe] Forwarding minimal data:", JSON.stringify(minimalData));
+
+  return forwardToGAS(JSON.stringify(minimalData), env, "stripe");
 }
 
 /**

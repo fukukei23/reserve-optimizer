@@ -153,32 +153,160 @@ function handleLineWebhookVerified(body) {
 
 /**
  * Stripe Webhook処理（Worker検証済み）
+ * 最小データ形式（type, id, reservation_id）と旧形式（full event）の両方に対応
  */
 function handleStripeWebhookVerified(body) {
-  var event = JSON.parse(body);
+  try {
+    appendLogRow('STRIPE', 'handleStripeWebhookVerified start: body=' + body.substring(0, 300));
+  } catch(logErr) {}
 
-  if (!event || !event.type) {
+  var payload = JSON.parse(body);
+
+  if (!payload || !payload.type) {
+    try { appendLogRow('STRIPE_ERROR', 'No event type: payload=' + JSON.stringify(payload).substring(0, 200)); } catch(e) {}
     return createTextOutput('error', 'No event data');
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed':
-      handleCheckoutSessionCompleted(event.data.object);
-      break;
-    case 'payment_intent.succeeded':
-      handlePaymentSuccess(event.data.object);
-      break;
-    case 'payment_intent.payment_failed':
-      handlePaymentFailure(event.data.object);
-      break;
-    case 'charge.refunded':
-      handleRefund(event.data.object);
-      break;
-    default:
-      console.log('[Stripe] Unknown event type: ' + event.type);
+  console.log('[Stripe] Event type: ' + payload.type + ' id: ' + (payload.id || 'N/A'));
+  try {
+    appendLogRow('STRIPE', 'type=' + payload.type + ' id=' + (payload.id || 'N/A') + ' hasData=' + !!(payload.data));
+  } catch(logErr) {}
+
+  // 旧形式（full event body）の場合
+  if (payload.data && payload.data.object) {
+    switch (payload.type) {
+      case 'checkout.session.completed':
+        handleCheckoutSessionCompleted(payload.data.object);
+        break;
+      case 'payment_intent.succeeded':
+        handlePaymentSuccess(payload.data.object);
+        break;
+      case 'payment_intent.payment_failed':
+        handlePaymentFailure(payload.data.object);
+        break;
+      case 'charge.refunded':
+        handleRefund(payload.data.object);
+        break;
+      default:
+        console.log('[Stripe] Unknown event type: ' + payload.type);
+    }
+    return createTextOutput('success', 'Stripe webhook processed (full)');
   }
 
-  return createTextOutput('success', 'Stripe webhook processed');
+  // 最小データ形式（Worker経由）の場合
+  switch (payload.type) {
+    case 'checkout.session.completed':
+      handleCheckoutSessionMinimal(payload);
+      break;
+    case 'payment_intent.succeeded':
+      handlePaymentSuccessMinimal(payload);
+      break;
+    case 'payment_intent.payment_failed':
+      handlePaymentFailureMinimal(payload);
+      break;
+    case 'charge.refunded':
+      handleRefundMinimal(payload);
+      break;
+    default:
+      console.log('[Stripe] Unknown event type: ' + payload.type);
+  }
+
+  return createTextOutput('success', 'Stripe webhook processed (minimal)');
+}
+
+/**
+ * 最小データから checkout.session.completed を処理
+ * Stripe API からセッション詳細を取得して既存ハンドラに委譲
+ */
+function handleCheckoutSessionMinimal(payload) {
+  try { appendLogRow('STRIPE', 'handleCheckoutSessionMinimal: id=' + payload.id + ' reservation_id=' + (payload.reservation_id || 'N/A')); } catch(e) {}
+
+  console.log('[Stripe] Fetching checkout session: ' + payload.id);
+  var session = getCheckoutSession(payload.id);
+
+  if (!session) {
+    try { appendLogRow('STRIPE_ERROR', 'getCheckoutSession returned null for: ' + payload.id); } catch(e) {}
+    console.log('[Stripe] Failed to fetch checkout session: ' + payload.id);
+    return;
+  }
+
+  try { appendLogRow('STRIPE', 'Session fetched: metadata=' + JSON.stringify(session.metadata || {})); } catch(e) {}
+
+  handleCheckoutSessionCompleted(session);
+}
+
+/**
+ * 最小データから payment_intent.succeeded を処理
+ */
+function handlePaymentSuccessMinimal(payload) {
+  var reservationId = payload.reservation_id;
+  if (!reservationId) {
+    console.log('[Stripe] No reservation_id in minimal payload');
+    return;
+  }
+
+  console.log('[Stripe] Payment success for reservation: ' + reservationId);
+  var reservation = getReservationById(reservationId);
+  if (!reservation) {
+    console.log('[Stripe] Reservation not found: ' + reservationId);
+    return;
+  }
+
+  updateReservation(reservationId, {
+    deposit_status: DEPOSIT_STATUS.PAID,
+    status: RESERVATION_STATUS.CONFIRMED
+  });
+
+  var message = MessageTemplates.getConfirmationMessage(reservation);
+  sendLinePush(reservation.line_display_name, message);
+
+  var adminUserId = getLineAdminUserId();
+  if (adminUserId) {
+    var adminMessage = '新しい予約が確定しました。\n\n' +
+      'ID: ' + reservationId + '\n' +
+      '患者: ' + reservation.patient_name + '\n' +
+      '日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
+    sendLinePush(adminUserId, adminMessage);
+  }
+}
+
+/**
+ * 最小データから payment_intent.payment_failed を処理
+ */
+function handlePaymentFailureMinimal(payload) {
+  var reservationId = payload.reservation_id;
+  if (!reservationId) return;
+
+  var reservation = getReservationById(reservationId);
+  if (!reservation) return;
+
+  updateReservation(reservationId, {
+    deposit_status: DEPOSIT_STATUS.FAILED
+  });
+}
+
+/**
+ * 最小データから charge.refunded を処理
+ */
+function handleRefundMinimal(payload) {
+  console.log('[Stripe] Refund event for charge: ' + payload.id);
+  // 既存の handleRefund は charge オブジェクト全体を必要とするため、
+  // payment_intent ID から予約を検索する簡易処理
+  var sheet = getReservationsSheet();
+  var data = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (row[13] === DEPOSIT_STATUS.PAID && row[10] === RESERVATION_STATUS.CANCELLED) {
+      var reservationId = row[0];
+      updateReservation(reservationId, {
+        deposit_status: DEPOSIT_STATUS.REFUNDED
+      });
+      var lineDisplayName = row[4];
+      sendLinePush(lineDisplayName, MessageTemplates.getRefundConfirmationMessage(reservationId));
+      break;
+    }
+  }
 }
 
 /**

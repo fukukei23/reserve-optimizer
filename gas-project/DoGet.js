@@ -7,6 +7,19 @@
  * 3. ヘルスチェック: パラメータなし → ステータス返却
  */
 function doGet(e) {
+  // 最初に必ずログ出力（デバッグ用）
+  try {
+    var ss = SpreadsheetApp.openById(getSpreadsheetId());
+    var logSheet = ss.getSheetByName('ログ');
+    if (!logSheet) {
+      logSheet = ss.insertSheet('ログ');
+      logSheet.appendRow(['timestamp', 'level', 'message']);
+    }
+    logSheet.appendRow([new Date(), 'ENTRY', 'doGet called: params=' + JSON.stringify(Object.keys(e.parameter || {})).substring(0, 200)]);
+  } catch(entryErr) {
+    // スプレッドシート書き込み失敗は致命的ではない
+  }
+
   // === モード1: Worker転送 ===
   var verified = e.parameter['x-verified'];
   var source = e.parameter['x-source'] || '';
@@ -15,6 +28,7 @@ function doGet(e) {
   if (verified === 'true' && body) {
     body = decodeURIComponent(body);
     console.log('[doGet] Worker forwarding: source=' + source + ' body_length=' + body.length);
+    appendLogRow('DEBUG', 'doGet: source=' + source + ' body=' + body.substring(0, 300));
 
     if (source === 'line') {
       return handleLineWebhookVerified(body);

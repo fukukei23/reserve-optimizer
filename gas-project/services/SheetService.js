@@ -5,6 +5,27 @@
  */
 
 /**
+ * Format a Date object to YYYY-MM-DD string
+ */
+function formatDateObj(d) {
+  if (!d || !(d instanceof Date)) return d || '';
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  return y + '/' + m + '/' + day;
+}
+
+/**
+ * Format a Date object to HH:MM string (for time columns stored as dates)
+ */
+function formatTimeObj(d) {
+  if (!d || !(d instanceof Date)) return d || '';
+  var h = ('0' + d.getHours()).slice(-2);
+  var min = ('0' + d.getMinutes()).slice(-2);
+  return h + ':' + min;
+}
+
+/**
  * Get reservations sheet
  */
 function getReservationsSheet() {
@@ -176,9 +197,9 @@ function getReservationById(reservationId) {
         line_display_name: data[i][4],
         visit_type: data[i][5],
         menu_type: data[i][6],
-        reserved_date: data[i][7],
-        reserved_start: data[i][8],
-        reserved_end: data[i][9],
+        reserved_date: formatDateObj(data[i][7]),
+        reserved_start: formatTimeObj(data[i][8]),
+        reserved_end: formatTimeObj(data[i][9]),
         status: data[i][10],
         deposit_required: data[i][11],
         deposit_amount: data[i][12],

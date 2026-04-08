@@ -182,6 +182,36 @@ function refundPayment(paymentIntentId, amount) {
 }
 
 /**
+ * Get checkout session by ID from Stripe API
+ */
+function getCheckoutSession(sessionId) {
+  var apiKey = getStripeApiKey();
+  if (!apiKey) {
+    Logger.log('[getCheckoutSession] STRIPE_API_KEY not set');
+    return null;
+  }
+
+  var url = STRIPE_API_BASE + '/checkout/sessions/' + sessionId;
+
+  var options = {
+    method: 'get',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey
+    },
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+
+  if (response.getResponseCode() !== 200) {
+    Logger.log('[getCheckoutSession] Error ' + response.getResponseCode() + ': ' + response.getContentText());
+    return null;
+  }
+
+  return JSON.parse(response.getContentText());
+}
+
+/**
  * Handle successful payment
  */
 function handlePaymentSuccess(event) {

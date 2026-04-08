@@ -153,18 +153,22 @@ function handleRefund(charge) {
  */
 function handleCheckoutSessionCompleted(session) {
   Logger.log('[Stripe] Checkout session completed: ' + session.id);
+  try { appendLogRow('STRIPE', 'handleCheckoutSessionCompleted: session=' + session.id); } catch(e) {}
 
   var reservationId = session.metadata ? session.metadata.reservation_id : null;
   if (!reservationId) {
     Logger.log('[Stripe] No reservation_id in checkout session metadata');
+    try { appendLogRow('STRIPE_ERROR', 'No reservation_id in session metadata: keys=' + (session.metadata ? Object.keys(session.metadata).join(',') : 'NO_METADATA')); } catch(e) {}
     return;
   }
 
   Logger.log('[Stripe] Processing checkout completion for reservation: ' + reservationId);
+  try { appendLogRow('STRIPE', 'Reservation ID: ' + reservationId); } catch(e) {}
 
   var reservation = getReservationById(reservationId);
   if (!reservation) {
     Logger.log('[Stripe] Reservation not found: ' + reservationId);
+    try { appendLogRow('STRIPE_ERROR', 'Reservation not found: ' + reservationId); } catch(e) {}
     return;
   }
 
@@ -173,6 +177,7 @@ function handleCheckoutSessionCompleted(session) {
     deposit_status: DEPOSIT_STATUS.PAID,
     status: RESERVATION_STATUS.CONFIRMED
   });
+  try { appendLogRow('STRIPE', 'Updated reservation to PAID/CONFIRMED: ' + reservationId); } catch(e) {}
 
   // Send confirmation message to user
   var message = MessageTemplates.getConfirmationMessage(reservation);
