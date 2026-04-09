@@ -10,9 +10,10 @@
 function formatDateObj(d) {
   if (!d || !(d instanceof Date)) return d || '';
   var y = d.getFullYear();
-  var m = ('0' + (d.getMonth() + 1)).slice(-2);
-  var day = ('0' + d.getDate()).slice(-2);
-  return y + '/' + m + '/' + day;
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  if (isNaN(y) || isNaN(m) || isNaN(day)) return '';
+  return y + '/' + ('0' + m).slice(-2) + '/' + ('0' + day).slice(-2);
 }
 
 /**
@@ -20,9 +21,10 @@ function formatDateObj(d) {
  */
 function formatTimeObj(d) {
   if (!d || !(d instanceof Date)) return d || '';
-  var h = ('0' + d.getHours()).slice(-2);
-  var min = ('0' + d.getMinutes()).slice(-2);
-  return h + ':' + min;
+  var h = d.getHours();
+  var min = d.getMinutes();
+  if (isNaN(h) || isNaN(min)) return '';
+  return ('0' + h).slice(-2) + ':' + ('0' + min).slice(-2);
 }
 
 /**
