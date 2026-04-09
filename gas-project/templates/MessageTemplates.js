@@ -43,7 +43,7 @@ var MessageTemplates = {
       '【予約ID】 ' + reservation.id + '\n' +
       '【氏名】 ' + reservation.patient_name + '\n' +
       '【日付】 ' + reservation.reserved_date + '\n' +
-      '【時間】 ' + reservation.reserved_start + ' - ' + reservation.reserved_end + '\n' +
+      '【時間】 ' + reservation.reserved_start + (reservation.reserved_end && reservation.reserved_end.indexOf('NaN') === -1 ? ' - ' + reservation.reserved_end : '') + '\n' +
       '【施術】 ' + reservation.menu_type + '\n\n' +
       '【注意事項】\n' +
       '・遅刻は15分までにお願いします\n' +
