@@ -94,7 +94,16 @@
 
 ---
 
-## 2026-04-03
+## 2026-04-08
+
+### v2026.4.5 Breaking Changesの確認とアップデート対応（04/08 23:33 UTC = 04/09 08:33 JST）
+- **背景**: ふくけいから「Breaking changesって何？確認して。」と質問
+- **内容**: レガシー設定エイリアス削除（`talk.voiceId`/`talk.apiKey`、`agents.*.sandbox.perSession`、`browser.ssrfPolicy.allowPrivateNetwork`、`hooks.internal.handlers`等）
+- **対応**: `openclaw doctor --fix`で自動移行可能、よつばからupdate.runを実行する流れに
+- **承認問題**: Discordでは`/approve`が使えないため、Surface Goで`openclaw doctor --fix`を実行する必要がある旨をよつばが案内
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.5
+
+(追記者: フクロウ)
 
 ### v2026.4.2 リリース検知（2026-04-03 09:30 JST）
 - **リリース日**: 2026-04-02
