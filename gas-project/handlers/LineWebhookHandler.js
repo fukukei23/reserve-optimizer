@@ -87,6 +87,13 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle "やめる" globally across all non-IDLE states
+  if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
+    clearUserState(userId);
+    sendLineReply(replyToken, '操作をキャンセルしました。\n\n「予約する」でまた始められます。');
+    return;
+  }
+
   // Check for commands
   if (text.startsWith('/')) {
     handleCommand(text, replyToken, userId);
@@ -168,11 +175,30 @@ function handleCommand(command, replyToken, userId) {
 }
 
 /**
- * Start reservation flow
+ * Start reservation flow (施術選択 → 日付 → 時間 → 名前[初回のみ])
  */
 function startReservationFlow(replyToken, userId) {
-  setUserState(userId, USER_STATES.AWAITING_NAME, {});
-  sendLineReply(replyToken, '予約を開始します。\n\nお名前を入力してください。');
+  // Returning user detection: auto-fill name/phone from last reservation
+  var lastReservation = getLastReservationByLineUserId(userId);
+  var tempData = {};
+  var isReturning = false;
+
+  if (lastReservation && lastReservation.patient_name) {
+    tempData.patient_name = lastReservation.patient_name;
+    tempData.phone = lastReservation.phone || '';
+    isReturning = true;
+  }
+  tempData.is_returning = isReturning;
+
+  setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
+
+  var menuOptions = [
+    { label: '初診（30分）', text: '初診（30分）' },
+    { label: '再診（30分）', text: '再診（30分）' },
+    { label: '再診（60分）', text: '再診（60分）' },
+    { label: 'やめる', text: 'やめる' }
+  ];
+  sendQuickReply(replyToken, '予約を開始します。\n\n施術の種類を選択してください。', menuOptions);
 }
 
 /**
@@ -197,13 +223,17 @@ function handleIdleState(text, replyToken, userId) {
  */
 function handleAwaitingName(text, replyToken, userId) {
   if (text === FALLBACK_RETRY_TEXT) {
-    sendLineReply(replyToken, 'お名前を入力してください。');
+    sendQuickReply(replyToken, 'お名前を入力してください。', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
     return;
   }
 
   var trimmed = text.trim();
   if (!trimmed || trimmed.length > 100) {
-    sendFallbackWithContact(replyToken, 'お名前を入力してください。\n（100文字以内でご入力ください）');
+    sendQuickReply(replyToken, 'お名前を入力してください。\n（100文字以内でご入力ください）', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
     return;
   }
 
@@ -219,21 +249,25 @@ function handleAwaitingName(text, replyToken, userId) {
  */
 function handleAwaitingPhone(text, replyToken, userId) {
   if (text === FALLBACK_RETRY_TEXT) {
-    sendLineReply(replyToken, '電話番号を入力してください（例: 09012345678）。');
+    sendQuickReply(replyToken, '電話番号を入力してください（例: 09012345678）。', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
     return;
   }
 
   var tempData = getUserState(userId).context;
   var normalized = normalizePhoneInput(text);
   if (!validatePhoneNumber(normalized)) {
-    sendFallbackWithContact(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678 または 090-1234-5678）。');
+    sendQuickReply(replyToken, '電話番号の形式が正しくありません。もう一度入力してください（例: 09012345678 または 090-1234-5678）。', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
     return;
   }
 
   tempData.phone = normalized;
 
-  setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
-  sendDatePromptWithQuickReply(replyToken, userId);
+  // Phone is the last input before reservation creation
+  createReservationAndGoToPayment(replyToken, userId, tempData);
 }
 
 /**
@@ -250,7 +284,8 @@ function sendDatePromptWithQuickReply(replyToken, userId) {
     { label: '来週木曜', text: '来週木曜' },
     { label: '来週金曜', text: '来週金曜' },
     { label: '来週土曜', text: '来週土曜' },
-    { label: '来週日曜', text: '来週日曜' }
+    { label: '来週日曜', text: '来週日曜' },
+    { label: 'やめる', text: 'やめる' }
   ];
   sendQuickReply(replyToken, '希望日を入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。下のボタンから選ぶか、日付を入力してください。', dateOptions);
 }
@@ -286,6 +321,7 @@ function sendTimePromptWithQuickReply(replyToken) {
     '9:00', '9:30', '10:00', '10:30', '11:00', '12:00',
     '13:00', '14:00', '15:00', '16:00', '17:00'
   ].map(function(t) { return { label: t, text: t }; });
+  timeOptions.push({ label: 'やめる', text: 'やめる' });
   sendQuickReply(replyToken, '希望時間を入力してください（例: 10:00 または 10時）。下のボタンから選ぶか、時刻を入力してください。', timeOptions);
 }
 
@@ -307,41 +343,33 @@ function handleAwaitingTime(text, replyToken, userId) {
   }
 
   tempData.reserved_start = normalized;
-  tempData.reserved_end = calculateEndTime(normalized);
+  var duration = tempData.menu_type === '再診（60分）' ? 60 : 30;
+  tempData.reserved_end = calculateEndTime(normalized, duration);
 
-  setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
-
-  var menuOptions = [
-    '初診（30分）',
-    '再診（30分）',
-    '再診（60分）'
-  ];
-
-  sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions.map(function(opt) {
-    return {label: opt, text: opt};
-  }));
+  // Returning user: skip name/phone → go directly to reservation creation
+  if (tempData.is_returning && tempData.patient_name && tempData.phone) {
+    createReservationAndGoToPayment(replyToken, userId, tempData);
+  } else {
+    // First-time user: collect name → phone → reservation creation
+    setUserState(userId, USER_STATES.AWAITING_NAME, tempData);
+    sendQuickReply(replyToken, 'お名前を入力してください。', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
+  }
 }
 
 /**
- * Handle awaiting treatment
+ * Create reservation and transition to payment state
+ * Extracted from old handleAwaitingTreatment for reuse by multiple flow paths
  */
-function handleAwaitingTreatment(text, replyToken, userId) {
-  var tempData = getUserState(userId).context;
-  tempData.menu_type = text;
-
-  // Determine visit type
-  tempData.visit_type = text.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
-
-  // Get LINE profile
+function createReservationAndGoToPayment(replyToken, userId, tempData) {
   var profile = getLineProfile(userId);
   if (profile) {
     tempData.line_display_name = profile.userId;
   }
 
-  // Create reservation
   var result = createReservation(tempData);
 
-  // Send confirmation with payment link（先にリンク取得してから状態を移す）
   var paymentLink = null;
   try {
     paymentLink = createPaymentLink(
@@ -356,7 +384,7 @@ function handleAwaitingTreatment(text, replyToken, userId) {
   if (paymentLink) {
     setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
       reservation_id: result.id,
-      payment_link: paymentLink  // 再送用に保持
+      payment_link: paymentLink
     });
     var message = MessageTemplates.getDepositRequestMessage(
       result.id,
@@ -365,11 +393,41 @@ function handleAwaitingTreatment(text, replyToken, userId) {
       tempData.menu_type,
       paymentLink
     );
-    sendLineReply(replyToken, message);
+    sendQuickReply(replyToken, message, [
+      { label: '支払完了', text: '支払完了' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
   } else {
     sendLineReply(replyToken, '決済リンクの作成に失敗しました。管理者にお問い合わせください。');
     clearUserState(userId);
   }
+}
+
+/**
+ * Handle awaiting treatment (Step 1 of new flow: menu selection → date)
+ */
+function handleAwaitingTreatment(text, replyToken, userId) {
+  var validOptions = ['初診（30分）', '再診（30分）', '再診（60分）'];
+  var found = false;
+  for (var i = 0; i < validOptions.length; i++) {
+    if (text === validOptions[i]) { found = true; break; }
+  }
+
+  if (!found) {
+    var menuOptions = validOptions.map(function(opt) {
+      return { label: opt, text: opt };
+    });
+    menuOptions.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions);
+    return;
+  }
+
+  var tempData = getUserState(userId).context;
+  tempData.menu_type = text;
+  tempData.visit_type = text.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
+
+  setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
+  sendDatePromptWithQuickReply(replyToken, userId);
 }
 
 /**
@@ -400,7 +458,10 @@ function handleAwaitingPayment(text, replyToken, userId) {
     sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！');
     clearUserState(userId);
   } else if (storedLink) {
-    sendLineReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。\n\n※やめる場合は「キャンセル」と返信してください。');
+    sendQuickReply(replyToken, 'お支払いがまだ完了していません。\n\n下のリンクからデポジットをお支払いください。\n\n' + storedLink + '\n\nお支払い完了後、「支払完了」と返信してください。', [
+      { label: '支払完了', text: '支払完了' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
   } else {
     sendLineReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。');
   }
@@ -502,7 +563,7 @@ function handleAwaitingChangeField(text, replyToken, userId) {
     var menuOptions = ['初診（30分）', '再診（30分）', '再診（60分）'];
     sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions.map(function(opt) {
       return { label: opt, text: opt };
-    }));
+    }).concat([{ label: 'やめる', text: 'やめる' }]));
     return;
   }
 
@@ -561,7 +622,8 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CHANGE_CONFIRM, tempData);
 
   var reservation = getReservationById(tempData.selected_reservation_id);
-  sendLineReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized)));
+  var duration = reservation.menu_type === '再診（60分）' ? 60 : 30;
+  sendLineReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized, duration)));
 }
 
 /**
@@ -624,8 +686,10 @@ function handleAwaitingChangeConfirm(text, replyToken, userId) {
     updates.reserved_date = tempData.new_date;
     changeLabel = '日付 → ' + tempData.new_date;
   } else if (tempData.new_time) {
+    var reservation = getReservationById(tempData.selected_reservation_id);
+    var duration = (reservation && reservation.menu_type === '再診（60分）') ? 60 : 30;
     updates.reserved_start = tempData.new_time;
-    updates.reserved_end = calculateEndTime(tempData.new_time);
+    updates.reserved_end = calculateEndTime(tempData.new_time, duration);
     changeLabel = '時間 → ' + tempData.new_time + ' - ' + updates.reserved_end;
   } else if (tempData.new_treatment) {
     updates.menu_type = tempData.new_treatment;

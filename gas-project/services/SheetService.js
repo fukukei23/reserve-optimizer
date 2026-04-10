@@ -289,6 +289,33 @@ function getReservationsByLineUserId(lineUserId) {
 }
 
 /**
+ * Get last reservation by LINE User ID (any status except Cancelled/NoShow)
+ * Used for returning user detection to skip name/phone input
+ */
+function getLastReservationByLineUserId(lineUserId) {
+  var sheet = getReservationsSheet();
+  var data = sheet.getDataRange().getValues();
+  var lastReservation = null;
+
+  for (var i = data.length - 1; i >= 1; i--) {
+    if (data[i][4] === lineUserId) {
+      var status = data[i][10];
+      if (status !== RESERVATION_STATUS.CANCELLED && status !== RESERVATION_STATUS.NO_SHOW) {
+        var patientName = data[i][2];
+        if (patientName) {
+          return {
+            patient_name: String(patientName),
+            phone: data[i][3] ? String(data[i][3]) : ''
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Get reservations by phone number
  */
 function getReservationsByPatient(phoneNumber) {
