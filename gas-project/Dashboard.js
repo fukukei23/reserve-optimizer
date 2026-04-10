@@ -107,7 +107,7 @@ function updateDashboard() {
     ['', currentKPIs.estimated_recovered_revenue + '円', '-', '-']
   ];
 
-  sheet.getRange(5, 2, summaryValues.length, 3).setValues(summaryValues);
+  sheet.getRange(5, 2, summaryValues.length, 4).setValues(summaryValues);
 
   // Update targets
   var targets = compareKPIsToTargets(currentKPIs);

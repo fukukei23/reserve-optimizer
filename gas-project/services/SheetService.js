@@ -8,7 +8,9 @@
  * Format a Date object to YYYY-MM-DD string
  */
 function formatDateObj(d) {
-  if (!d || !(d instanceof Date)) return d || '';
+  if (!d) return '';
+  if (typeof d === 'string') return d.indexOf('NaN') === -1 ? d : '';
+  if (!(d instanceof Date)) return '';
   var y = d.getFullYear();
   var m = d.getMonth() + 1;
   var day = d.getDate();
@@ -20,7 +22,9 @@ function formatDateObj(d) {
  * Format a Date object to HH:MM string (for time columns stored as dates)
  */
 function formatTimeObj(d) {
-  if (!d || !(d instanceof Date)) return d || '';
+  if (!d) return '';
+  if (typeof d === 'string') return d.indexOf('NaN') === -1 ? d : '';
+  if (!(d instanceof Date)) return '';
   var h = d.getHours();
   var min = d.getMinutes();
   if (isNaN(h) || isNaN(min)) return '';
@@ -238,9 +242,9 @@ function getReservationsByDate(date) {
         line_display_name: data[i][4],
         visit_type: data[i][5],
         menu_type: data[i][6],
-        reserved_date: data[i][7],
-        reserved_start: data[i][8],
-        reserved_end: data[i][9],
+        reserved_date: formatDateObj(data[i][7]),
+        reserved_start: formatTimeObj(data[i][8]),
+        reserved_end: formatTimeObj(data[i][9]),
         status: data[i][10]
       });
     }
@@ -268,9 +272,9 @@ function getReservationsByLineUserId(lineUserId) {
           line_display_name: data[i][4],
           visit_type: data[i][5],
           menu_type: data[i][6],
-          reserved_date: data[i][7],
-          reserved_start: data[i][8],
-          reserved_end: data[i][9],
+          reserved_date: formatDateObj(data[i][7]),
+          reserved_start: formatTimeObj(data[i][8]),
+          reserved_end: formatTimeObj(data[i][9]),
           status: status,
           deposit_required: data[i][11],
           deposit_amount: data[i][12],
@@ -296,8 +300,8 @@ function getReservationsByPatient(phoneNumber) {
     if (data[i][3] === phoneNumber) {
       results.push({
         id: data[i][0],
-        reserved_date: data[i][7],
-        reserved_start: data[i][8],
+        reserved_date: formatDateObj(data[i][7]),
+        reserved_start: formatTimeObj(data[i][8]),
         status: data[i][10]
       });
     }

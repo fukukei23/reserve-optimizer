@@ -171,7 +171,7 @@ var MessageTemplates = {
     for (var i = 0; i < reservations.length; i++) {
       var r = reservations[i];
       msg += (i + 1) + '. 【' + r.id + '】\n' +
-        '   ' + r.reserved_date + ' ' + r.reserved_start + ' - ' + r.reserved_end + '\n' +
+        '   ' + r.reserved_date + ' ' + r.reserved_start + (r.reserved_end && r.reserved_end.indexOf('NaN') === -1 ? ' - ' + r.reserved_end : '') + '\n' +
         '   ' + r.menu_type + ' / デポジット: ' + r.deposit_status + '\n\n';
     }
     msg += 'キャンセルする予約の番号を返信してください。';
@@ -184,7 +184,7 @@ var MessageTemplates = {
   getCancelConfirmMessage: function(reservation) {
     var msg = '以下の予約をキャンセルします。よろしいですか？\n\n' +
       '【予約ID】 ' + reservation.id + '\n' +
-      '【日時】 ' + reservation.reserved_date + ' ' + reservation.reserved_start + ' - ' + reservation.reserved_end + '\n' +
+      '【日時】 ' + reservation.reserved_date + ' ' + reservation.reserved_start + (reservation.reserved_end && reservation.reserved_end.indexOf('NaN') === -1 ? ' - ' + reservation.reserved_end : '') + '\n' +
       '【施術】 ' + reservation.menu_type + '\n';
 
     if (reservation.deposit_status === DEPOSIT_STATUS.PAID) {
@@ -297,7 +297,7 @@ var MessageTemplates = {
     for (var i = 0; i < reservations.length; i++) {
       var r = reservations[i];
       msg += (i + 1) + '. 【' + r.id + '】\n' +
-        '   ' + r.reserved_date + ' ' + r.reserved_start + ' - ' + r.reserved_end + '\n' +
+        '   ' + r.reserved_date + ' ' + r.reserved_start + (r.reserved_end && r.reserved_end.indexOf('NaN') === -1 ? ' - ' + r.reserved_end : '') + '\n' +
         '   ' + r.menu_type + '\n\n';
     }
     msg += '変更する予約の番号を返信してください。';
@@ -311,7 +311,7 @@ var MessageTemplates = {
     return '以下の予約を変更します。\n\n' +
       '【予約ID】 ' + reservation.id + '\n' +
       '【日付】 ' + reservation.reserved_date + '\n' +
-      '【時間】 ' + reservation.reserved_start + ' - ' + reservation.reserved_end + '\n' +
+      '【時間】 ' + reservation.reserved_start + (reservation.reserved_end && reservation.reserved_end.indexOf('NaN') === -1 ? ' - ' + reservation.reserved_end : '') + '\n' +
       '【施術】 ' + reservation.menu_type + '\n\n' +
       '何を変更しますか？\n' +
       '「日付」「時間」「施術」のいずれかを返信してください。';

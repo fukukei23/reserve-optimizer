@@ -449,7 +449,7 @@ function handleAwaitingChangeSelect(text, replyToken, userId) {
 
   if (isNaN(selection) || selection < 1 || selection > reservationIds.length) {
     var items = [];
-    for (var i = 0; i < reservationIds.length && i < 13; i++) {
+    for (var i = 0; i < reservationIds.length && i < 12; i++) {
       items.push({ label: String(i + 1), text: String(i + 1) });
     }
     items.push({ label: 'やめる', text: 'やめる' });
@@ -696,7 +696,7 @@ function handleAwaitingCancelSelect(text, replyToken, userId) {
 
   if (isNaN(selection) || selection < 1 || selection > reservationIds.length) {
     var items = [];
-    for (var i = 0; i < reservationIds.length && i < 13; i++) {
+    for (var i = 0; i < reservationIds.length && i < 12; i++) {
       var num = String(i + 1);
       items.push({ label: num, text: num });
     }
