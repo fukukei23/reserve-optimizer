@@ -94,6 +94,20 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle "予約する" globally — reset current operation and start new reservation
+  if (text === '予約する' && userState.state !== USER_STATES.IDLE) {
+    clearUserState(userId);
+    startReservationFlow(replyToken, userId);
+    return;
+  }
+
+  // Handle "予約変更・キャンセル" globally — reset and start change/cancel flow
+  if (text === '予約変更・キャンセル' && userState.state !== USER_STATES.IDLE) {
+    clearUserState(userId);
+    handleChangeFlow(replyToken, userId);
+    return;
+  }
+
   // Check for commands
   if (text.startsWith('/')) {
     handleCommand(text, replyToken, userId);
