@@ -41,6 +41,7 @@ function doGet(e) {
 
   // === モード2: gas-autopilot ===
   var fnName = (e && e.parameter && e.parameter.fn) || '';
+  var param1 = (e && e.parameter && e.parameter.p1) || '';
 
   var allowedFunctions = {
     runSetup: runSetup,
@@ -51,7 +52,18 @@ function doGet(e) {
     testChangeFlow: testChangeFlow,
     testLineReply: testLineReply,
     debugDoPost: debugDoPost,
-    debugStripeLink: debugStripeLink
+    debugStripeLink: debugStripeLink,
+    setupRichMenuFromProperty: setupRichMenuFromProperty,
+    storeRichMenuImage: function() {
+      if (!param1) return { ok: false, error: 'p1 (base64 chunk) required' };
+      var existing = PropertiesService.getScriptProperties().getProperty('RICHMENU_IMAGE_B64') || '';
+      PropertiesService.getScriptProperties().setProperty('RICHMENU_IMAGE_B64', existing + param1);
+      return { ok: true, length: (existing + param1).length };
+    },
+    clearRichMenuImage: function() {
+      PropertiesService.getScriptProperties().deleteProperty('RICHMENU_IMAGE_B64');
+      return { ok: true };
+    }
   };
 
   if (fnName && fnName in allowedFunctions) {
