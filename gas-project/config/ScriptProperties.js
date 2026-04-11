@@ -114,7 +114,7 @@ function getDepositAmount() {
  * Get cancellation deadline in hours
  */
 function getCancellationDeadlineHours() {
-  return parseInt(getProperty(PROPERTY_KEYS.CANCELLATION_DEADLINE_HOURS, '2'));
+  return parseInt(getProperty(PROPERTY_KEYS.CANCELLATION_DEADLINE_HOURS, '24'));
 }
 
 /**
@@ -191,7 +191,7 @@ function getBookingLeadTimeMinutes() {
  * Get max concurrent bookings per time slot
  */
 function getMaxConcurrentBookings() {
-  return parseInt(getProperty(PROPERTY_KEYS.MAX_CONCURRENT_BOOKINGS, '1'));
+  return parseInt(getProperty(PROPERTY_KEYS.MAX_CONCURRENT_BOOKINGS, '2'));
 }
 
 /**
@@ -221,14 +221,14 @@ function getBusinessEndTime() {
 function initializeDefaultProperties() {
   var defaults = {
     DEPOSIT_AMOUNT_JPY: '1000',
-    CANCELLATION_DEADLINE_HOURS: '2',
+    CANCELLATION_DEADLINE_HOURS: '24',
     REMINDER_HOURS_BEFORE: '24',
     RESALE_NOTIFICATION_MINUTES: '10',
     AVERAGE_UNIT_PRICE: '6000',
     NO_SHOW_THRESHOLD: '2',
     NO_SHOW_DEPOSIT_AMOUNT: '2000',
     BOOKING_LEAD_TIME_MINUTES: '60',
-    MAX_CONCURRENT_BOOKINGS: '1',
+    MAX_CONCURRENT_BOOKINGS: '2',
     MAX_RESERVATIONS_PER_USER: '3',
     BUSINESS_START_TIME: '09:00',
     BUSINESS_END_TIME: '18:00'

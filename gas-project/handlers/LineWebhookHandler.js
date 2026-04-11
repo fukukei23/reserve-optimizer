@@ -315,29 +315,115 @@ function handleAwaitingPhone(text, replyToken, userId) {
 }
 
 /**
- * Send date prompt with quick reply (今日 / 明日 / 明後日 / 来週月曜 ...)
+ * Send date prompt with rolling calendar (next 10 available dates, skip Sundays)
+ * @param {string} replyToken - LINE reply token
+ * @param {string} userId - LINE user ID (unused but kept for signature compatibility)
+ * @param {string} pageStartDate - optional 'YYYY-MM-DD' to start showing from a specific date
  */
-function sendDatePromptWithQuickReply(replyToken, userId) {
-  var dateOptions = [
-    { label: '今日', text: '今日' },
-    { label: '明日', text: '明日' },
-    { label: '明後日', text: '明後日' },
-    { label: '来週月曜', text: '来週月曜' },
-    { label: '来週火曜', text: '来週火曜' },
-    { label: '来週水曜', text: '来週水曜' },
-    { label: '来週木曜', text: '来週木曜' },
-    { label: '来週金曜', text: '来週金曜' },
-    { label: '来週土曜', text: '来週土曜' },
-    { label: '来週日曜', text: '来週日曜' },
-    { label: 'やめる', text: 'やめる' }
-  ];
-  sendQuickReply(replyToken, '希望日を入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。下のボタンから選ぶか、日付を入力してください。', dateOptions);
+function sendDatePromptWithQuickReply(replyToken, userId, pageStartDate) {
+  var tz = 'Asia/Tokyo';
+  var now = new Date();
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var todayDate = new Date(todayStr + 'T00:00:00+09:00');
+  var maxDate = new Date(todayDate);
+  maxDate.setDate(maxDate.getDate() + 90);
+  var maxDateStr = Utilities.formatDate(maxDate, tz, 'yyyy-MM-dd');
+  var weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+  // Start date for this page
+  var start;
+  if (pageStartDate) {
+    start = new Date(pageStartDate + 'T00:00:00+09:00');
+  } else {
+    start = new Date(todayDate);
+  }
+
+  // Collect up to 10 available dates (skip Sundays)
+  var dates = [];
+  var current = new Date(start);
+  while (dates.length < 10) {
+    var dateStr = Utilities.formatDate(current, tz, 'yyyy-MM-dd');
+    if (dateStr > maxDateStr) break;
+    var dow = current.getDay();
+    if (dow === 0) { // Skip Sunday
+      current.setDate(current.getDate() + 1);
+      continue;
+    }
+    if (dateStr < todayStr) {
+      current.setDate(current.getDate() + 1);
+      continue;
+    }
+    var month = current.getMonth() + 1;
+    var day = current.getDate();
+    dates.push({
+      date: dateStr,
+      label: month + '/' + day + '(' + weekdays[dow] + ')'
+    });
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Build Quick Reply items
+  var items = [];
+  for (var i = 0; i < dates.length; i++) {
+    items.push({ label: dates[i].label, text: dates[i].date });
+  }
+
+  // Previous page button
+  var isFirstPage = !pageStartDate;
+  if (!isFirstPage) {
+    var prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - 1);
+    var prevDates = [];
+    while (prevDates.length < 10 && prevStart >= todayDate) {
+      var prevDateStr = Utilities.formatDate(prevStart, tz, 'yyyy-MM-dd');
+      if (prevDateStr < todayStr) break;
+      var prevDow = prevStart.getDay();
+      if (prevDow !== 0) {
+        prevDates.unshift(prevDateStr);
+      }
+      prevStart.setDate(prevStart.getDate() - 1);
+    }
+    if (prevDates.length > 0) {
+      items.push({ label: '\u25C0前へ', text: 'PAGE_PREV:' + prevDates[0] });
+    }
+  }
+
+  // Next page button
+  if (dates.length === 10) {
+    var nextDateStr = Utilities.formatDate(current, tz, 'yyyy-MM-dd');
+    if (nextDateStr <= maxDateStr) {
+      items.push({ label: '次へ\u25B6', text: 'PAGE_NEXT:' + nextDateStr });
+    }
+  }
+
+  items.push({ label: '日付入力', text: '日付入力' });
+  items.push({ label: 'やめる', text: 'やめる' });
+
+  var msg = isFirstPage
+    ? '希望日を選んでください。（日曜休業、90日先まで）'
+    : '続きの日付を選んでください。';
+  sendQuickReply(replyToken, msg, items);
 }
 
 /**
  * Handle awaiting date
  */
 function handleAwaitingDate(text, replyToken, userId) {
+  // Handle calendar page navigation
+  if (text.indexOf('PAGE_NEXT:') === 0 || text.indexOf('PAGE_PREV:') === 0) {
+    var navDate = text.split(':')[1];
+    sendDatePromptWithQuickReply(replyToken, userId, navDate);
+    return;
+  }
+
+  // Handle "日付入力" — show free text prompt
+  if (text === '日付入力') {
+    sendQuickReply(replyToken, '日付を入力してください。（例: 4月25日、5/1、2026-06-01）', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
   if (text === FALLBACK_RETRY_TEXT || text === '別の日' || text === '別の日を選ぶ') {
     sendDatePromptWithQuickReply(replyToken, userId);
     return;
@@ -347,7 +433,30 @@ function handleAwaitingDate(text, replyToken, userId) {
 
   var parsedDate = parseDateInput(text);
   if (!parsedDate) {
-    sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。');
+    sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 4月25日、5/1、2026-06-01）。');
+    return;
+  }
+
+  // 90-day limit check
+  var tz = 'Asia/Tokyo';
+  var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var maxDate = new Date(todayStr + 'T00:00:00+09:00');
+  maxDate.setDate(maxDate.getDate() + 90);
+  var maxDateStr = Utilities.formatDate(maxDate, tz, 'yyyy-MM-dd');
+
+  if (parsedDate < todayStr) {
+    sendFallbackWithContact(replyToken, '過去の日付は選択できません。別の日を選択してください。');
+    return;
+  }
+  if (parsedDate > maxDateStr) {
+    sendFallbackWithContact(replyToken, '予約は90日以内のみ可能です。');
+    return;
+  }
+
+  // Sunday check
+  var bookingDate = new Date(parsedDate + 'T12:00:00+09:00');
+  if (bookingDate.getDay() === 0) {
+    sendFallbackWithContact(replyToken, '日曜日は休業日です。別の日を選択してください。');
     return;
   }
 
@@ -369,10 +478,18 @@ function sendTimePromptWithQuickReply(replyToken, date) {
   var maxConcurrent = getMaxConcurrentBookings();
   var bookedSlots = getBookedSlotsForDate(targetDate);
 
-  var allSlots = [
-    '9:00', '9:30', '10:00', '10:30', '11:00', '12:00',
-    '13:00', '14:00', '15:00', '16:00', '17:00'
-  ];
+  // Generate slots based on day of week
+  var targetDateObj = new Date(targetDate + 'T12:00:00+09:00');
+  var dayOfWeek = targetDateObj.getDay();
+  var allSlots;
+
+  if (dayOfWeek === 6) {
+    // Saturday: 9:00-13:00 (no lunch break)
+    allSlots = ['9:00', '9:30', '10:00', '10:30', '11:00', '12:00'];
+  } else {
+    // Weekday: 9:00-18:00, lunch break 12:00-13:00 excluded
+    allSlots = ['9:00', '9:30', '10:00', '10:30', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+  }
 
   var availableSlots = [];
   for (var i = 0; i < allSlots.length; i++) {
@@ -803,9 +920,9 @@ function handleAwaitingChangeField(text, replyToken, userId) {
   var reservation = getReservationById(reservationId);
   if (reservation) {
     sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
-      { label: '📅 日付', data: '日付' },
-      { label: '🕐 時間', data: '時間' },
-      { label: '💆 施術', data: '施術' }
+      { label: '📅 日付', text: '日付' },
+      { label: '🕐 時間', text: '時間' },
+      { label: '💆 施術', text: '施術' }
     ]);
   } else {
     clearUserState(userId);
@@ -817,7 +934,22 @@ function handleAwaitingChangeField(text, replyToken, userId) {
  * Handle awaiting change date
  */
 function handleAwaitingChangeDate(text, replyToken, userId) {
-  if (text === FALLBACK_RETRY_TEXT) {
+  // Handle calendar page navigation
+  if (text.indexOf('PAGE_NEXT:') === 0 || text.indexOf('PAGE_PREV:') === 0) {
+    var navDate = text.split(':')[1];
+    sendDatePromptWithQuickReply(replyToken, userId, navDate);
+    return;
+  }
+
+  // Handle "日付入力" — show free text prompt
+  if (text === '日付入力') {
+    sendQuickReply(replyToken, '日付を入力してください。（例: 4月25日、5/1、2026-06-01）', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
+  if (text === FALLBACK_RETRY_TEXT || text === '別の日' || text === '別の日を選ぶ') {
     sendDatePromptWithQuickReply(replyToken, userId);
     return;
   }
@@ -826,7 +958,30 @@ function handleAwaitingChangeDate(text, replyToken, userId) {
   var parsedDate = parseDateInput(text);
 
   if (!parsedDate) {
-    sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 今日、明日、来週月曜、または 2026-02-20）。');
+    sendFallbackWithContact(replyToken, '日付の形式が正しくありません。もう一度入力してください（例: 4月25日、5/1、2026-06-01）。');
+    return;
+  }
+
+  // 90-day limit check
+  var tz = 'Asia/Tokyo';
+  var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var maxDate = new Date(todayStr + 'T00:00:00+09:00');
+  maxDate.setDate(maxDate.getDate() + 90);
+  var maxDateStr = Utilities.formatDate(maxDate, tz, 'yyyy-MM-dd');
+
+  if (parsedDate < todayStr) {
+    sendFallbackWithContact(replyToken, '過去の日付は選択できません。別の日を選択してください。');
+    return;
+  }
+  if (parsedDate > maxDateStr) {
+    sendFallbackWithContact(replyToken, '予約は90日以内のみ可能です。');
+    return;
+  }
+
+  // Sunday check
+  var bookingDate = new Date(parsedDate + 'T12:00:00+09:00');
+  if (bookingDate.getDay() === 0) {
+    sendFallbackWithContact(replyToken, '日曜日は休業日です。別の日を選択してください。');
     return;
   }
 
@@ -1391,27 +1546,40 @@ function validateTreatmentTimeOrdering(userId, date, time, treatmentType, exclud
 }
 
 /**
- * Parse date input (YYYY-MM-DD, MM/DD/YYYY, 今日, 明日, 明後日, 来週月曜...)
+ * Parse date input (YYYY-MM-DD, M月D日, M/D, 今日, 明日, 明後日, 来週月曜...)
+ * Also strips trailing (曜日) suffix e.g. "4/25(金)" → "4/25"
  */
 function parseDateInput(text) {
   if (!text || typeof text !== 'string') return null;
   var s = text.trim();
 
-  var patterns = [
-    /(\d{4})-(\d{1,2})-(\d{1,2})/,   // YYYY-MM-DD
-    /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // MM/DD/YYYY
-    /(\d{4})\/(\d{1,2})\/(\d{1,2})/   // YYYY/MM/DD
-  ];
-  for (var i = 0; i < patterns.length; i++) {
-    var match = s.match(patterns[i]);
-    if (match) {
-      return match[0].indexOf('-') !== -1 ? match[0] : formatDateFromMatch(match, patterns[i]);
-    }
-  }
+  // Strip trailing (曜日) suffix e.g. "4/25(金)" → "4/25"
+  s = s.replace(/\([月火水木金土日]\)$/, '');
 
   var tz = 'Asia/Tokyo';
   var now = new Date();
   var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var currentYear = parseInt(Utilities.formatDate(now, tz, 'yyyy'));
+
+  // YYYY-MM-DD
+  var isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (isoMatch) return isoMatch[0];
+
+  // YYYY/MM/DD
+  var ymdSlash = s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);
+  if (ymdSlash) return ymdSlash[1] + '-' + pad2(ymdSlash[2]) + '-' + pad2(ymdSlash[3]);
+
+  // MM/DD/YYYY
+  var mdySlash = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mdySlash) return mdySlash[3] + '-' + pad2(mdySlash[1]) + '-' + pad2(mdySlash[2]);
+
+  // M/D (no year — assume current year, if past assume next year)
+  var mdSlash = s.match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (mdSlash) return resolveMonthDay(currentYear, parseInt(mdSlash[1]), parseInt(mdSlash[2]), todayStr);
+
+  // M月D日 (Japanese date format)
+  var jpDate = s.match(/^(\d{1,2})月(\d{1,2})日?$/);
+  if (jpDate) return resolveMonthDay(currentYear, parseInt(jpDate[1]), parseInt(jpDate[2]), todayStr);
 
   if (s === '今日') return todayStr;
   if (s === '明日' || s === '翌日') return addDaysToDateStr(todayStr, 1);
@@ -1435,22 +1603,24 @@ function parseDateInput(text) {
   return null;
 }
 
-function formatDateFromMatch(match, pattern) {
-  var str = match[0];
-  if (str.indexOf('-') !== -1 && str.length >= 10) return str;
-  var parts = str.split('/');
-  if (parts.length !== 3) return str;
-  var y, m, d;
-  if (parts[0].length === 4) {
-    y = parts[0];
-    m = parts[1].length === 1 ? '0' + parts[1] : parts[1];
-    d = parts[2].length === 1 ? '0' + parts[2] : parts[2];
-  } else {
-    y = parts[2];
-    m = parts[0].length === 1 ? '0' + parts[0] : parts[0];
-    d = parts[1].length === 1 ? '0' + parts[1] : parts[1];
+/**
+ * Resolve M/D to YYYY-MM-DD, using next year if the date is in the past
+ */
+function resolveMonthDay(year, month, day, todayStr) {
+  var m = pad2(String(month));
+  var d = pad2(String(day));
+  var candidate = year + '-' + m + '-' + d;
+  if (candidate < todayStr) {
+    candidate = (year + 1) + '-' + m + '-' + d;
   }
-  return y + '-' + m + '-' + d;
+  return candidate;
+}
+
+/**
+ * Zero-pad a number string to 2 digits
+ */
+function pad2(n) {
+  return n.length === 1 ? '0' + n : String(n);
 }
 
 function addDaysToDateStr(dateStr, days) {
