@@ -596,9 +596,9 @@ function handleChangeFlow(replyToken, userId) {
       selected_reservation_id: r.id
     });
     sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(r), [
-      { label: '📅 日付', data: '日付' },
-      { label: '🕐 時間', data: '時間' },
-      { label: '💆 施術', data: '施術' }
+      { label: '📅 日付', text: '日付' },
+      { label: '🕐 時間', text: '時間' },
+      { label: '💆 施術', text: '施術' }
     ]);
     return;
   }
@@ -729,9 +729,9 @@ function handleAwaitingChangeSelect(text, replyToken, userId) {
     selected_reservation_id: selectedId
   });
   sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
-    { label: '📅 日付', data: '日付' },
-    { label: '🕐 時間', data: '時間' },
-    { label: '💆 施術', data: '施術' }
+    { label: '📅 日付', text: '日付' },
+    { label: '🕐 時間', text: '時間' },
+    { label: '💆 施術', text: '施術' }
   ]);
 }
 
