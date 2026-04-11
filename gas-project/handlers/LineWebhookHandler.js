@@ -508,7 +508,11 @@ function handleChangeFlow(replyToken, userId) {
     setUserState(userId, USER_STATES.AWAITING_CHANGE_FIELD, {
       selected_reservation_id: r.id
     });
-    sendLineReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(r));
+    sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(r), [
+      { label: '📅 日付', data: '日付' },
+      { label: '🕐 時間', data: '時間' },
+      { label: '💆 施術', data: '施術' }
+    ]);
     return;
   }
 
@@ -555,7 +559,11 @@ function handleAwaitingChangeSelect(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CHANGE_FIELD, {
     selected_reservation_id: selectedId
   });
-  sendLineReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation));
+  sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
+    { label: '📅 日付', data: '日付' },
+    { label: '🕐 時間', data: '時間' },
+    { label: '💆 施術', data: '施術' }
+  ]);
 }
 
 /**
@@ -595,7 +603,11 @@ function handleAwaitingChangeField(text, replyToken, userId) {
   // Invalid input — re-show field selection
   var reservation = getReservationById(reservationId);
   if (reservation) {
-    sendLineReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation));
+    sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
+      { label: '📅 日付', data: '日付' },
+      { label: '🕐 時間', data: '時間' },
+      { label: '💆 施術', data: '施術' }
+    ]);
   } else {
     clearUserState(userId);
     sendLineReply(replyToken, '予約が見つかりませんでした。');
