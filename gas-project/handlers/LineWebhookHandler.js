@@ -847,7 +847,8 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
   if (text === FALLBACK_RETRY_TEXT || text === '別の時間') {
     var tempDataCT = getUserState(userId).context;
     var resCT = getReservationById(tempDataCT.selected_reservation_id);
-    sendTimePromptWithQuickReply(replyToken, resCT ? resCT.reserved_date : null);
+    var dateForPicker = tempDataCT.new_date || (resCT ? resCT.reserved_date : null);
+    sendTimePromptWithQuickReply(replyToken, dateForPicker);
     return;
   }
 
@@ -862,7 +863,8 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
   // Check 初診/再診 time ordering (再診 must be after 初診 on same day)
   var reservationForOrder = getReservationById(tempData.selected_reservation_id);
   if (reservationForOrder) {
-    var changeOrderResult = validateTreatmentTimeOrdering(userId, reservationForOrder.reserved_date, normalized, reservationForOrder.menu_type, tempData.selected_reservation_id);
+    var checkDate = tempData.new_date || reservationForOrder.reserved_date;
+    var changeOrderResult = validateTreatmentTimeOrdering(userId, checkDate, normalized, reservationForOrder.menu_type, tempData.selected_reservation_id);
     if (!changeOrderResult.valid) {
       sendFallbackWithContact(replyToken, changeOrderResult.reason);
       return;
@@ -874,10 +876,20 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
 
   var reservation = getReservationById(tempData.selected_reservation_id);
   var duration = reservation.menu_type === '再診（60分）' ? 60 : 30;
-  sendQuickReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized, duration)), [
-    { label: 'はい', text: 'はい' },
-    { label: 'いいえ', text: 'いいえ' }
-  ]);
+
+  if (tempData.new_date) {
+    // Combined date+time change confirmation
+    var confirmMsg = '以下の内容で変更します。\n\n日付: ' + tempData.new_date + '\n時間: ' + normalized + ' - ' + calculateEndTime(normalized, duration) + '\n\nよろしいですか？';
+    sendQuickReply(replyToken, confirmMsg, [
+      { label: 'はい', text: 'はい' },
+      { label: 'いいえ', text: 'いいえ' }
+    ]);
+  } else {
+    sendQuickReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized, duration)), [
+      { label: 'はい', text: 'はい' },
+      { label: 'いいえ', text: 'いいえ' }
+    ]);
+  }
 }
 
 /**
@@ -935,23 +947,33 @@ function handleAwaitingChangeConfirm(text, replyToken, userId) {
     return;
   }
 
-  // Build update object
+  // Date change: also prompt for time on the new date
+  if (tempData.new_date && !tempData.new_time) {
+    setUserState(userId, USER_STATES.AWAITING_CHANGE_TIME, tempData);
+    sendTimePromptWithQuickReply(replyToken, tempData.new_date);
+    return;
+  }
+
+  // Build update object (supports multiple field changes)
   var updates = {};
   var changeLabel = '';
 
   if (tempData.new_date) {
     updates.reserved_date = tempData.new_date;
-    changeLabel = '日付 → ' + tempData.new_date;
-  } else if (tempData.new_time) {
-    var reservation = getReservationById(tempData.selected_reservation_id);
-    var duration = (reservation && reservation.menu_type === '再診（60分）') ? 60 : 30;
+    changeLabel += '日付 → ' + tempData.new_date;
+  }
+  if (tempData.new_time) {
+    var duration = (reservation.menu_type === '再診（60分）') ? 60 : 30;
     updates.reserved_start = tempData.new_time;
     updates.reserved_end = calculateEndTime(tempData.new_time, duration);
-    changeLabel = '時間 → ' + tempData.new_time + ' - ' + updates.reserved_end;
-  } else if (tempData.new_treatment) {
+    if (changeLabel) changeLabel += ', ';
+    changeLabel += '時間 → ' + tempData.new_time + ' - ' + updates.reserved_end;
+  }
+  if (tempData.new_treatment) {
     updates.menu_type = tempData.new_treatment;
     updates.visit_type = tempData.new_treatment.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
-    changeLabel = '施術 → ' + tempData.new_treatment;
+    if (changeLabel) changeLabel += ', ';
+    changeLabel += '施術 → ' + tempData.new_treatment;
   }
 
   updateReservation(reservationId, updates);
