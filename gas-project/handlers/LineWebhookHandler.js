@@ -821,7 +821,10 @@ function handleAwaitingChangeDate(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CHANGE_CONFIRM, tempData);
 
   var reservation = getReservationById(tempData.selected_reservation_id);
-  sendLineReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '日付', parsedDate));
+  sendQuickReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '日付', parsedDate), [
+    { label: 'はい', text: 'はい' },
+    { label: 'いいえ', text: 'いいえ' }
+  ]);
 }
 
 /**
@@ -848,7 +851,10 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
 
   var reservation = getReservationById(tempData.selected_reservation_id);
   var duration = reservation.menu_type === '再診（60分）' ? 60 : 30;
-  sendLineReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized, duration)));
+  sendQuickReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '時間', normalized + ' - ' + calculateEndTime(normalized, duration)), [
+    { label: 'はい', text: 'はい' },
+    { label: 'いいえ', text: 'いいえ' }
+  ]);
 }
 
 /**
@@ -872,7 +878,10 @@ function handleAwaitingChangeTreatment(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CHANGE_CONFIRM, tempData);
 
   var reservation = getReservationById(tempData.selected_reservation_id);
-  sendLineReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '施術', text));
+  sendQuickReply(replyToken, MessageTemplates.getChangeConfirmMessage(reservation, '施術', text), [
+    { label: 'はい', text: 'はい' },
+    { label: 'いいえ', text: 'いいえ' }
+  ]);
 }
 
 /**
@@ -965,7 +974,10 @@ function handleCancelFlow(replyToken, userId) {
     setUserState(userId, USER_STATES.AWAITING_CANCEL_CONFIRM, {
       selected_reservation_id: r.id
     });
-    sendLineReply(replyToken, MessageTemplates.getCancelConfirmMessage(r));
+    sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(r), [
+      { label: 'はい', text: 'はい' },
+      { label: 'いいえ', text: 'いいえ' }
+    ]);
     return;
   }
 
@@ -1097,7 +1109,10 @@ function handleAwaitingCancelSelect(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CANCEL_CONFIRM, {
     selected_reservation_id: selectedId
   });
-  sendLineReply(replyToken, MessageTemplates.getCancelConfirmMessage(reservation));
+  sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(reservation), [
+    { label: 'はい', text: 'はい' },
+    { label: 'いいえ', text: 'いいえ' }
+  ]);
 }
 
 /**
