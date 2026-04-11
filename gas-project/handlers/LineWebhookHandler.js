@@ -220,12 +220,19 @@ function startReservationFlow(replyToken, userId) {
 
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
-  var menuOptions = [
-    { label: '初診（30分）', text: '初診（30分）' },
-    { label: '再診（30分）', text: '再診（30分）' },
-    { label: '再診（60分）', text: '再診（60分）' },
-    { label: 'やめる', text: 'やめる' }
-  ];
+  var menuOptions;
+  if (isReturning) {
+    menuOptions = [
+      { label: '再診（30分）', text: '再診（30分）' },
+      { label: '再診（60分）', text: '再診（60分）' },
+      { label: 'やめる', text: 'やめる' }
+    ];
+  } else {
+    menuOptions = [
+      { label: '初診（30分）', text: '初診（30分）' },
+      { label: 'やめる', text: 'やめる' }
+    ];
+  }
   sendQuickReply(replyToken, '予約を開始します。\n\n施術の種類を選択してください。', menuOptions);
 }
 
@@ -273,7 +280,9 @@ function handleAwaitingName(text, replyToken, userId) {
   tempData.patient_name = trimmed;
 
   setUserState(userId, USER_STATES.AWAITING_PHONE, tempData);
-  sendLineReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。');
+  sendQuickReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。', [
+    { label: 'やめる', text: 'やめる' }
+  ]);
 }
 
 /**
@@ -518,7 +527,11 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
  * Handle awaiting treatment (Step 1 of new flow: menu selection → date)
  */
 function handleAwaitingTreatment(text, replyToken, userId) {
-  var validOptions = ['初診（30分）', '再診（30分）', '再診（60分）'];
+  var tempData = getUserState(userId).context;
+  var isReturning = tempData.is_returning;
+  var validOptions = isReturning
+    ? ['再診（30分）', '再診（60分）']
+    : ['初診（30分）'];
   var found = false;
   for (var i = 0; i < validOptions.length; i++) {
     if (text === validOptions[i]) { found = true; break; }
@@ -532,8 +545,6 @@ function handleAwaitingTreatment(text, replyToken, userId) {
     sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions);
     return;
   }
-
-  var tempData = getUserState(userId).context;
   tempData.menu_type = text;
   tempData.visit_type = text.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
 
