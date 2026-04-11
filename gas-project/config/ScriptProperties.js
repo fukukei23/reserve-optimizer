@@ -29,7 +29,11 @@ var PROPERTY_KEYS = {
 
   // Contact (for fallback "人間に問い合わせる")
   CONTACT_PHONE: 'CONTACT_PHONE',
-  CONTACT_URL: 'CONTACT_URL'
+  CONTACT_URL: 'CONTACT_URL',
+
+  // Business info (for rich menu "営業時間・アクセス")
+  BUSINESS_HOURS: 'BUSINESS_HOURS',
+  BUSINESS_ADDRESS: 'BUSINESS_ADDRESS'
 };
 
 /**
@@ -150,6 +154,20 @@ function getContactPhone() {
  */
 function getContactUrl() {
   return getProperty(PROPERTY_KEYS.CONTACT_URL, '');
+}
+
+/**
+ * Get business hours for "営業時間・アクセス" message (optional)
+ */
+function getBusinessHours() {
+  return getProperty(PROPERTY_KEYS.BUSINESS_HOURS, '');
+}
+
+/**
+ * Get business address for "営業時間・アクセス" message (optional)
+ */
+function getBusinessAddress() {
+  return getProperty(PROPERTY_KEYS.BUSINESS_ADDRESS, '');
 }
 
 /**

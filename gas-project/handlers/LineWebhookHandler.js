@@ -87,6 +87,13 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle "お問い合わせ" globally (rich menu action — same as "人間に問い合わせる")
+  if (text === 'お問い合わせ') {
+    sendLineReply(replyToken, MessageTemplates.getContactMessage());
+    clearUserState(userId);
+    return;
+  }
+
   // Handle "やめる" globally across all non-IDLE states
   if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
@@ -226,6 +233,10 @@ function handleIdleState(text, replyToken, userId) {
     handleChangeFlow(replyToken, userId);
   } else if (text === '当日空き枠通知を受け取る') {
     handleWaitlistFlow(replyToken, userId);
+  } else if (text === '営業時間・アクセス') {
+    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
+  } else if (text === 'お問い合わせ') {
+    sendLineReply(replyToken, MessageTemplates.getContactMessage());
   } else {
     var welcomeData = MessageTemplates.getWelcomeMessage();
     sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);

@@ -246,6 +246,18 @@ var MessageTemplates = {
   },
 
   /**
+   * Business hours and access info for "営業時間・アクセス" (rich menu)
+   */
+  getBusinessHoursMessage: function() {
+    var hours = getBusinessHours();
+    var address = getBusinessAddress();
+    var msg = '【営業時間・アクセス】\n\n';
+    msg += '営業時間:\n' + (hours || 'お問い合わせください') + '\n\n';
+    msg += 'アクセス:\n' + (address || 'お問い合わせください');
+    return msg;
+  },
+
+  /**
    * Contact message for "人間に問い合わせる" (human contact fallback)
    */
   getContactMessage: function() {
