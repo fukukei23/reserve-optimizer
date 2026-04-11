@@ -411,6 +411,30 @@ function handleCancellation(reservationId, reason) {
 }
 
 /**
+ * Get booked slot counts for a specific date
+ * Returns {timeString: count} for active reservations (Pending/Confirmed)
+ * Used for concurrent booking conflict detection
+ */
+function getBookedSlotsForDate(date) {
+  var sheet = getReservationsSheet();
+  var data = sheet.getDataRange().getValues();
+  var slots = {};
+
+  for (var i = 1; i < data.length; i++) {
+    var rowDate = formatDateObj(data[i][7]);
+    var status = data[i][10];
+    if (rowDate === date && (status === RESERVATION_STATUS.PENDING || status === RESERVATION_STATUS.CONFIRMED)) {
+      var startTime = formatTimeObj(data[i][8]);
+      if (startTime) {
+        slots[startTime] = (slots[startTime] || 0) + 1;
+      }
+    }
+  }
+
+  return slots;
+}
+
+/**
  * Find waitlist candidate for vacancy
  */
 function findWaitlistCandidate(appointmentDateTime) {

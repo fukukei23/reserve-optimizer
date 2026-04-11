@@ -165,9 +165,16 @@ var MessageTemplates = {
 
   /**
    * Cancel reservation list (show active reservations for selection)
+   * Now supports pagination: shows page+1 / totalPages
    */
-  getCancelListMessage: function(reservations) {
-    var msg = 'キャンセル可能な予約が ' + reservations.length + ' 件あります。\n\n';
+  getCancelListMessage: function(reservations, page, totalPages) {
+    var pageNum = (page || 0) + 1;
+    var tp = totalPages || 1;
+    var msg = 'キャンセル可能な予約が' + (reservations.length > 0 ? '' : '') + 'あります。';
+    if (tp > 1) {
+      msg += '（' + pageNum + '/' + tp + 'ページ目）';
+    }
+    msg += '\n\n';
     for (var i = 0; i < reservations.length; i++) {
       var r = reservations[i];
       msg += (i + 1) + '. 【' + r.id + '】\n' +
@@ -303,9 +310,16 @@ var MessageTemplates = {
 
   /**
    * Change reservation list (show active reservations for selection)
+   * Now supports pagination: shows page+1 / totalPages
    */
-  getChangeListMessage: function(reservations) {
-    var msg = '変更可能な予約が ' + reservations.length + ' 件あります。\n\n';
+  getChangeListMessage: function(reservations, page, totalPages) {
+    var pageNum = (page || 0) + 1;
+    var tp = totalPages || 1;
+    var msg = '変更可能な予約があります。';
+    if (tp > 1) {
+      msg += '（' + pageNum + '/' + tp + 'ページ目）';
+    }
+    msg += '\n\n';
     for (var i = 0; i < reservations.length; i++) {
       var r = reservations[i];
       msg += (i + 1) + '. 【' + r.id + '】\n' +

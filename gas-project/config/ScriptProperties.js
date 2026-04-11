@@ -33,7 +33,14 @@ var PROPERTY_KEYS = {
 
   // Business info (for rich menu "営業時間・アクセス")
   BUSINESS_HOURS: 'BUSINESS_HOURS',
-  BUSINESS_ADDRESS: 'BUSINESS_ADDRESS'
+  BUSINESS_ADDRESS: 'BUSINESS_ADDRESS',
+
+  // Booking management settings
+  BOOKING_LEAD_TIME_MINUTES: 'BOOKING_LEAD_TIME_MINUTES',   // minimum advance booking time (default: 60)
+  MAX_CONCURRENT_BOOKINGS: 'MAX_CONCURRENT_BOOKINGS',       // simultaneous slots per time (default: 1)
+  MAX_RESERVATIONS_PER_USER: 'MAX_RESERVATIONS_PER_USER',   // max active reservations per user (default: 3)
+  BUSINESS_START_TIME: 'BUSINESS_START_TIME',               // business open time (default: 09:00)
+  BUSINESS_END_TIME: 'BUSINESS_END_TIME'                    // business close time (default: 18:00)
 };
 
 /**
@@ -171,6 +178,41 @@ function getBusinessAddress() {
 }
 
 /**
+ * Get booking lead time in minutes (minimum advance booking time)
+ */
+function getBookingLeadTimeMinutes() {
+  return parseInt(getProperty(PROPERTY_KEYS.BOOKING_LEAD_TIME_MINUTES, '60'));
+}
+
+/**
+ * Get max concurrent bookings per time slot
+ */
+function getMaxConcurrentBookings() {
+  return parseInt(getProperty(PROPERTY_KEYS.MAX_CONCURRENT_BOOKINGS, '1'));
+}
+
+/**
+ * Get max active reservations per user
+ */
+function getMaxReservationsPerUser() {
+  return parseInt(getProperty(PROPERTY_KEYS.MAX_RESERVATIONS_PER_USER, '3'));
+}
+
+/**
+ * Get business start time (HH:MM)
+ */
+function getBusinessStartTime() {
+  return getProperty(PROPERTY_KEYS.BUSINESS_START_TIME, '09:00');
+}
+
+/**
+ * Get business end time (HH:MM)
+ */
+function getBusinessEndTime() {
+  return getProperty(PROPERTY_KEYS.BUSINESS_END_TIME, '18:00');
+}
+
+/**
  * Initialize default properties if not set
  */
 function initializeDefaultProperties() {
@@ -181,7 +223,12 @@ function initializeDefaultProperties() {
     RESALE_NOTIFICATION_MINUTES: '10',
     AVERAGE_UNIT_PRICE: '6000',
     NO_SHOW_THRESHOLD: '2',
-    NO_SHOW_DEPOSIT_AMOUNT: '2000'
+    NO_SHOW_DEPOSIT_AMOUNT: '2000',
+    BOOKING_LEAD_TIME_MINUTES: '60',
+    MAX_CONCURRENT_BOOKINGS: '1',
+    MAX_RESERVATIONS_PER_USER: '3',
+    BUSINESS_START_TIME: '09:00',
+    BUSINESS_END_TIME: '18:00'
   };
 
   var properties = PropertiesService.getScriptProperties();

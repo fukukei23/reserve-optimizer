@@ -219,3 +219,34 @@ function getAgeInDays(date) {
   var oneDay = 24 * 60 * 60 * 1000;
   return Math.floor((Date.now() - date.getTime()) / oneDay);
 }
+
+/**
+ * Check if a date+time combination is in the past (with optional lead time buffer)
+ * @param {string} dateStr - YYYY-MM-DD format
+ * @param {string} timeStr - HH:MM format
+ * @param {number} leadTimeMinutes - additional buffer minutes required before the slot
+ * @returns {boolean} true if the slot is within the lead time or past
+ */
+function isPastDateTime(dateStr, timeStr, leadTimeMinutes) {
+  if (!dateStr || !timeStr) return true;
+  var leadTime = leadTimeMinutes || 0;
+  var tz = 'Asia/Tokyo';
+  var now = new Date();
+  var nowStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var nowTimeStr = Utilities.formatDate(now, tz, 'HH:mm');
+
+  // If date is before today, definitely past
+  if (dateStr < nowStr) return true;
+  // If date is after today, definitely not past
+  if (dateStr > nowStr) return false;
+
+  // Same day — compare times with lead time
+  var timeParts = timeStr.split(':');
+  var slotMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+
+  var nowParts = nowTimeStr.split(':');
+  var nowMinutes = parseInt(nowParts[0]) * 60 + parseInt(nowParts[1]);
+
+  // Slot must be at least leadTime minutes from now
+  return slotMinutes <= (nowMinutes + leadTime);
+}

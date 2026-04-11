@@ -63,7 +63,8 @@ function doGet(e) {
     clearRichMenuImage: function() {
       PropertiesService.getScriptProperties().deleteProperty('RICHMENU_IMAGE_B64');
       return { ok: true };
-    }
+    },
+    initializeDefaultProperties: initializeDefaultProperties
   };
 
   if (fnName && fnName in allowedFunctions) {

@@ -94,6 +94,13 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
+  if (text === '営業時間・アクセス') {
+    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
+    clearUserState(userId);
+    return;
+  }
+
   // Handle "やめる" globally across all non-IDLE states
   if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
@@ -319,7 +326,7 @@ function sendDatePromptWithQuickReply(replyToken, userId) {
  * Handle awaiting date
  */
 function handleAwaitingDate(text, replyToken, userId) {
-  if (text === FALLBACK_RETRY_TEXT) {
+  if (text === FALLBACK_RETRY_TEXT || text === '別の日' || text === '別の日を選ぶ') {
     sendDatePromptWithQuickReply(replyToken, userId);
     return;
   }
@@ -335,27 +342,57 @@ function handleAwaitingDate(text, replyToken, userId) {
   tempData.reserved_date = parsedDate;
 
   setUserState(userId, USER_STATES.AWAITING_TIME, tempData);
-  sendTimePromptWithQuickReply(replyToken);
+  sendTimePromptWithQuickReply(replyToken, parsedDate);
 }
 
 /**
- * Send time prompt with quick reply (9:00, 9:30, ... 17:00)
+ * Send time prompt with quick reply — shows only available slots
+ * Filters out: past times (with lead time buffer) and fully booked slots
+ * @param {string} replyToken - LINE reply token
+ * @param {string} date - YYYY-MM-DD format (optional, defaults to today)
  */
-function sendTimePromptWithQuickReply(replyToken) {
-  var timeOptions = [
+function sendTimePromptWithQuickReply(replyToken, date) {
+  var targetDate = date || Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
+  var leadTime = getBookingLeadTimeMinutes();
+  var maxConcurrent = getMaxConcurrentBookings();
+  var bookedSlots = getBookedSlotsForDate(targetDate);
+
+  var allSlots = [
     '9:00', '9:30', '10:00', '10:30', '11:00', '12:00',
     '13:00', '14:00', '15:00', '16:00', '17:00'
-  ].map(function(t) { return { label: t, text: t }; });
+  ];
+
+  var availableSlots = [];
+  for (var i = 0; i < allSlots.length; i++) {
+    var slot = allSlots[i];
+    // Skip past times (with lead time)
+    if (isPastDateTime(targetDate, slot, leadTime)) continue;
+    // Skip fully booked slots
+    var bookedCount = bookedSlots[slot] || 0;
+    if (bookedCount >= maxConcurrent) continue;
+    availableSlots.push(slot);
+  }
+
+  if (availableSlots.length === 0) {
+    sendQuickReply(replyToken, '申し訳ございません、' + targetDate + 'は予約可能な時間がありません。\n\n別の日を選択してください。', [
+      { label: '別の日を選ぶ', text: '別の日' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
+  var timeOptions = availableSlots.map(function(t) { return { label: t, text: t }; });
   timeOptions.push({ label: 'やめる', text: 'やめる' });
-  sendQuickReply(replyToken, '希望時間を入力してください（例: 10:00 または 10時）。下のボタンから選ぶか、時刻を入力してください。', timeOptions);
+  sendQuickReply(replyToken, '希望時間を選択してください。（空き枠のみ表示）', timeOptions);
 }
 
 /**
  * Handle awaiting time
  */
 function handleAwaitingTime(text, replyToken, userId) {
-  if (text === FALLBACK_RETRY_TEXT) {
-    sendTimePromptWithQuickReply(replyToken);
+  if (text === FALLBACK_RETRY_TEXT || text === '別の時間') {
+    var tempDataR = getUserState(userId).context;
+    sendTimePromptWithQuickReply(replyToken, tempDataR.reserved_date);
     return;
   }
 
@@ -370,6 +407,23 @@ function handleAwaitingTime(text, replyToken, userId) {
   tempData.reserved_start = normalized;
   var duration = tempData.menu_type === '再診（60分）' ? 60 : 30;
   tempData.reserved_end = calculateEndTime(normalized, duration);
+
+  // Check if this time slot is in the past (with lead time buffer)
+  if (isPastDateTime(tempData.reserved_date, normalized, getBookingLeadTimeMinutes())) {
+    sendFallbackWithContact(replyToken, 'その時間は予約できません（' + getBookingLeadTimeMinutes() + '分以上前の予約が必要です）。別の時間を選択してください。');
+    return;
+  }
+
+  // Check if this time slot is already fully booked
+  var bookedSlots = getBookedSlotsForDate(tempData.reserved_date);
+  var bookedCount = bookedSlots[normalized] || 0;
+  if (bookedCount >= getMaxConcurrentBookings()) {
+    sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + normalized + 'は既に予約で埋まっています。\n\n別の時間を選択してください。', [
+      { label: '別の時間', text: '別の時間' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
 
   // Returning user: skip name/phone → go directly to reservation creation
   if (tempData.is_returning && tempData.patient_name && tempData.phone) {
@@ -388,6 +442,30 @@ function handleAwaitingTime(text, replyToken, userId) {
  * Extracted from old handleAwaitingTreatment for reuse by multiple flow paths
  */
 function createReservationAndGoToPayment(replyToken, userId, tempData) {
+  // Check max reservations per user
+  var existingReservations = getReservationsByLineUserId(userId);
+  var maxReservations = getMaxReservationsPerUser();
+  if (existingReservations.length >= maxReservations) {
+    clearUserState(userId);
+    sendQuickReply(replyToken, '予約が' + maxReservations + '件あるため、これ以上予約できません。\n変更・キャンセルする場合は「予約変更・キャンセル」をご利用ください。', [
+      { label: '予約変更・キャンセル', text: '予約変更・キャンセル' },
+      { label: 'メニューに戻る', text: 'メニュー' }
+    ]);
+    return;
+  }
+
+  // Final conflict check (race condition guard)
+  var bookedSlots = getBookedSlotsForDate(tempData.reserved_date);
+  var bookedCount = bookedSlots[tempData.reserved_start] || 0;
+  if (bookedCount >= getMaxConcurrentBookings()) {
+    clearUserState(userId);
+    sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
+      { label: '予約する', text: '予約する' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
   var profile = getLineProfile(userId);
   if (profile) {
     tempData.line_display_name = profile.userId;
@@ -494,6 +572,7 @@ function handleAwaitingPayment(text, replyToken, userId) {
 
 /**
  * Handle change flow - search reservations by LINE userId
+ * Shows max 5 reservations at a time with pagination
  */
 function handleChangeFlow(replyToken, userId) {
   var reservations = getReservationsByLineUserId(userId);
@@ -516,11 +595,29 @@ function handleChangeFlow(replyToken, userId) {
     return;
   }
 
-  // Multiple reservations — show list for selection
+  // Multiple reservations — show paginated list (max 5 at a time)
+  var allIds = reservations.map(function(r) { return r.id; });
+  var page = 0;
+  var pageSize = 5;
+  var pageIds = allIds.slice(0, pageSize);
+  var pageReservations = reservations.slice(0, pageSize);
+
   setUserState(userId, USER_STATES.AWAITING_CHANGE_SELECT, {
-    reservation_ids: reservations.map(function(r) { return r.id; })
+    reservation_ids: allIds,
+    page: page,
+    page_size: pageSize
   });
-  sendLineReply(replyToken, MessageTemplates.getChangeListMessage(reservations));
+
+  var msg = MessageTemplates.getChangeListMessage(pageReservations, page, Math.ceil(allIds.length / pageSize));
+  var items = [];
+  for (var i = 0; i < pageReservations.length; i++) {
+    items.push({ label: String(i + 1), text: String(i + 1) });
+  }
+  if (allIds.length > pageSize) {
+    items.push({ label: '次の5件 ▶', text: '次の5件' });
+  }
+  items.push({ label: 'やめる', text: 'やめる' });
+  sendQuickReply(replyToken, msg, items);
 }
 
 /**
@@ -529,7 +626,8 @@ function handleChangeFlow(replyToken, userId) {
 function handleAwaitingChangeSelect(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
   var reservationIds = tempData.reservation_ids || [];
-  var selection = parseInt(text);
+  var page = tempData.page || 0;
+  var pageSize = tempData.page_size || 5;
 
   if (text === 'やめる') {
     clearUserState(userId);
@@ -537,17 +635,80 @@ function handleAwaitingChangeSelect(text, replyToken, userId) {
     return;
   }
 
-  if (isNaN(selection) || selection < 1 || selection > reservationIds.length) {
-    var items = [];
-    for (var i = 0; i < reservationIds.length && i < 12; i++) {
-      items.push({ label: String(i + 1), text: String(i + 1) });
+  // Handle pagination
+  if (text === '次の5件') {
+    page++;
+    var startIdx = page * pageSize;
+    if (startIdx >= reservationIds.length) {
+      page = 0;
+      startIdx = 0;
     }
-    items.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '番号を選択してください（1〜' + reservationIds.length + '）。', items);
+    var newPageIds = reservationIds.slice(startIdx, startIdx + pageSize);
+    var newPageReservations = [];
+    for (var pi = 0; pi < newPageIds.length; pi++) {
+      var pr = getReservationById(newPageIds[pi]);
+      if (pr) newPageReservations.push(pr);
+    }
+    tempData.page = page;
+    setUserState(userId, USER_STATES.AWAITING_CHANGE_SELECT, tempData);
+    var pmsg = MessageTemplates.getChangeListMessage(newPageReservations, page, Math.ceil(reservationIds.length / pageSize));
+    var pitems = [];
+    for (var pj = 0; pj < newPageReservations.length; pj++) {
+      pitems.push({ label: String(pj + 1), text: String(pj + 1) });
+    }
+    if (startIdx + pageSize < reservationIds.length) {
+      pitems.push({ label: '次の5件 ▶', text: '次の5件' });
+    }
+    if (page > 0) {
+      pitems.push({ label: '◀ 前の5件', text: '前の5件' });
+    }
+    pitems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, pmsg, pitems);
     return;
   }
 
-  var selectedId = reservationIds[selection - 1];
+  if (text === '前の5件') {
+    page = Math.max(0, page - 1);
+    var prevStartIdx = page * pageSize;
+    var prevPageIds = reservationIds.slice(prevStartIdx, prevStartIdx + pageSize);
+    var prevPageReservations = [];
+    for (var pvi = 0; pvi < prevPageIds.length; pvi++) {
+      var pvr = getReservationById(prevPageIds[pvi]);
+      if (pvr) prevPageReservations.push(pvr);
+    }
+    tempData.page = page;
+    setUserState(userId, USER_STATES.AWAITING_CHANGE_SELECT, tempData);
+    var prevMsg = MessageTemplates.getChangeListMessage(prevPageReservations, page, Math.ceil(reservationIds.length / pageSize));
+    var prevItems = [];
+    for (var pvj = 0; pvj < prevPageReservations.length; pvj++) {
+      prevItems.push({ label: String(pvj + 1), text: String(pvj + 1) });
+    }
+    if (prevStartIdx + pageSize < reservationIds.length) {
+      prevItems.push({ label: '次の5件 ▶', text: '次の5件' });
+    }
+    if (page > 0) {
+      prevItems.push({ label: '◀ 前の5件', text: '前の5件' });
+    }
+    prevItems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, prevMsg, prevItems);
+    return;
+  }
+
+  var selection = parseInt(text);
+  var currentStartIdx = page * pageSize;
+
+  if (isNaN(selection) || selection < 1 || selection > pageSize || (currentStartIdx + selection - 1) >= reservationIds.length) {
+    var errorItems = [];
+    var maxOnPage = Math.min(pageSize, reservationIds.length - currentStartIdx);
+    for (var ei = 0; ei < maxOnPage; ei++) {
+      errorItems.push({ label: String(ei + 1), text: String(ei + 1) });
+    }
+    errorItems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, '番号を選択してください（1〜' + maxOnPage + '）。', errorItems);
+    return;
+  }
+
+  var selectedId = reservationIds[currentStartIdx + selection - 1];
   var reservation = getReservationById(selectedId);
 
   if (!reservation) {
@@ -587,7 +748,13 @@ function handleAwaitingChangeField(text, replyToken, userId) {
 
   if (text === '時間') {
     setUserState(userId, USER_STATES.AWAITING_CHANGE_TIME, tempData);
-    sendTimePromptWithQuickReply(replyToken);
+    // Show available slots for the reservation's date
+    var reservationForTime = getReservationById(tempData.selected_reservation_id);
+    if (reservationForTime) {
+      sendTimePromptWithQuickReply(replyToken, reservationForTime.reserved_date);
+    } else {
+      sendTimePromptWithQuickReply(replyToken);
+    }
     return;
   }
 
@@ -642,8 +809,10 @@ function handleAwaitingChangeDate(text, replyToken, userId) {
  * Handle awaiting change time
  */
 function handleAwaitingChangeTime(text, replyToken, userId) {
-  if (text === FALLBACK_RETRY_TEXT) {
-    sendTimePromptWithQuickReply(replyToken);
+  if (text === FALLBACK_RETRY_TEXT || text === '別の時間') {
+    var tempDataCT = getUserState(userId).context;
+    var resCT = getReservationById(tempDataCT.selected_reservation_id);
+    sendTimePromptWithQuickReply(replyToken, resCT ? resCT.reserved_date : null);
     return;
   }
 
@@ -746,6 +915,7 @@ function handleAwaitingChangeConfirm(text, replyToken, userId) {
 
 /**
  * Handle cancel flow - search reservations by LINE userId
+ * Shows max 5 cancellable reservations at a time with pagination
  */
 function handleCancelFlow(replyToken, userId) {
   // Search active reservations for this LINE user
@@ -780,11 +950,27 @@ function handleCancelFlow(replyToken, userId) {
     return;
   }
 
-  // Multiple reservations — show list for selection
+  // Multiple reservations — show paginated list
+  var allIds = activeReservations.map(function(r) { return r.id; });
+  var pageSize = 5;
+  var pageReservations = activeReservations.slice(0, pageSize);
+
   setUserState(userId, USER_STATES.AWAITING_CANCEL_SELECT, {
-    reservation_ids: activeReservations.map(function(r) { return r.id; })
+    reservation_ids: allIds,
+    page: 0,
+    page_size: pageSize
   });
-  sendLineReply(replyToken, MessageTemplates.getCancelListMessage(activeReservations));
+
+  var msg = MessageTemplates.getCancelListMessage(pageReservations, 0, Math.ceil(allIds.length / pageSize));
+  var items = [];
+  for (var j = 0; j < pageReservations.length; j++) {
+    items.push({ label: String(j + 1), text: String(j + 1) });
+  }
+  if (allIds.length > pageSize) {
+    items.push({ label: '次の5件 ▶', text: '次の5件' });
+  }
+  items.push({ label: 'やめる', text: 'やめる' });
+  sendQuickReply(replyToken, msg, items);
 }
 
 /**
@@ -793,18 +979,8 @@ function handleCancelFlow(replyToken, userId) {
 function handleAwaitingCancelSelect(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
   var reservationIds = tempData.reservation_ids || [];
-  var selection = parseInt(text);
-
-  if (isNaN(selection) || selection < 1 || selection > reservationIds.length) {
-    var items = [];
-    for (var i = 0; i < reservationIds.length && i < 12; i++) {
-      var num = String(i + 1);
-      items.push({ label: num, text: num });
-    }
-    items.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '番号を選択してください（1〜' + reservationIds.length + '）。', items);
-    return;
-  }
+  var page = tempData.page || 0;
+  var pageSize = tempData.page_size || 5;
 
   if (text === 'やめる') {
     clearUserState(userId);
@@ -812,7 +988,77 @@ function handleAwaitingCancelSelect(text, replyToken, userId) {
     return;
   }
 
-  var selectedId = reservationIds[selection - 1];
+  // Handle pagination
+  if (text === '次の5件') {
+    page++;
+    var startIdx = page * pageSize;
+    if (startIdx >= reservationIds.length) { page = 0; startIdx = 0; }
+    var npIds = reservationIds.slice(startIdx, startIdx + pageSize);
+    var npRes = [];
+    for (var npi = 0; npi < npIds.length; npi++) {
+      var npr = getReservationById(npIds[npi]);
+      if (npr) npRes.push(npr);
+    }
+    tempData.page = page;
+    setUserState(userId, USER_STATES.AWAITING_CANCEL_SELECT, tempData);
+    var npMsg = MessageTemplates.getCancelListMessage(npRes, page, Math.ceil(reservationIds.length / pageSize));
+    var npItems = [];
+    for (var npj = 0; npj < npRes.length; npj++) {
+      npItems.push({ label: String(npj + 1), text: String(npj + 1) });
+    }
+    if (startIdx + pageSize < reservationIds.length) {
+      npItems.push({ label: '次の5件 ▶', text: '次の5件' });
+    }
+    if (page > 0) {
+      npItems.push({ label: '◀ 前の5件', text: '前の5件' });
+    }
+    npItems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, npMsg, npItems);
+    return;
+  }
+
+  if (text === '前の5件') {
+    page = Math.max(0, page - 1);
+    var pvStartIdx = page * pageSize;
+    var pvIds = reservationIds.slice(pvStartIdx, pvStartIdx + pageSize);
+    var pvRes = [];
+    for (var pvi = 0; pvi < pvIds.length; pvi++) {
+      var pvr = getReservationById(pvIds[pvi]);
+      if (pvr) pvRes.push(pvr);
+    }
+    tempData.page = page;
+    setUserState(userId, USER_STATES.AWAITING_CANCEL_SELECT, tempData);
+    var pvMsg = MessageTemplates.getCancelListMessage(pvRes, page, Math.ceil(reservationIds.length / pageSize));
+    var pvItems = [];
+    for (var pvj = 0; pvj < pvRes.length; pvj++) {
+      pvItems.push({ label: String(pvj + 1), text: String(pvj + 1) });
+    }
+    if (pvStartIdx + pageSize < reservationIds.length) {
+      pvItems.push({ label: '次の5件 ▶', text: '次の5件' });
+    }
+    if (page > 0) {
+      pvItems.push({ label: '◀ 前の5件', text: '前の5件' });
+    }
+    pvItems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, pvMsg, pvItems);
+    return;
+  }
+
+  var selection = parseInt(text);
+  var currentStartIdx = page * pageSize;
+
+  if (isNaN(selection) || selection < 1 || selection > pageSize || (currentStartIdx + selection - 1) >= reservationIds.length) {
+    var errItems = [];
+    var maxOnPage = Math.min(pageSize, reservationIds.length - currentStartIdx);
+    for (var ei = 0; ei < maxOnPage; ei++) {
+      errItems.push({ label: String(ei + 1), text: String(ei + 1) });
+    }
+    errItems.push({ label: 'やめる', text: 'やめる' });
+    sendQuickReply(replyToken, '番号を選択してください（1〜' + maxOnPage + '）。', errItems);
+    return;
+  }
+
+  var selectedId = reservationIds[currentStartIdx + selection - 1];
   var reservation = getReservationById(selectedId);
 
   if (!reservation) {
