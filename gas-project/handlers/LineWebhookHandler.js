@@ -396,6 +396,14 @@ function handleAwaitingTime(text, replyToken, userId) {
     return;
   }
 
+  // "別の日" / "別の日を選ぶ" → 日付選択に戻る（空き枠なし時のQuick Reply用）
+  if (text === '別の日' || text === '別の日を選ぶ') {
+    var tempDataD = getUserState(userId).context;
+    setUserState(userId, USER_STATES.AWAITING_DATE, tempDataD);
+    sendDatePromptWithQuickReply(replyToken, userId);
+    return;
+  }
+
   var tempData = getUserState(userId).context;
 
   var normalized = normalizeTimeInput(text);
