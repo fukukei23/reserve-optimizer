@@ -442,6 +442,16 @@ function handleAwaitingTime(text, replyToken, userId) {
     return;
   }
 
+  // Check 初診/再診 time ordering (再診 must be after 初診 on same day)
+  var orderingResult = validateTreatmentTimeOrdering(userId, tempData.reserved_date, normalized, tempData.menu_type, null);
+  if (!orderingResult.valid) {
+    sendQuickReply(replyToken, orderingResult.reason + '\n\n別の時間を選択してください。', [
+      { label: '別の時間', text: '別の時間' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
   // Returning user: skip name/phone → go directly to reservation creation
   if (tempData.is_returning && tempData.patient_name && tempData.phone) {
     createReservationAndGoToPayment(replyToken, userId, tempData);
@@ -844,6 +854,16 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
   if (!validateTime(normalized)) {
     sendFallbackWithContact(replyToken, '時間の形式が正しくありません。もう一度入力してください（例: 10:00 または 10時）。');
     return;
+  }
+
+  // Check 初診/再診 time ordering (再診 must be after 初診 on same day)
+  var reservationForOrder = getReservationById(tempData.selected_reservation_id);
+  if (reservationForOrder) {
+    var changeOrderResult = validateTreatmentTimeOrdering(userId, reservationForOrder.reserved_date, normalized, reservationForOrder.menu_type, tempData.selected_reservation_id);
+    if (!changeOrderResult.valid) {
+      sendFallbackWithContact(replyToken, changeOrderResult.reason);
+      return;
+    }
   }
 
   tempData.new_time = normalized;
@@ -1288,6 +1308,61 @@ function getUserState(userId) {
 function clearUserState(userId) {
   var key = TEMP_DATA_KEY_PREFIX + userId;
   PropertiesService.getUserProperties().deleteProperty(key);
+}
+
+/**
+ * Validate 初診/再診 time ordering on the same day
+ * Rule: 再診 must start AFTER 初診 ends on the same day
+ * @param {string} userId - LINE user ID
+ * @param {string} date - YYYY-MM-DD
+ * @param {string} time - HH:MM (start time being validated)
+ * @param {string} treatmentType - menu_type (e.g., '初診（30分）', '再診（30分）')
+ * @param {string} excludeId - reservation ID to exclude from check (for changes)
+ * @returns {object} { valid: boolean, reason: string }
+ */
+function validateTreatmentTimeOrdering(userId, date, time, treatmentType, excludeId) {
+  var reservations = getReservationsByLineUserId(userId);
+  var isShoshin = treatmentType.indexOf('初診') !== -1;
+  var tParts = time.split(':');
+  var timeMins = parseInt(tParts[0]) * 60 + parseInt(tParts[1]);
+  var duration = treatmentType === '再診（60分）' ? 60 : 30;
+  var endMins = timeMins + duration;
+
+  for (var i = 0; i < reservations.length; i++) {
+    var r = reservations[i];
+    if (excludeId && r.id === excludeId) continue;
+    if (r.reserved_date !== date) continue;
+    if (r.status !== RESERVATION_STATUS.PENDING && r.status !== RESERVATION_STATUS.CONFIRMED) continue;
+    if (!r.menu_type) continue;
+
+    var rIsShoshin = r.menu_type.indexOf('初診') !== -1;
+    var rStartParts = r.reserved_start.split(':');
+    var rStartMins = parseInt(rStartParts[0]) * 60 + parseInt(rStartParts[1]);
+    var rEndParts = r.reserved_end ? r.reserved_end.split(':') : null;
+    var rEndMins = rEndParts ? parseInt(rEndParts[0]) * 60 + parseInt(rEndParts[1]) : rStartMins + 30;
+
+    // 再診 must start AFTER 初診 ends
+    if (!isShoshin && rIsShoshin) {
+      if (timeMins < rEndMins) {
+        return {
+          valid: false,
+          reason: '再診は初診（' + r.reserved_start + ' - ' + (r.reserved_end || '') + '）より後の時間にしてください。'
+        };
+      }
+    }
+
+    // 初診 must end BEFORE 再診 starts
+    if (isShoshin && !rIsShoshin) {
+      if (endMins > rStartMins) {
+        return {
+          valid: false,
+          reason: '初診は再診（' + r.reserved_start + '）より前の時間にしてください。'
+        };
+      }
+    }
+  }
+
+  return { valid: true, reason: '' };
 }
 
 /**
