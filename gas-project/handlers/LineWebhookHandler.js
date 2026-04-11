@@ -252,8 +252,11 @@ function handleIdleState(text, replyToken, userId) {
   } else if (text === 'お問い合わせ') {
     sendLineReply(replyToken, MessageTemplates.getContactMessage());
   } else {
-    var welcomeData = MessageTemplates.getWelcomeMessage();
-    sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
+    // Try LLM for clinic-related questions
+    if (!handleLLMQuery(replyToken, text)) {
+      var welcomeData = MessageTemplates.getWelcomeMessage();
+      sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
+    }
   }
 }
 
