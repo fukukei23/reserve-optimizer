@@ -739,7 +739,8 @@ function handleChangeFlow(replyToken, userId) {
     sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(r), [
       { label: '📅 日付', text: '日付' },
       { label: '🕐 時間', text: '時間' },
-      { label: '💆 施術', text: '施術' }
+      { label: '💆 施術', text: '施術' },
+      { label: '🗑️ キャンセル', text: 'キャンセル' }
     ]);
     return;
   }
@@ -886,6 +887,29 @@ function handleAwaitingChangeField(text, replyToken, userId) {
   if (text === 'やめる') {
     clearUserState(userId);
     sendLineReply(replyToken, '変更を中止しました。');
+    return;
+  }
+
+  if (text === 'キャンセル') {
+    var reservationToCancel = getReservationById(reservationId);
+    if (!reservationToCancel) {
+      clearUserState(userId);
+      sendLineReply(replyToken, '予約が見つかりませんでした。');
+      return;
+    }
+    var cancelCheck = canCancelReservation(reservationToCancel);
+    if (!cancelCheck.canCancel) {
+      clearUserState(userId);
+      sendLineReply(replyToken, cancelCheck.reason);
+      return;
+    }
+    setUserState(userId, USER_STATES.AWAITING_CANCEL_CONFIRM, {
+      selected_reservation_id: reservationId
+    });
+    sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(reservationToCancel), [
+      { label: 'はい', text: 'はい' },
+      { label: 'いいえ', text: 'いいえ' }
+    ]);
     return;
   }
 

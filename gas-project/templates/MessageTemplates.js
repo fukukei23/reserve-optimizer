@@ -160,8 +160,7 @@ var MessageTemplates = {
    */
   getNoCancellableReservationsMessage: function() {
     return 'キャンセル可能な予約がありません。\n\n' +
-      '予約状況は /reserve で確認するか、' +
-      '管理者にお問い合わせください。';
+      '新規予約は「予約する」からお手続きください。';
   },
 
   /**
@@ -304,9 +303,8 @@ var MessageTemplates = {
    * No changeable reservations found
    */
   getNoChangeableReservationsMessage: function() {
-    return '変更可能な予約がありません。\n\n' +
-      '予約状況は /reserve で新規予約するか、' +
-      '管理者にお問い合わせください。';
+    return '変更・キャンセル可能な予約がありません。\n\n' +
+      '新規予約は「予約する」からお手続きください。';
   },
 
   /**

@@ -300,7 +300,7 @@ function getLastReservationByLineUserId(lineUserId) {
   for (var i = data.length - 1; i >= 1; i--) {
     if (data[i][4] === lineUserId) {
       var status = data[i][10];
-      if (status !== RESERVATION_STATUS.CANCELLED && status !== RESERVATION_STATUS.NO_SHOW) {
+      if (status === RESERVATION_STATUS.CONFIRMED) {
         var patientName = data[i][2];
         if (patientName) {
           return {
