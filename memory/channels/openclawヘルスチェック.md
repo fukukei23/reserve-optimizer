@@ -118,6 +118,33 @@
 
 ---
 
+## 2026-04-10
+
+### v2026.4.9 リリース検知（2026-04-10 09:30 JST）
+- **リリース日**: 2026-04-09
+- **内容**: Memory/dreaming改善（REM backfill、diary commit/reset flows、durable-fact extraction、短期記憶プロンプション統合）
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.9
+- **状態**: ヘルスチェック全正常（200, 49-160ms）
+
+(追記者: フクロウ)
+
+---
+
+## 2026-04-12
+
+### v2026.4.11 リリース検知（2026-04-12 09:31 JST）
+- **リリース日**: 2026-04-12
+- **内容**: Dreaming/memory-wiki強化
+  - ChatGPT import取り込み対応
+  - Imported Insights / Memory Palace diaryサブタブ追加
+  - 取り込んだソースチャット・Wikiページ・スキルダイアログの検査が可能に
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.11
+- **状態**: ヘルスチェック全正常（200, 50ms）
+
+(追記者: フクロウ)
+
+---
+
 ## 2026-04-09
 
 ### v2026.4.8 リリース検知（2026-04-09 09:31 JST）
