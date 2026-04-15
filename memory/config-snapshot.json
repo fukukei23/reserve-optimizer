@@ -1,11 +1,10 @@
 {
-  "lastCheck": "2026-04-01T02:49:00Z",
+  "lastCheck": "2026-04-15T04:13:00Z",
   "timeoutSeconds": 60,
   "primaryModel": "minimax/MiniMax-M2.7",
-  "fallbackModels": ["zai/glm-5.1", "zai/glm-4.7"],
+  "fallbackModels": ["zai/glm-5.1"],
   "hooksEnabled": true,
   "fallbackNotifyEnabled": true,
   "discordEnabled": true,
-  "braveSearchEnabled": true,
-  "hash": "55381c6cde33a12d481ba54671ecc80342d1a22ba5099b32422b27e0a22ff2bf"
+  "hash": "e41b4aeb0b0f948ee4c5c88bcc2e54ff00b6e7cbf0c451ac1ec8583180eba121"
 }
