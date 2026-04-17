@@ -172,3 +172,20 @@
 - **その後**: 承認タイムアウト発生（よつば node）。`openclaw doctor --fix` 未実行
 
 (追記者: フクロウ)
+
+---
+
+## 2026-04-17
+
+### OpenClaw v2026.4.15 リリース（04/16 09:31 JST = 04/16 00:31 UTC）
+- **公開**: 2026-04-16
+- **内容**: Anthropicモデルデフォルト改善、Opusエイリアス強化、Claude CLIデフォルト改善、Google TTS（Gemini TTS）追加
+- **参照**: https://github.com/openclaw/openclaw/releases/tag/v2026.4.15
+- **状態**: ヘルスチェック全正常（200, 55-300ms）
+
+(追記者: フクロウ)
+
+### ヘルスチェック結果（04/17 15:04 JST = 04/17 06:04 UTC）
+- https://fopenclaw.com/ → 200, 79ms（正常）
+
+(追記者: フクロウ)
