@@ -2,16 +2,12 @@
 
 最終更新: 2026-04-19 06:00 UTC
 
-## 2026-04-19 更新分
+## 2026-04-21 更新分
 
-### 🔴 OpenAI使用コストアラート（9セッション 未解決・19時台に再燃）
-- **状況:** 9件（gpt-5-mini）+ 2件（gpt-5.1-codex）がOpenAI APIを消費中（19:42 UTCに再アラート）
-- **原因:** `modelOverride` / `providerOverride` の設定がない
-- **備考:** メモリ整理完了（22:00 UTC）、OpenAI使用問題は未解決のまま
-  - cron: `7a371d42-...` / `09ded1ad-...`
-  - discord channels: `148299069` / `148329389` / `148287556` / `148058936` / `148154972`
-  - cron: `b3e30cb5-...` / `77824934-...`
-- **対応:** `providerOverride=zai` / `modelOverride=glm-5` への切り替えが提案されているが未実施
-- **備考:** 1セッションのみGLM override済み（`agent:main:discord:channel:148055945` → `glm-4.7`）
+### ⚠️ OpenAI使用コストアラート（9セッション 未解決・04/21 07:43 UTCに最新アラート）
+- **状況:** 9件（gpt-5-mini）+ 2件（gpt-5.1-codex）がOpenAI APIを消費中（04/21 07:43 UTCに再アラート）
+- **最終更新:** 2026-03-07〜03-18（一ヶ月以上前のセッション）
+- **対応状況:** 1件のみGLM override済み（agent:main:discord:channel:148055945 → glm-4.7）
+- **備考:** 残りの8件は依然としてOpenAI使用中、成本高騰の可能性
 
 ---
