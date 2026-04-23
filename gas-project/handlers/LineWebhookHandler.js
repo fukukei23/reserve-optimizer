@@ -240,18 +240,70 @@ function startReservationFlow(replyToken, userId) {
  * Handle idle state
  */
 function handleIdleState(text, replyToken, userId) {
-  // Check for quick replies or menu selections
-  if (text === '予約する') {
-    startReservationFlow(replyToken, userId);
-  } else if (text === '予約変更・キャンセル') {
-    handleChangeFlow(replyToken, userId);
-  } else if (text === '当日空き枠通知を受け取る') {
-    handleWaitlistFlow(replyToken, userId);
-  } else if (text === '営業時間・アクセス') {
-    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
-  } else if (text === 'お問い合わせ') {
-    sendLineReply(replyToken, MessageTemplates.getContactMessage());
-  } else {
+  // Normalize: trim whitespace and full-width spaces
+  var normalized = text.replace(/[\s\u3000]+/g, '').replace(/！/g, '!').replace(/？/g, '?');
+
+  // Reservation keywords
+  var reservationTriggers = ['予約する', '予約', '予約したい', '新規予約', '予約お願い', '予約おねがい'];
+  // Change/cancel keywords
+  var changeTriggers = ['予約変更・キャンセル', '予約変更', '変更', 'キャンセル', '予約キャンセル', '変更したい', 'キャンセルしたい'];
+  // Waitlist keywords
+  var waitlistTriggers = ['当日空き枠通知を受け取る', '空き枠通知', 'キャンセル待ち', '空き通知', 'ウェイティング'];
+  // Info keywords
+  var hoursTriggers = ['営業時間・アクセス', '営業時間', 'アクセス', '住所', 'どこ', '場所', '何時', '時間'];
+  var contactTriggers = ['お問い合わせ', 'お問合せ', '電話', '電話番号', '連絡'];
+
+  var matched = false;
+
+  for (var i = 0; i < reservationTriggers.length; i++) {
+    if (normalized === reservationTriggers[i] || normalized.indexOf(reservationTriggers[i]) === 0) {
+      startReservationFlow(replyToken, userId);
+      matched = true;
+      break;
+    }
+  }
+
+  if (!matched) {
+    for (var j = 0; j < changeTriggers.length; j++) {
+      if (normalized === changeTriggers[j] || normalized.indexOf(changeTriggers[j]) === 0) {
+        handleChangeFlow(replyToken, userId);
+        matched = true;
+        break;
+      }
+    }
+  }
+
+  if (!matched) {
+    for (var k = 0; k < waitlistTriggers.length; k++) {
+      if (normalized === waitlistTriggers[k] || normalized.indexOf(waitlistTriggers[k]) === 0) {
+        handleWaitlistFlow(replyToken, userId);
+        matched = true;
+        break;
+      }
+    }
+  }
+
+  if (!matched) {
+    for (var l = 0; l < hoursTriggers.length; l++) {
+      if (normalized === hoursTriggers[l] || normalized.indexOf(hoursTriggers[l]) === 0) {
+        sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
+        matched = true;
+        break;
+      }
+    }
+  }
+
+  if (!matched) {
+    for (var m = 0; m < contactTriggers.length; m++) {
+      if (normalized === contactTriggers[m] || normalized.indexOf(contactTriggers[m]) === 0) {
+        sendLineReply(replyToken, MessageTemplates.getContactMessage());
+        matched = true;
+        break;
+      }
+    }
+  }
+
+  if (!matched) {
     // Try LLM for clinic-related questions
     if (!handleLLMQuery(replyToken, text)) {
       var welcomeData = MessageTemplates.getWelcomeMessage();
@@ -740,7 +792,8 @@ function handleChangeFlow(replyToken, userId) {
       { label: '📅 日付', text: '日付' },
       { label: '🕐 時間', text: '時間' },
       { label: '💆 施術', text: '施術' },
-      { label: '🗑️ キャンセル', text: 'キャンセル' }
+      { label: '🗑️ 予約をキャンセル', text: '予約をキャンセル' },
+      { label: '✖️ 変更をやめる', text: 'やめる' }
     ]);
     return;
   }
@@ -890,7 +943,7 @@ function handleAwaitingChangeField(text, replyToken, userId) {
     return;
   }
 
-  if (text === 'キャンセル') {
+  if (text === '予約をキャンセル' || text === 'キャンセル') {
     var reservationToCancel = getReservationById(reservationId);
     if (!reservationToCancel) {
       clearUserState(userId);
@@ -907,8 +960,8 @@ function handleAwaitingChangeField(text, replyToken, userId) {
       selected_reservation_id: reservationId
     });
     sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(reservationToCancel), [
-      { label: 'はい', text: 'はい' },
-      { label: 'いいえ', text: 'いいえ' }
+      { label: 'はい、キャンセルする', text: 'はい' },
+      { label: 'いいえ、やめる', text: 'いいえ' }
     ]);
     return;
   }
@@ -946,7 +999,9 @@ function handleAwaitingChangeField(text, replyToken, userId) {
     sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
       { label: '📅 日付', text: '日付' },
       { label: '🕐 時間', text: '時間' },
-      { label: '💆 施術', text: '施術' }
+      { label: '💆 施術', text: '施術' },
+      { label: '🗑️ 予約をキャンセル', text: '予約をキャンセル' },
+      { label: '✖️ 変更をやめる', text: 'やめる' }
     ]);
   } else {
     clearUserState(userId);

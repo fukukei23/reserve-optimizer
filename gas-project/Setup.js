@@ -87,9 +87,9 @@ function setupTriggers() {
     .atHour(8)
     .create();
 
-  // Trigger 2: No-show check (every 30 minutes, 9:00-18:00)
-  // Create multiple triggers for each time slot
-  var checkTimes = [9, 9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 16.5, 17, 17.5];
+  // Trigger 2: No-show check (hourly, 9:00-17:00)
+  // 9 triggers to stay under GAS 20-trigger limit (total: 13)
+  var checkTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17];
 
   for (var i = 0; i < checkTimes.length; i++) {
     ScriptApp.newTrigger('checkForNoShows')
@@ -263,4 +263,14 @@ function clearUserStates() {
   }
 
   Logger.log('Cleared ' + clearedCount + ' old user states');
+}
+
+/**
+ * Rename spreadsheet and script project (one-time setup utility)
+ */
+function renameResources() {
+  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  ss.setName('整骨院予約管理システム');
+  Logger.log('Spreadsheet renamed to: ' + ss.getName());
+  return 'OK: Spreadsheet renamed to ' + ss.getName();
 }

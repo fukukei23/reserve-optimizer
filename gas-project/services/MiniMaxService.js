@@ -143,11 +143,7 @@ function callMiniMaxAPI(userMessage) {
  * Returns true if LLM handled the message, false if it should fall through
  */
 function handleLLMQuery(replyToken, text) {
-  // Scope check — skip API call for obviously unrelated input
-  if (!isClinicRelatedInput(text)) {
-    return false;
-  }
-
+  // Skip scope check — system prompt handles topic restriction
   var aiResponse = callMiniMaxAPI(text);
 
   if (aiResponse) {
