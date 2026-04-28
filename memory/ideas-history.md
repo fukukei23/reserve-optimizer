@@ -1,5 +1,33 @@
 # OpenClaw Ideas History
 
+## 2026-04-28 Weekly Ideas Collector
+
+### 検索ソース
+- web_search: "OpenClaw tips tricks 2026", "OpenClaw workflow automation examples", "site:github.com openclaw skill workflow", "OpenClaw best practices configuration", "site:reddit.com openclaw setup guide"
+- web_fetch: devshorts.in, felo.ai, github.com/VoltAgent/awesome-openclaw-skills
+
+### 抽出アイデア一覧
+
+**定期実行・自動化**
+1. SlackからのGitHub Issue修正フロー（DevShorts事例）
+2. メールアーカイブ自動化（迷惑メール解除、重要メール要約）
+
+**スキル・ワークフロー**
+3. ClawHub: GitHubリンクを貼るだけで自動スキルセットアップ
+4. Task Flowによるマルチステップ実行追跡（子タスク・待機・リトライ）
+5. aetherlang-claude-code（AetherLang V3 AIワークフロー実行）
+
+**設定・セキュリティ**
+6. localhostバインド推奨（0.0.0.0はIP暴露リスク）
+7. sandbox mode + tool deny list + systemd isolation（selfhosted必須）
+
+**運用・ベストプラクティス**
+8. 最初のメッセージでコンテキストをフロントロード（2文以上推奨）
+9. Workspaceスキル優先（プロジェクト固有スキル管理: Workspace > Local > Bundled）
+10. 一クリックセットアップ（ampere.sh, o6w.ai）
+
+---
+
 ## 2026-04-07 Weekly Ideas Collector
 
 ### 検索ソース
