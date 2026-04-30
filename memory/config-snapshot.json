@@ -1,8 +1,10 @@
 {
-  "lastCheck": "2026-04-26T05:43:20Z",
+  "lastCheck": "2026-04-30T07:44:47Z",
   "timeoutSeconds": 60,
   "primaryModel": "minimax/MiniMax-M2.7",
-  "fallbackModels": ["zai/glm-5.1"],
+  "fallbackModels": [
+    "zai/glm-5.1"
+  ],
   "hooksEnabled": true,
   "fallbackNotifyEnabled": true,
   "discordEnabled": true,
