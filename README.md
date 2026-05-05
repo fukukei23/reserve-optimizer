@@ -1,8 +1,14 @@
 # reserve-optimizer
 
-整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AI。
+A LINE reservation management bot for orthopedic clinics, built with GAS + Cloudflare Worker + Stripe. Features a conversational state machine for booking, QuickReply UI, deposit-based payments, and AI-powered Q&A.
+
+整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AIによる予約・決済・AIチャットの統合システム。
+
+---
 
 ## アーキテクチャ
+
+### レイヤー構成
 
 | レイヤー | 技術 | 役割 |
 |----------|------|------|
@@ -12,6 +18,89 @@
 | データストア | Google Spreadsheets | 予約・ユーザー・ログ・ウェイティングリスト |
 | 決済 | Stripe Checkout | デポジット制 1,000円 |
 | AIチャット | MiniMax M2.7 | 整骨院トピック限定Q&A |
+
+### アーキテクチャ図
+
+```
+=== 本番モード ===
+
+[LINEユーザー]
+    ↓ メッセージ送信
+[LINE Platform]
+    ↓ Webhook (POST)
+[Cloudflare Worker]
+    ↓ ① HMAC-SHA256署名検証
+    ↓ ② 即座に200 OK返却（LINEタイムアウト回避）
+    ↓ ③ waitUntil でGAS転送
+[GAS Web App] (doGet)
+    ↓ x-verified=true で検証済み判定
+    ↓ handleLineWebhookVerified → 会話ステートマシン実行
+
+[Stripe Checkout]
+    ↓ checkout.session.completed
+[Cloudflare Worker]
+    ↓ 署名検証 → 最小データ転送 (type, id, reservation_id)
+[GAS Web App]
+    ↓ Stripe API からセッション詳細取得 → 予約確定
+
+=== テストモード ===
+
+[LINE Platform] → [GAS doPost] (直接LINE署名検証)
+```
+
+### Worker API エンドポイント
+
+| エンドポイント | メソッド | 説明 |
+|---|---|---|
+| `/health` | GET | ヘルスチェック（`{"status":"ok"}`） |
+| `/webhook/line` | POST | LINE Webhook（署名検証 → GAS転送、waitUntil非同期） |
+| `/webhook/stripe` | POST | Stripe Webhook（署名検証 → GAS転送、同期） |
+
+---
+
+## LINE会話ステートマシン
+
+`LineWebhookHandler.js` による会話状態管理。QuickReply UIで選択式にすることでフリー入力を最小限に抑制。
+
+```
+=== 新規予約フロー ===
+
+IDLE → AWAITING_NAME → AWAITING_PHONE → AWAITING_DATE → AWAITING_TIME
+  → AWAITING_TREATMENT → AWAITING_PAYMENT → Stripe Checkout → 予約確定
+
+=== キャンセルフロー ===
+
+IDLE → AWAITING_CANCEL_SELECT → AWAITING_CANCEL_CONFIRM → キャンセル実行
+
+=== 変更フロー ===
+
+IDLE → AWAITING_CHANGE_SELECT → AWAITING_CHANGE_FIELD
+  → AWAITING_CHANGE_DATE / AWAITING_CHANGE_TIME / AWAITING_CHANGE_TREATMENT
+  → AWAITING_CHANGE_CONFIRM → 変更実行
+```
+
+各状態でQuickReply選択肢を提示し、ユーザーの入力をガイド。
+
+---
+
+## Stripe決済フロー
+
+```
+予約確定 → Stripe Checkout セッション作成（1,000円デポジット）
+    ↓
+ユーザーが支払い完了
+    ↓
+checkout.session.completed → 予約ステータス: CONFIRMED / デポジット: PAID
+    ↓
+患者に確定通知 + 管理者に通知
+
+--- キャンセル時 ---
+
+キャンセル実行 → charge.refunded → デポジット: REFUNDED
+    ↓ 前日キャンセルまでは無料返金
+```
+
+---
 
 ## プロジェクト構造
 
@@ -56,6 +145,8 @@ reserve-optimizer/
 └── README.md                      # このファイル
 ```
 
+---
+
 ## 主な機能
 
 - **LINE予約フロー**: 予約作成・変更・キャンセル（会話型ウィザード）
@@ -64,6 +155,8 @@ reserve-optimizer/
 - **リマインダー & ウェイティングリスト**: 前日リマインダー + キャンセル時の自動通知
 - **AIチャット**: MiniMax M2.7による整骨院トピック限定Q&A
 - **管理ダッシュボード**: Google Spreadsheetsベースの予約・KPI管理
+
+---
 
 ## ビジネスルール
 
@@ -74,6 +167,8 @@ reserve-optimizer/
 | 施術メニュー | 初診(30分), 再診(30分), 再診(60分) |
 | デポジット | 1,000円（前日キャンセルまで無料返金） |
 | 予約制約 | 1ユーザー最大3件、当日60分前まで予約可能 |
+
+---
 
 ## セットアップ
 
@@ -104,6 +199,8 @@ GASエディタのプロジェクトのプロパティに以下を設定：
 - **LINE Developers Console**: `https://reserve-optimizer.fukukei44161.workers.dev/webhook/line`
 - **Stripe Dashboard**: `https://reserve-optimizer.fukukei44161.workers.dev/webhook/stripe`
 
+---
+
 ## デプロイ
 
 ### GAS
@@ -131,6 +228,8 @@ echo -n "<値>" | npx wrangler secret put GAS_WEBAPP_URL
 echo -n "<値>" | npx wrangler secret put STRIPE_WEBHOOK_SECRET
 echo -n "<値>" | npx wrangler secret put LINE_CHANNEL_SECRET
 ```
+
+---
 
 ## 詳細ドキュメント
 
