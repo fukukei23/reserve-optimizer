@@ -1,5 +1,5 @@
 {
-  "lastCheck": "2026-04-30T07:44:47Z",
+  "lastCheck": "2026-05-05T05:12:00Z",
   "timeoutSeconds": 60,
   "primaryModel": "minimax/MiniMax-M2.7",
   "fallbackModels": [
