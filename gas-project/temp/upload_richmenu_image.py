@@ -4,7 +4,7 @@ import json, urllib.request, urllib.parse, os
 import requests
 
 HOME = os.path.expanduser('~')
-WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwWSnmX2HqMwM2xz1ilCgqjG05TQHmg0o4jTNThKHXCI9QpfBEzm8qsWErCOmU6gI6K/exec'
+WEBAPP_URL = os.environ.get('GAS_WEBAPP_URL', 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec')
 
 # 1. Get OAuth token
 with open(os.path.join(HOME, '.clasprc.json')) as f:
@@ -24,10 +24,10 @@ line_token = gas_result.get('result')
 print(f"LINE Token: {line_token[:20]}...")
 
 # 3. The rich menu was already created
-rich_menu_id = 'richmenu-ab482a7444b5be4dd0f5511411f0757e'
+rich_menu_id = os.environ.get('LINE_RICH_MENU_ID', 'YOUR_RICH_MENU_ID')
 
 # 4. Upload image
-image_path = '/mnt/c/Users/USER/workspace/active/line_rich_menu.png'
+image_path = os.environ.get('RICH_MENU_IMAGE_PATH', 'rich_menu.png')
 with open(image_path, 'rb') as f:
     image_data = f.read()
 print(f"Image size: {len(image_data)} bytes")
