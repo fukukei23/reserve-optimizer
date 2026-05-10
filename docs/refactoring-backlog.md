@@ -96,6 +96,67 @@
   - 修正方針: `Code.js` は `doPost(e)` → `WebhookRouter.handle(e)` の1行委譲のみにする。署名検証は `WebhookRouter` 内で処理
   - 推定工数: 1時間
 
+## 優先度P3（品質・UX改善） — 全12項目完了
+
+- [x] **P3-0: console.log/Logger.log全置換 + URL設定化** — `services/LineService.js`, `services/MiniMaxService.js`, `services/StripeService.js`, `services/SheetService.js`, `config/ScriptProperties.js`
+  - 30+箇所の console.log/error → appendLogRow 統一
+  - success_url/cancel_url を ScriptProperties に設定化
+  - Logger.log → appendLogRow (StripeService.verifyStripeSignature, SheetService, ScriptProperties)
+
+- [x] **P3-1: Stripe Webhook冪等性チェック** — `handlers/WebhookRouter.js`
+  - _dispatchStripeWebhook 内でイベントID重複検出
+  - PropertiesService に処理済みイベントIDを記録（stripe_evt_ プレフィックス）
+
+- [x] **P3-2: 同時予約競合防止** — `handlers/ReservationHandler.js`
+  - LockService.getScriptLock() で排他制御
+  - ロック取得後に _invalidateReservationCache() → 再チェック → createReservation
+  - 10秒タイムアウト、try-catch でロック解放保証
+
+- [x] **P3-3: 決済リンク失敗時リトライ** — `handlers/ReservationHandler.js`
+  - 失敗時に clearUserState せず AWAITING_PAYMENT 状態を維持
+  - handleAwaitingPayment で「再試行」ボタンから createPaymentLink 再実行
+  - 再失敗時も状態維持で無限リトライ可能
+
+- [x] **P3-4: 予約重複検出** — `handlers/ReservationHandler.js`
+  - createReservationAndGoToPayment 内で同一日時の既存予約をチェック
+  - ユーザーごとに既予約の日付+開始時刻が一致したら拒否
+
+- [x] **P3-5: 待機リスト登録フロー実装** — `handlers/MessageRouter.js`
+  - AWAITING_WAITLIST_TIME 状態追加
+  - 時間帯選択（午前中/午後/いつでもOK）→ 既存登録チェック → addToWaitlist
+  - 過去予約から電話番号を自動取得
+
+- [x] **P3-6: エラーUX統一** — 各ハンドラ
+  - 決済失敗メッセージに QuickReply ボタン追加（お問い合わせ/やめる）
+  - sendFallbackWithContact は P0 で実装済み
+
+- [x] **P3-7: 戻るユーザーパーソナライズ** — `handlers/MessageRouter.js`
+  - handleFollow で getLastReservationByLineUserId をチェック
+  - 戻りユーザーに「おかえりなさい」+ 前回名前表示
+  - 新規ユーザーには通常ウェルカムメッセージ
+
+- [x] **P3-8: ページネーション位置表示** — `handlers/MessageRouter.js`, `handlers/CancelHandler.js`, `handlers/ChangeHandler.js`
+  - buildPaginatedQuickReplyItems のラベルに "(2/5)" 形式のページ位置追加
+  - CancelHandler/ChangeHandler の初回ページ表示にも位置追加
+
+- [x] **P3-9: 期限切れ状態クリーンアップTrigger** — `handlers/StateHandler.js`
+  - cleanupExpiredStates() 関数追加
+  - PropertiesService.getUserProperties() 全スキャン → 24h超過エントリ削除
+  - 不正JSON エントリも除去
+
+- [x] **P3-10: 管理者LINEコマンド追加** — `handlers/MessageRouter.js`
+  - /status — 設定状態確認（管理者のみ）
+  - /cleanup — 期限切れ状態クリーンアップ実行（管理者のみ）
+  - /help — コマンド一覧表示
+
+- [x] **P3-11: Result型統一 + 未使用コード除去** — `services/StripeService.js`
+  - verifyStripeSignature の Logger.log → appendLogRow
+  - null チェック追加（signature が null/undefined の場合の防御）
+
+- [x] **P3-12: 日付妥当性チェック強化** — `utils/ValidationUtils.js`
+  - validateDateForBooking に月(1-12)・日(1-31)の基本チェック追加
+  - フォーマット不正時のエラーメッセージ改善
+
 ## 高品質ファイル（変更不要・参考モデル）
 
 | ファイル | 評価 | 理由 |
