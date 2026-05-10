@@ -99,3 +99,60 @@ function cleanupExpiredStates() {
 
   appendLogRow('INFO', 'cleanupExpiredStates: removed ' + removed + ' expired states');
 }
+
+// --- User Preferences ---
+
+var PREFS_KEY_PREFIX = 'user_prefs_';
+
+var USER_PREFS_DEFAULTS = {
+  language: 'ja',
+  reminder_timing: '08:00'
+};
+
+/**
+ * Get user preference value
+ */
+function getUserPref(userId, key) {
+  var props = PropertiesService.getUserProperties();
+  var allPrefs = props.getProperty(PREFS_KEY_PREFIX + userId);
+  if (!allPrefs) return USER_PREFS_DEFAULTS[key] || null;
+  try {
+    var parsed = JSON.parse(allPrefs);
+    return parsed[key] !== undefined ? parsed[key] : (USER_PREFS_DEFAULTS[key] || null);
+  } catch (e) {
+    return USER_PREFS_DEFAULTS[key] || null;
+  }
+}
+
+/**
+ * Set user preference value
+ */
+function setUserPref(userId, key, value) {
+  var props = PropertiesService.getUserProperties();
+  var allPrefs = {};
+  var stored = props.getProperty(PREFS_KEY_PREFIX + userId);
+  if (stored) {
+    try { allPrefs = JSON.parse(stored); } catch (e) { allPrefs = {}; }
+  }
+  allPrefs[key] = value;
+  props.setProperty(PREFS_KEY_PREFIX + userId, JSON.stringify(allPrefs));
+}
+
+/**
+ * Get all user preferences
+ */
+function getUserPrefs(userId) {
+  var props = PropertiesService.getUserProperties();
+  var stored = props.getProperty(PREFS_KEY_PREFIX + userId);
+  if (!stored) return JSON.parse(JSON.stringify(USER_PREFS_DEFAULTS));
+  try {
+    var parsed = JSON.parse(stored);
+    var result = JSON.parse(JSON.stringify(USER_PREFS_DEFAULTS));
+    for (var key in parsed) {
+      result[key] = parsed[key];
+    }
+    return result;
+  } catch (e) {
+    return JSON.parse(JSON.stringify(USER_PREFS_DEFAULTS));
+  }
+}

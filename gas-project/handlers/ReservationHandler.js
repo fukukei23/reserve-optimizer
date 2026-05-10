@@ -323,6 +323,9 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     return;
   }
 
+  // Send processing indicator (replyToken is one-time use, so push for results after this)
+  sendLineReply(replyToken, '予約を作成中です...');
+
   // Final conflict check with LockService (race condition guard)
   var lock = LockService.getScriptLock();
   lock.waitLock(10000); // Wait up to 10 seconds for the lock
@@ -337,7 +340,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
       if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
         lock.releaseLock();
         clearUserState(userId);
-        sendQuickReply(replyToken, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
+        sendLinePushQuickReply(userId, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
           { label: '予約する', text: '予約する' },
           { label: 'やめる', text: 'やめる' }
         ]);
@@ -350,7 +353,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     if (bookedCountFinal >= getMaxConcurrentBookings()) {
       lock.releaseLock();
       clearUserState(userId);
-      sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
+      sendLinePushQuickReply(userId, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
         { label: '予約する', text: '予約する' },
         { label: 'やめる', text: 'やめる' }
       ]);
@@ -388,7 +391,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
         tempData.menu_type,
         paymentLink
       );
-      sendQuickReply(replyToken, message, [
+      sendLinePushQuickReply(userId, message, [
         { label: '支払完了', text: '支払完了' },
         { label: 'やめる', text: 'やめる' }
       ]);
@@ -398,7 +401,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
         reservation_id: result.id,
         payment_link: null
       });
-      sendQuickReply(replyToken, '決済リンクの作成に失敗しました。下のボタンで再試行するか、管理者にお問い合わせください。', [
+      sendLinePushQuickReply(userId, '決済リンクの作成に失敗しました。下のボタンで再試行するか、管理者にお問い合わせください。', [
         { label: '再試行', text: '再試行' },
         { label: 'お問い合わせ', text: 'お問い合わせ' },
         { label: 'やめる', text: 'やめる' }
@@ -408,7 +411,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     try { lock.releaseLock(); } catch (le) { /* already released */ }
     appendLogRow('ERROR', 'createReservationAndGoToPayment lock error: ' + e.message);
     clearUserState(userId);
-    sendQuickReply(replyToken, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
+    sendLinePushQuickReply(userId, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
       { label: '予約する', text: '予約する' },
       { label: 'お問い合わせ', text: 'お問い合わせ' }
     ]);

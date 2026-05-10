@@ -166,6 +166,14 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle settings change responses (SET_REMINDER: prefix)
+  if (text.indexOf('SET_REMINDER:') === 0) {
+    var timing = text.substring('SET_REMINDER:'.length);
+    setUserPref(userId, 'reminder_timing', timing);
+    sendLineReply(replyToken, 'リマインダー時刻を ' + timing + ' に変更しました。');
+    return;
+  }
+
   // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
   if (text === '営業時間・アクセス') {
     sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
@@ -315,11 +323,21 @@ function handleCommand(command, replyToken, userId) {
         '/reserve - 予約開始\n' +
         '/change - 予約変更\n' +
         '/cancel - 予約キャンセル\n' +
-        '/waitlist - 空き枠通知登録';
+        '/waitlist - 空き枠通知登録\n' +
+        '/settings - 設定確認・変更';
       if (isAdmin) {
         helpMsg += '\n【管理者】\n/status - 設定確認\n/cleanup - 状態クリーンアップ';
       }
       sendLineReply(replyToken, helpMsg);
+      break;
+    case '/settings':
+      var prefs = getUserPrefs(userId);
+      sendQuickReply(replyToken, '【現在の設定】\nリマインダー時刻: ' + prefs.reminder_timing + '\n\nリマインダー時刻を変更する場合は下から選択してください。', [
+        { label: '07:00', text: 'SET_REMINDER:07:00' },
+        { label: '08:00', text: 'SET_REMINDER:08:00' },
+        { label: '09:00', text: 'SET_REMINDER:09:00' },
+        { label: 'メニューに戻る', text: 'メニュー' }
+      ]);
       break;
     default:
       sendLineReply(replyToken, '無効なコマンドです。/help でコマンド一覧を確認してください。');

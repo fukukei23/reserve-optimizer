@@ -402,6 +402,56 @@ function sendQuickReply(replyToken, text, quickReplies) {
 }
 
 /**
+ * Send push message with quick reply buttons
+ */
+function sendLinePushQuickReply(userId, text, quickReplies) {
+  var accessToken = getLineAccessToken();
+  var url = 'https://api.line.me/v2/bot/message/push';
+
+  var message = {
+    type: 'text',
+    text: text,
+    quickReply: {
+      items: quickReplies.map(function(qr) {
+        return {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: qr.label,
+            text: qr.text
+          }
+        };
+      })
+    }
+  };
+
+  var payload = {
+    to: userId,
+    messages: [message]
+  };
+
+  var options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  var response = UrlFetchApp.fetch(url, options);
+  var statusCode = response.getResponseCode();
+
+  if (statusCode !== 200) {
+    appendLogRow('ERROR', '[LINE Push QR] Failed - status: ' + statusCode + ', body: ' + response.getContentText().substring(0, 300));
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * Log LINE message for debugging
  */
 function logLineMessage(source, message) {
