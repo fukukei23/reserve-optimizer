@@ -44,7 +44,7 @@ function sendLineMessages(replyToken, messages) {
   var responseBody = response.getContentText();
 
   if (statusCode !== 200) {
-    console.error('[LINE API] Reply failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+    appendLogRow('ERROR', '[LINE API] Reply failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
     return false;
   }
 
@@ -78,15 +78,14 @@ function sendLinePush(userId, text) {
     muteHttpExceptions: true
   };
 
-  console.log('[LINE Push] Sending to userId: ' + userId.substring(0, 10) + '...');
   var response = UrlFetchApp.fetch(url, options);
   var statusCode = response.getResponseCode();
   var responseBody = response.getContentText();
 
-  console.log('[LINE Push] Response status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+  appendLogRow('INFO', '[LINE Push] userId: ' + userId.substring(0, 10) + '... status: ' + statusCode);
 
   if (statusCode !== 200) {
-    console.error('[LINE Push] ERROR - status: ' + statusCode + ', body: ' + responseBody);
+    appendLogRow('ERROR', '[LINE Push] Failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
     return false;
   }
 
@@ -111,7 +110,7 @@ function getLineProfile(userId) {
   var response = UrlFetchApp.fetch(url, options);
 
   if (response.getResponseCode() !== 200) {
-    console.error('[LINE Profile] Error: ' + response.getContentText());
+    appendLogRow('ERROR', '[LINE Profile] Error: ' + response.getContentText().substring(0, 300));
     return null;
   }
 
@@ -164,11 +163,11 @@ function createLineRichMenu() {
   var body = JSON.parse(response.getContentText());
 
   if (statusCode !== 200) {
-    console.error('[RichMenu] Create failed: ' + statusCode + ' ' + response.getContentText());
+    appendLogRow('ERROR', '[RichMenu] Create failed: ' + statusCode + ' ' + response.getContentText().substring(0, 300));
     return null;
   }
 
-  console.log('[RichMenu] Created: ' + body.richMenuId);
+  appendLogRow('INFO', '[RichMenu] Created: ' + body.richMenuId);
   return body.richMenuId;
 }
 
@@ -193,11 +192,11 @@ function uploadRichMenuImage(richMenuId, imageBlob) {
   var statusCode = response.getResponseCode();
 
   if (statusCode !== 200) {
-    console.error('[RichMenu] Image upload failed: ' + statusCode + ' ' + response.getContentText());
+    appendLogRow('ERROR', '[RichMenu] Image upload failed: ' + statusCode + ' ' + response.getContentText().substring(0, 300));
     return { ok: false, status: statusCode, body: response.getContentText().substring(0, 500) };
   }
 
-  console.log('[RichMenu] Image uploaded to: ' + richMenuId);
+  appendLogRow('INFO', '[RichMenu] Image uploaded to: ' + richMenuId);
   return { ok: true };
 }
 
@@ -218,11 +217,11 @@ function setDefaultRichMenu(richMenuId) {
   var statusCode = response.getResponseCode();
 
   if (statusCode !== 200) {
-    console.error('[RichMenu] Set default failed: ' + statusCode + ' ' + response.getContentText());
+    appendLogRow('ERROR', '[RichMenu] Set default failed: ' + statusCode + ' ' + response.getContentText().substring(0, 300));
     return false;
   }
 
-  console.log('[RichMenu] Set default: ' + richMenuId);
+  appendLogRow('INFO', '[RichMenu] Set default: ' + richMenuId);
   return true;
 }
 
@@ -243,7 +242,7 @@ function getDefaultRichMenuId() {
   var statusCode = response.getResponseCode();
 
   if (statusCode !== 200) {
-    console.error('[RichMenu] Get default failed: ' + statusCode);
+    appendLogRow('ERROR', '[RichMenu] Get default failed: ' + statusCode);
     return null;
   }
 
@@ -268,11 +267,11 @@ function deleteLineRichMenu(richMenuId) {
   var statusCode = response.getResponseCode();
 
   if (statusCode !== 200) {
-    console.error('[RichMenu] Delete failed: ' + statusCode);
+    appendLogRow('ERROR', '[RichMenu] Delete failed: ' + statusCode);
     return false;
   }
 
-  console.log('[RichMenu] Deleted: ' + richMenuId);
+  appendLogRow('INFO', '[RichMenu] Deleted: ' + richMenuId);
   return true;
 }
 
@@ -281,32 +280,26 @@ function deleteLineRichMenu(richMenuId) {
  * @param {string} driveFileId - Google Drive file ID of the rich menu image (PNG)
  */
 function setupRichMenu(driveFileId) {
-  // 1. Get image from Google Drive
   var file = DriveApp.getFileById(driveFileId);
   var imageBlob = file.getBlob();
 
-  // 2. Delete old default rich menu if exists
   var oldMenuId = getDefaultRichMenuId();
   if (oldMenuId) {
-    console.log('[RichMenu] Removing old default: ' + oldMenuId);
-    setDefaultRichMenu('');  // Unset default first
+    setDefaultRichMenu('');
     deleteLineRichMenu(oldMenuId);
   }
 
-  // 3. Create new rich menu
   var richMenuId = createLineRichMenu();
   if (!richMenuId) {
     return { ok: false, error: 'Failed to create rich menu' };
   }
 
-  // 4. Upload image
   var uploaded = uploadRichMenuImage(richMenuId, imageBlob);
   if (!uploaded || !uploaded.ok) {
     deleteLineRichMenu(richMenuId);
     return { ok: false, error: 'Failed to upload image', detail: uploaded };
   }
 
-  // 5. Set as default for all users
   var setDefault = setDefaultRichMenu(richMenuId);
   if (!setDefault) {
     return { ok: false, error: 'Failed to set default' };
@@ -328,7 +321,6 @@ function setupRichMenuFromProperty() {
   if (!b64) {
     return { ok: false, error: 'RICHMENU_IMAGE_B64 not set in ScriptProperties' };
   }
-  // Clean up the property after reading
   PropertiesService.getScriptProperties().deleteProperty('RICHMENU_IMAGE_B64');
   return setupRichMenuFromBase64(b64, 'line_rich_menu.png');
 }
@@ -339,33 +331,27 @@ function setupRichMenuFromProperty() {
  * @param {string} fileName - File name for Drive
  */
 function setupRichMenuFromBase64(base64Image, fileName) {
-  // 1. Decode base64 → blob
   var decoded = Utilities.base64Decode(base64Image);
   var blob = Utilities.newBlob(decoded, 'image/png', fileName || 'rich_menu.png');
-  console.log('[RichMenu] Decoded blob size: ' + blob.getBytes().length + ' bytes');
+  appendLogRow('INFO', '[RichMenu] Decoded blob size: ' + blob.getBytes().length + ' bytes');
 
-  // 2. Delete old default rich menu if exists
   var oldMenuId = getDefaultRichMenuId();
   if (oldMenuId) {
-    console.log('[RichMenu] Removing old default: ' + oldMenuId);
     setDefaultRichMenu('');
     deleteLineRichMenu(oldMenuId);
   }
 
-  // 4. Create new rich menu
   var richMenuId = createLineRichMenu();
   if (!richMenuId) {
     return { ok: false, error: 'Failed to create rich menu' };
   }
 
-  // 5. Upload image
   var uploaded = uploadRichMenuImage(richMenuId, blob);
   if (!uploaded || !uploaded.ok) {
     deleteLineRichMenu(richMenuId);
     return { ok: false, error: 'Failed to upload image', detail: uploaded };
   }
 
-  // 6. Set as default
   var setDefault = setDefaultRichMenu(richMenuId);
   if (!setDefault) {
     return { ok: false, error: 'Failed to set default' };
@@ -419,5 +405,5 @@ function sendQuickReply(replyToken, text, quickReplies) {
  * Log LINE message for debugging
  */
 function logLineMessage(source, message) {
-  console.log('[LINE Message] from ' + source.userId + ': ' + message);
+  appendLogRow('DEBUG', '[LINE Message] from ' + source.userId + ': ' + message);
 }

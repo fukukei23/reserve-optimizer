@@ -234,7 +234,7 @@ function createReservation(reservationData) {
 
   sheet.appendRow(row);
   _invalidateReservationCache();
-  Logger.log('Created reservation: ' + reservationId);
+  appendLogRow('INFO', 'Created reservation: ' + reservationId);
 
   return {
     id: reservationId,
@@ -263,7 +263,7 @@ function updateReservation(reservationId, updates) {
     }
   }
 
-  Logger.log('Updated reservation: ' + reservationId);
+  appendLogRow('INFO', 'Updated reservation: ' + reservationId);
   _invalidateReservationCache();
 }
 
@@ -409,7 +409,7 @@ function handleCancellation(reservationId, reason) {
     status: RESERVATION_STATUS.CANCELLED,
     cancel_time: new Date()
   });
-  Logger.log('Cancelled reservation: ' + reservationId + ' Reason: ' + reason);
+  appendLogRow('INFO', 'Cancelled reservation: ' + reservationId + ' Reason: ' + reason);
 }
 
 /**
@@ -493,8 +493,7 @@ function resellVacancy(reservationId, waitlistPatientId) {
     resale_notified: 'Y'
   });
 
-  // TODO: Send notification to waitlist patient
-  Logger.log('Reselling vacancy: ' + reservationId + ' to waitlist ID: ' + waitlistPatientId);
+  appendLogRow('INFO', 'Reselling vacancy: ' + reservationId + ' to waitlist ID: ' + waitlistPatientId);
 }
 
 /**

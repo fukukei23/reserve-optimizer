@@ -50,7 +50,8 @@ function handleChangeFlow(replyToken, userId) {
     items.push({ label: String(i + 1), text: String(i + 1) });
   }
   if (allIds.length > pageSize) {
-    items.push({ label: '次の5件 ▶', text: '次の5件' });
+    var totalP = Math.ceil(allIds.length / pageSize);
+    items.push({ label: '次の5件 ▶ (2/' + totalP + ')', text: '次の5件' });
   }
   items.push({ label: 'やめる', text: 'やめる' });
   sendQuickReply(replyToken, msg, items);

@@ -20,7 +20,8 @@ var USER_STATES = {
   AWAITING_CHANGE_DATE: 'AWAITING_CHANGE_DATE',
   AWAITING_CHANGE_TIME: 'AWAITING_CHANGE_TIME',
   AWAITING_CHANGE_TREATMENT: 'AWAITING_CHANGE_TREATMENT',
-  AWAITING_CHANGE_CONFIRM: 'AWAITING_CHANGE_CONFIRM'
+  AWAITING_CHANGE_CONFIRM: 'AWAITING_CHANGE_CONFIRM',
+  AWAITING_WAITLIST_TIME: 'AWAITING_WAITLIST_TIME'
 };
 
 // Temporary data storage key prefix (24-hour TTL)
@@ -68,4 +69,33 @@ function getUserState(userId) {
 function clearUserState(userId) {
   var key = TEMP_DATA_KEY_PREFIX + userId;
   PropertiesService.getUserProperties().deleteProperty(key);
+}
+
+/**
+ * Clean up expired user states (call from scheduled trigger)
+ * Scans all user properties and removes entries older than 24 hours
+ */
+function cleanupExpiredStates() {
+  var props = PropertiesService.getUserProperties();
+  var allProps = props.getProperties();
+  var now = Date.now();
+  var ttlMs = 24 * 60 * 60 * 1000;
+  var removed = 0;
+
+  for (var key in allProps) {
+    if (key.indexOf(TEMP_DATA_KEY_PREFIX) !== 0) continue;
+    try {
+      var data = JSON.parse(allProps[key]);
+      if (data.timestamp && (now - data.timestamp > ttlMs)) {
+        props.deleteProperty(key);
+        removed++;
+      }
+    } catch (e) {
+      // Malformed entry — remove it
+      props.deleteProperty(key);
+      removed++;
+    }
+  }
+
+  appendLogRow('INFO', 'cleanupExpiredStates: removed ' + removed + ' expired states');
 }

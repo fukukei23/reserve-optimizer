@@ -43,7 +43,11 @@ var PROPERTY_KEYS = {
   MAX_CONCURRENT_BOOKINGS: 'MAX_CONCURRENT_BOOKINGS',       // simultaneous slots per time (default: 1)
   MAX_RESERVATIONS_PER_USER: 'MAX_RESERVATIONS_PER_USER',   // max active reservations per user (default: 3)
   BUSINESS_START_TIME: 'BUSINESS_START_TIME',               // business open time (default: 09:00)
-  BUSINESS_END_TIME: 'BUSINESS_END_TIME'                    // business close time (default: 18:00)
+  BUSINESS_END_TIME: 'BUSINESS_END_TIME',                    // business close time (default: 18:00)
+
+  // Stripe redirect URLs
+  STRIPE_SUCCESS_URL: 'STRIPE_SUCCESS_URL',
+  STRIPE_CANCEL_URL: 'STRIPE_CANCEL_URL'
 };
 
 /**
@@ -216,6 +220,20 @@ function getBusinessEndTime() {
 }
 
 /**
+ * Get Stripe success redirect URL
+ */
+function getStripeSuccessUrl() {
+  return getProperty(PROPERTY_KEYS.STRIPE_SUCCESS_URL, 'https://line.me/R/');
+}
+
+/**
+ * Get Stripe cancel redirect URL
+ */
+function getStripeCancelUrl() {
+  return getProperty(PROPERTY_KEYS.STRIPE_CANCEL_URL, 'https://line.me/R/');
+}
+
+/**
  * Initialize default properties if not set
  */
 function initializeDefaultProperties() {
@@ -239,7 +257,7 @@ function initializeDefaultProperties() {
   for (var key in defaults) {
     if (!properties.getProperty(key)) {
       properties.setProperty(key, defaults[key]);
-      Logger.log('Initialized property: ' + key + ' = ' + defaults[key]);
+      appendLogRow('INFO', 'Initialized property: ' + key + ' = ' + defaults[key]);
     }
   }
 }

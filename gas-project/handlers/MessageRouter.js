@@ -55,10 +55,10 @@ function buildPaginatedQuickReplyItems(pageReservations, page, totalPages, total
     items.push({ label: String(i + 1), text: String(i + 1) });
   }
   if ((page + 1) * pageSize < totalItems) {
-    items.push({ label: '次の5件 ▶', text: '次の5件' });
+    items.push({ label: '次の5件 ▶ (' + (page + 2) + '/' + totalPages + ')', text: '次の5件' });
   }
   if (page > 0) {
-    items.push({ label: '◀ 前の5件', text: '前の5件' });
+    items.push({ label: '◀ 前の5件 (' + page + '/' + totalPages + ')', text: '前の5件' });
   }
   items.push({ label: 'やめる', text: 'やめる' });
   return items;
@@ -125,7 +125,7 @@ function handleLineEvent(event) {
       handleMessage(event.message, replyToken, userId);
       break;
     case 'follow':
-      handleFollow(userId);
+      handleFollow(userId, replyToken);
       break;
     case 'unfollow':
       handleUnfollow(userId);
@@ -245,6 +245,9 @@ function handleMessage(message, replyToken, userId) {
     case USER_STATES.AWAITING_CHANGE_CONFIRM:
       handleAwaitingChangeConfirm(text, replyToken, userId);
       break;
+    case USER_STATES.AWAITING_WAITLIST_TIME:
+      handleAwaitingWaitlistTime(text, replyToken, userId);
+      break;
     default:
       sendLineReply(replyToken, '何かお手伝いしましょうか？');
   }
@@ -254,6 +257,10 @@ function handleMessage(message, replyToken, userId) {
  * Handle command messages
  */
 function handleCommand(command, replyToken, userId) {
+  // Admin commands (restricted to LINE_ADMIN_USER_ID)
+  var adminId = getLineAdminUserId();
+  var isAdmin = adminId && userId === adminId;
+
   switch (command) {
     case '/reserve':
       startReservationFlow(replyToken, userId);
@@ -267,8 +274,38 @@ function handleCommand(command, replyToken, userId) {
     case '/waitlist':
       handleWaitlistFlow(replyToken, userId);
       break;
+    case '/status':
+      if (isAdmin) {
+        var validation = validateRequiredProperties();
+        var statusMsg = '【System Status】\n' +
+          'Config: ' + (validation.valid ? 'OK' : 'MISSING: ' + validation.missing.join(', ')) + '\n' +
+          'Time: ' + new Date().toISOString();
+        sendLineReply(replyToken, statusMsg);
+      } else {
+        sendLineReply(replyToken, 'このコマンドは管理者のみ利用可能です。');
+      }
+      break;
+    case '/cleanup':
+      if (isAdmin) {
+        cleanupExpiredStates();
+        sendLineReply(replyToken, '期限切れ状態のクリーンアップを実行しました。');
+      } else {
+        sendLineReply(replyToken, 'このコマンドは管理者のみ利用可能です。');
+      }
+      break;
+    case '/help':
+      var helpMsg = '【コマンド一覧】\n' +
+        '/reserve - 予約開始\n' +
+        '/change - 予約変更\n' +
+        '/cancel - 予約キャンセル\n' +
+        '/waitlist - 空き枠通知登録';
+      if (isAdmin) {
+        helpMsg += '\n【管理者】\n/status - 設定確認\n/cleanup - 状態クリーンアップ';
+      }
+      sendLineReply(replyToken, helpMsg);
+      break;
     default:
-      sendLineReply(replyToken, '無効なコマンドです。/reserve, /change, /cancel, /waitlist のいずれかを使用してください。');
+      sendLineReply(replyToken, '無効なコマンドです。/help でコマンド一覧を確認してください。');
   }
 }
 
@@ -343,21 +380,108 @@ function handleIdleState(text, replyToken, userId) {
  * Handle waitlist flow
  */
 function handleWaitlistFlow(replyToken, userId) {
-  // TODO: Implement waitlist registration flow
-  sendLineReply(replyToken, '待機リスト登録機能は準備中です。');
+  setUserState(userId, USER_STATES.AWAITING_WAITLIST_TIME, {});
+  sendQuickReply(replyToken, '空き枠通知の登録をします。\n\n希望の時間帯を選択してください。', [
+    { label: '午前中', text: '午前中' },
+    { label: '午後', text: '午後' },
+    { label: 'いつでもOK', text: 'いつでもOK' },
+    { label: 'やめる', text: 'やめる' }
+  ]);
+}
+
+/**
+ * Handle awaiting waitlist time preference
+ */
+function handleAwaitingWaitlistTime(text, replyToken, userId) {
+  if (text === 'やめる') {
+    clearUserState(userId);
+    sendLineReply(replyToken, '空き枠通知の登録を中止しました。');
+    return;
+  }
+
+  var timeMap = {
+    '午前中': 'Morning',
+    '午後': 'Afternoon',
+    'いつでもOK': 'Any'
+  };
+  var preferredTime = timeMap[text];
+  if (!preferredTime) {
+    sendQuickReply(replyToken, '時間帯を選択してください。', [
+      { label: '午前中', text: '午前中' },
+      { label: '午後', text: '午後' },
+      { label: 'いつでもOK', text: 'いつでもOK' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
+  // Check if already on waitlist
+  var existing = getWaitlistReservations();
+  for (var i = 0; i < existing.length; i++) {
+    if (existing[i].line_display_name === userId) {
+      clearUserState(userId);
+      sendQuickReply(replyToken, '既に空き枠通知に登録されています。\n\n希望時間帯を変更する場合は管理者にお問い合わせください。', [
+        { label: '予約する', text: '予約する' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+      return;
+    }
+  }
+
+  var phone = '';
+  var lastRes = getLastReservationByLineUserId(userId);
+  if (lastRes && lastRes.phone) {
+    phone = lastRes.phone;
+  }
+
+  addToWaitlist({
+    line_display_name: userId,
+    phone: phone,
+    preferred_time: preferredTime,
+    same_day_ok: 'Y',
+    notes: 'Registered via LINE bot'
+  });
+
+  clearUserState(userId);
+  sendQuickReply(replyToken, '空き枠通知に登録しました！\n\nキャンセルが出た場合、優先的に通知をお送りします。\n通知は24時間以内に1回までです。', [
+    { label: '予約する', text: '予約する' },
+    { label: 'メニューに戻る', text: 'メニュー' }
+  ]);
+  appendLogRow('INFO', 'Waitlist registered: ' + userId + ' preferred: ' + preferredTime);
 }
 
 /**
  * Handle follow event
  */
-function handleFollow(userId) {
+function handleFollow(userId, replyToken) {
   var profile = getLineProfile(userId);
   var displayName = profile ? profile.displayName : '患者さん';
 
   appendLogRow('INFO', 'User followed: ' + userId + ' (' + displayName + ')');
 
+  // Personalize for returning users
+  var lastReservation = getLastReservationByLineUserId(userId);
+  if (lastReservation && lastReservation.patient_name) {
+    var welcomeMsg = displayName + 'さん、おかえりなさい！\n\n' +
+      '前回は「' + lastReservation.patient_name + '」様としてご来院いただきました。\n' +
+      '引き続き「予約する」からご予約いただけます。';
+    if (replyToken) {
+      sendQuickReply(replyToken, welcomeMsg, [
+        { label: '予約する', text: '予約する' },
+        { label: '営業時間・アクセス', text: '営業時間・アクセス' }
+      ]);
+    } else {
+      sendLinePush(userId, welcomeMsg);
+    }
+    return;
+  }
+
   var welcomeData = MessageTemplates.getWelcomeMessage();
-  sendLinePush(userId, welcomeData.text);
+  if (replyToken) {
+    sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
+  } else {
+    sendLinePush(userId, welcomeData.text);
+  }
 }
 
 /**

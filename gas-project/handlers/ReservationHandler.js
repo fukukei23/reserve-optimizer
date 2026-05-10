@@ -258,6 +258,30 @@ function handleAwaitingPayment(text, replyToken, userId) {
 
   var reservation = getReservationById(reservationId);
 
+  // Retry payment link creation if previous attempt failed
+  if (text === '再試行' && !storedLink) {
+    try {
+      var retryLink = createPaymentLink(reservationId, reservation ? reservation.patient_name : '', getDepositAmount());
+      if (retryLink) {
+        tempData.payment_link = retryLink;
+        setUserState(userId, USER_STATES.AWAITING_PAYMENT, tempData);
+        sendQuickReply(replyToken, '決済リンクを再作成しました。\n\n下のリンクからデポジットをお支払いください。\n\n' + retryLink + '\n\nお支払い完了後、「支払完了」と返信してください。', [
+          { label: '支払完了', text: '支払完了' },
+          { label: 'やめる', text: 'やめる' }
+        ]);
+        return;
+      }
+    } catch (e) {
+      appendLogRow('ERROR', 'Payment link retry error: ' + e.message);
+    }
+    sendQuickReply(replyToken, '決済リンクの再作成にも失敗しました。時間をおいて再度お試しください。', [
+      { label: '再試行', text: '再試行' },
+      { label: 'お問い合わせ', text: 'お問い合わせ' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
   if (reservation && reservation.deposit_status === DEPOSIT_STATUS.PAID) {
     sendLineReply(replyToken, 'お支払いが確認されました。予約が確定しました！');
     clearUserState(userId);
@@ -267,7 +291,10 @@ function handleAwaitingPayment(text, replyToken, userId) {
       { label: 'やめる', text: 'やめる' }
     ]);
   } else {
-    sendLineReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。');
+    sendQuickReply(replyToken, 'デポジットのお支払いがまだです。\n\n支払いリンクが届いていない場合は、管理者にお問い合わせください。', [
+      { label: 'お問い合わせ', text: 'お問い合わせ' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
   }
 }
 
@@ -287,54 +314,91 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     return;
   }
 
-  // Final conflict check (race condition guard)
-  var bookedSlots = getBookedSlotsForDate(tempData.reserved_date);
-  var bookedCount = bookedSlots[tempData.reserved_start] || 0;
-  if (bookedCount >= getMaxConcurrentBookings()) {
-    clearUserState(userId);
-    sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
-      { label: '予約する', text: '予約する' },
-      { label: 'やめる', text: 'やめる' }
-    ]);
-    return;
+  // Check for duplicate reservation (same date+time for this user)
+  for (var di = 0; di < existingReservations.length; di++) {
+    var er = existingReservations[di];
+    if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
+      clearUserState(userId);
+      sendQuickReply(replyToken, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
+        { label: '予約する', text: '予約する' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+      return;
+    }
   }
 
-  var profile = getLineProfile(userId);
-  if (profile) {
-    tempData.line_display_name = profile.userId;
-  }
-
-  var result = createReservation(tempData);
-
-  var paymentLink = null;
+  // Final conflict check with LockService (race condition guard)
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000); // Wait up to 10 seconds for the lock
   try {
-    paymentLink = createPaymentLink(
-      result.id,
-      tempData.patient_name,
-      getDepositAmount()
-    );
-  } catch (e) {
-    appendLogRow('ERROR', 'createPaymentLink error: ' + e.message);
-  }
+    // Re-check booked slots under lock
+    _invalidateReservationCache();
+    var bookedSlotsFinal = getBookedSlotsForDate(tempData.reserved_date);
+    var bookedCountFinal = bookedSlotsFinal[tempData.reserved_start] || 0;
+    if (bookedCountFinal >= getMaxConcurrentBookings()) {
+      lock.releaseLock();
+      clearUserState(userId);
+      sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
+        { label: '予約する', text: '予約する' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+      return;
+    }
 
-  if (paymentLink) {
-    setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
-      reservation_id: result.id,
-      payment_link: paymentLink
-    });
-    var message = MessageTemplates.getDepositRequestMessage(
-      result.id,
-      tempData.reserved_date,
-      tempData.reserved_start,
-      tempData.menu_type,
-      paymentLink
-    );
-    sendQuickReply(replyToken, message, [
-      { label: '支払完了', text: '支払完了' },
-      { label: 'やめる', text: 'やめる' }
-    ]);
-  } else {
-    sendLineReply(replyToken, '決済リンクの作成に失敗しました。管理者にお問い合わせください。');
+    var profile = getLineProfile(userId);
+    if (profile) {
+      tempData.line_display_name = profile.userId;
+    }
+
+    var result = createReservation(tempData);
+    lock.releaseLock();
+
+    var paymentLink = null;
+    try {
+      paymentLink = createPaymentLink(
+        result.id,
+        tempData.patient_name,
+        getDepositAmount()
+      );
+    } catch (e) {
+      appendLogRow('ERROR', 'createPaymentLink error: ' + e.message);
+    }
+
+    if (paymentLink) {
+      setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
+        reservation_id: result.id,
+        payment_link: paymentLink
+      });
+      var message = MessageTemplates.getDepositRequestMessage(
+        result.id,
+        tempData.reserved_date,
+        tempData.reserved_start,
+        tempData.menu_type,
+        paymentLink
+      );
+      sendQuickReply(replyToken, message, [
+        { label: '支払完了', text: '支払完了' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+    } else {
+      // Keep state so user can retry from handleAwaitingPayment
+      setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
+        reservation_id: result.id,
+        payment_link: null
+      });
+      sendQuickReply(replyToken, '決済リンクの作成に失敗しました。下のボタンで再試行するか、管理者にお問い合わせください。', [
+        { label: '再試行', text: '再試行' },
+        { label: 'お問い合わせ', text: 'お問い合わせ' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+    }
+  } catch (e) {
+    try { lock.releaseLock(); } catch (le) { /* already released */ }
+    appendLogRow('ERROR', 'createReservationAndGoToPayment lock error: ' + e.message);
     clearUserState(userId);
+    sendQuickReply(replyToken, '予約の作成中にエラーが発生しました。もう一度お試しください。', [
+      { label: '予約する', text: '予約する' },
+      { label: 'お問い合わせ', text: 'お問い合わせ' }
+    ]);
   }
 }

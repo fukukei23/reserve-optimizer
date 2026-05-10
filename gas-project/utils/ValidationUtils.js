@@ -269,6 +269,21 @@ function validateAmount(amount) {
  */
 function validateDateForBooking(parsedDate) {
   var tz = 'Asia/Tokyo';
+
+  // Basic format and range check (month 1-12, day 1-31)
+  var parts = parsedDate.split(/[-/]/);
+  if (parts.length !== 3) {
+    return { valid: false, errorMessage: '日付の形式が正しくありません。' };
+  }
+  var month = parseInt(parts[1], 10);
+  var day = parseInt(parts[2], 10);
+  if (month < 1 || month > 12) {
+    return { valid: false, errorMessage: '月は1〜12の範囲で入力してください。' };
+  }
+  if (day < 1 || day > 31) {
+    return { valid: false, errorMessage: '日は1〜31の範囲で入力してください。' };
+  }
+
   var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var maxDate = new Date(todayStr + 'T00:00:00+09:00');
   maxDate.setDate(maxDate.getDate() + 90);

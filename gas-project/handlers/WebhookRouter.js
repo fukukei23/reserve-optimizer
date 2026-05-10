@@ -127,6 +127,18 @@ function _dispatchStripeWebhook(body) {
     return _jsonResponse('error', 'No event data');
   }
 
+  // Idempotency check: skip already-processed events
+  var eventId = payload.id;
+  if (eventId) {
+    var processedKey = 'stripe_evt_' + eventId;
+    var props = PropertiesService.getScriptProperties();
+    if (props.getProperty(processedKey)) {
+      appendLogRow('INFO', '[Stripe] Duplicate event skipped: ' + eventId);
+      return _jsonResponse('success', 'Duplicate event already processed');
+    }
+    props.setProperty(processedKey, new Date().toISOString());
+  }
+
   appendLogRow('STRIPE', 'type=' + payload.type + ' id=' + (payload.id || 'N/A') + ' hasData=' + !!(payload.data));
 
   // Full event format (has data.object)

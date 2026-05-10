@@ -82,7 +82,7 @@ function isClinicRelatedInput(text) {
 function callMiniMaxAPI(userMessage) {
   var apiKey = getProperty('MINIMAX_API_KEY');
   if (!apiKey) {
-    console.error('[MiniMaxService] API key not set');
+    appendLogRow('ERROR', '[MiniMaxService] API key not set');
     return null;
   }
 
@@ -114,26 +114,24 @@ function callMiniMaxAPI(userMessage) {
     var responseBody = response.getContentText();
 
     if (responseCode !== 200) {
-      console.error('[MiniMaxService] API error: ' + responseCode + ' ' + responseBody.substring(0, 200));
+      appendLogRow('ERROR', '[MiniMaxService] API error: ' + responseCode + ' ' + responseBody.substring(0, 200));
       return null;
     }
 
     var json = JSON.parse(responseBody);
 
-    // MiniMax API response format (OpenAI-compatible)
     if (json.choices && json.choices.length > 0 && json.choices[0].message) {
       return json.choices[0].message.content.trim();
     }
 
-    // Fallback: check alternative response structures
     if (json.reply) {
       return json.reply.trim();
     }
 
-    console.error('[MiniMaxService] Unexpected response format: ' + responseBody.substring(0, 200));
+    appendLogRow('ERROR', '[MiniMaxService] Unexpected response format: ' + responseBody.substring(0, 200));
     return null;
   } catch (e) {
-    console.error('[MiniMaxService] Exception: ' + e.message);
+    appendLogRow('ERROR', '[MiniMaxService] Exception: ' + e.message);
     return null;
   }
 }
@@ -143,7 +141,6 @@ function callMiniMaxAPI(userMessage) {
  * Returns true if LLM handled the message, false if it should fall through
  */
 function handleLLMQuery(replyToken, text) {
-  // Skip scope check — system prompt handles topic restriction
   var aiResponse = callMiniMaxAPI(text);
 
   if (aiResponse) {
@@ -154,6 +151,5 @@ function handleLLMQuery(replyToken, text) {
     return true;
   }
 
-  // API failed — fall through to default welcome message
   return false;
 }

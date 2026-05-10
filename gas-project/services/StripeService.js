@@ -93,8 +93,8 @@ function createPaymentLink(reservationId, patientName, amount) {
       quantity: 1
     }],
     mode: 'payment',
-    success_url: 'https://line.me/R/',
-    cancel_url: 'https://line.me/R/',
+    success_url: getStripeSuccessUrl(),
+    cancel_url: getStripeCancelUrl(),
     metadata: {
       reservation_id: reservationId,
       patient_name: patientName
@@ -128,12 +128,12 @@ function getPaymentIntent(paymentIntentId) {
  * Verify Stripe webhook signature
  */
 function verifyStripeSignature(payload, signature, secret) {
-  var parts = signature.split(',');
-
-  if (parts.length < 2) {
-    Logger.log('Invalid signature format');
+  if (!signature || signature.indexOf(',') === -1) {
+    appendLogRow('WARN', '[Stripe] Invalid signature format');
     return false;
   }
+
+  var parts = signature.split(',');
 
   var timestamp = parts[0].replace('t=', '');
   var v1Signature = parts[1].replace('v1=', '');
@@ -141,7 +141,7 @@ function verifyStripeSignature(payload, signature, secret) {
   // Check timestamp tolerance (5 minutes)
   var currentTimestamp = Math.floor(Date.now() / 1000);
   if (Math.abs(currentTimestamp - parseInt(timestamp)) > 300) {
-    Logger.log('Signature timestamp too old');
+    appendLogRow('WARN', '[Stripe] Signature timestamp too old');
     return false;
   }
 
