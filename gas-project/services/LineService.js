@@ -39,16 +39,21 @@ function sendLineMessages(replyToken, messages) {
     muteHttpExceptions: true
   };
 
-  var response = UrlFetchApp.fetch(LINE_API_URL, options);
-  var statusCode = response.getResponseCode();
-  var responseBody = response.getContentText();
+  try {
+    var response = UrlFetchApp.fetch(LINE_API_URL, options);
+    var statusCode = response.getResponseCode();
+    var responseBody = response.getContentText();
 
-  if (statusCode !== 200) {
-    appendLogRow('ERROR', '[LINE API] Reply failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+    if (statusCode !== 200) {
+      appendLogRow('ERROR', '[LINE API] Reply failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    appendLogRow('ERROR', '[LINE API] Reply exception: ' + e.message);
     return false;
   }
-
-  return true;
 }
 
 /**
@@ -78,18 +83,23 @@ function sendLinePush(userId, text) {
     muteHttpExceptions: true
   };
 
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
-  var responseBody = response.getContentText();
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var statusCode = response.getResponseCode();
+    var responseBody = response.getContentText();
 
-  appendLogRow('INFO', '[LINE Push] userId: ' + userId.substring(0, 10) + '... status: ' + statusCode);
+    appendLogRow('INFO', '[LINE Push] userId: ' + userId.substring(0, 10) + '... status: ' + statusCode);
 
-  if (statusCode !== 200) {
-    appendLogRow('ERROR', '[LINE Push] Failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+    if (statusCode !== 200) {
+      appendLogRow('ERROR', '[LINE Push] Failed - status: ' + statusCode + ', body: ' + responseBody.substring(0, 300));
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    appendLogRow('ERROR', '[LINE Push] Exception: ' + e.message);
     return false;
   }
-
-  return true;
 }
 
 /**
@@ -440,15 +450,20 @@ function sendLinePushQuickReply(userId, text, quickReplies) {
     muteHttpExceptions: true
   };
 
-  var response = UrlFetchApp.fetch(url, options);
-  var statusCode = response.getResponseCode();
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var statusCode = response.getResponseCode();
 
-  if (statusCode !== 200) {
-    appendLogRow('ERROR', '[LINE Push QR] Failed - status: ' + statusCode + ', body: ' + response.getContentText().substring(0, 300));
+    if (statusCode !== 200) {
+      appendLogRow('ERROR', '[LINE Push QR] Failed - status: ' + statusCode + ', body: ' + response.getContentText().substring(0, 300));
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    appendLogRow('ERROR', '[LINE Push QR] Exception: ' + e.message);
     return false;
   }
-
-  return true;
 }
 
 /**
@@ -456,4 +471,18 @@ function sendLinePushQuickReply(userId, text, quickReplies) {
  */
 function logLineMessage(source, message) {
   appendLogRow('DEBUG', '[LINE Message] from ' + source.userId + ': ' + message);
+}
+
+/**
+ * Send admin notification with event type prefix
+ * @param {string} eventType - Event category (no_show, payment_failed, waitlist)
+ * @param {string} message - Notification body
+ */
+function notifyAdmin(eventType, message) {
+  var adminUserId = getLineAdminUserId();
+  if (!adminUserId) return;
+
+  var prefix = {no_show: '⚠', payment_failed: '💳', waitlist: '📋'};
+  var icon = prefix[eventType] || 'ℹ';
+  sendLinePush(adminUserId, icon + ' [' + eventType + '] ' + message);
 }

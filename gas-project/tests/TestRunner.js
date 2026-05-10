@@ -3,14 +3,15 @@
  *
  * Call runAllTests() from GAS editor or script.google.com to execute.
  * Individual suites can also be run directly:
- *   - testValidationUtils() — ValidationUtils unit tests
- *   - testDateUtils() — DateUtils/DateInputHelper unit tests
- *   - testMessageTemplates() — MessageTemplates unit tests
- *   - testCancelFlow() — Cancel flow integration test
- *   - testChangeFlow() — Change flow integration test
- *   - testSheetServiceIntegration() — Sheet accessibility check
- *   - testLineService() — LINE token check
- *   - testStripeService() — Stripe API key check
+ *   - testValidationUtils() — ValidationUtils unit tests (ValidationTests.js)
+ *   - testDateUtils() — DateUtils/DateInputHelper unit tests (DateParserTests.js)
+ *   - testMessageTemplates() — MessageTemplates unit tests (FlowTests.js)
+ *   - testReminderService() — ReminderService unit tests (ReminderServiceTests.js)
+ *   - testCancelFlow() — Cancel flow integration test (FlowTests.js)
+ *   - testChangeFlow() — Change flow integration test (FlowTests.js)
+ *   - testSheetServiceIntegration() — Sheet accessibility check (FlowTests.js)
+ *   - testLineService() — LINE token check (FlowTests.js)
+ *   - testStripeService() — Stripe API key check (FlowTests.js)
  */
 
 /**

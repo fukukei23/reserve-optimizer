@@ -89,6 +89,8 @@ function handlePaymentFailure(paymentIntent) {
   var failureMessage = MessageTemplates.getPaymentFailedMessage(errorMessage);
   sendLinePush(reservation.line_display_name, failureMessage);
 
+  notifyAdmin('payment_failed', '決済失敗: ' + reservationId + ' / ' + reservation.patient_name + ' / エラー: ' + errorMessage);
+
   appendLogRow('INFO', '[handlePaymentFailure] Payment failed for reservation: ' + reservationId);
 }
 
@@ -106,11 +108,11 @@ function handleRefund(charge) {
 
   appendLogRow('INFO', '[handleRefund] Processing refund for payment intent: ' + paymentIntentId);
 
-  // Search cache for reservation with matching payment intent
+  // Search cache for reservation with matching payment_intent_id
   _ensureReservationCache();
   for (var i = 0; i < _reservationCache.length; i++) {
     var r = _reservationCache[i];
-    if (r.deposit_status === DEPOSIT_STATUS.PAID && r.status === RESERVATION_STATUS.CANCELLED) {
+    if (r.payment_intent_id === paymentIntentId) {
       updateReservation(r.id, {
         deposit_status: DEPOSIT_STATUS.REFUNDED
       });
@@ -123,7 +125,7 @@ function handleRefund(charge) {
     }
   }
 
-  appendLogRow('INFO', '[handleRefund] No matching paid+cancelled reservation found');
+  appendLogRow('WARN', '[handleRefund] No reservation found with payment_intent_id: ' + paymentIntentId);
 }
 
 /**
@@ -146,7 +148,8 @@ function handleCheckoutSessionCompleted(session) {
 
   updateReservation(reservationId, {
     deposit_status: DEPOSIT_STATUS.PAID,
-    status: RESERVATION_STATUS.CONFIRMED
+    status: RESERVATION_STATUS.CONFIRMED,
+    payment_intent_id: session.payment_intent || ''
   });
 
   var message = MessageTemplates.getConfirmationMessage(reservation);

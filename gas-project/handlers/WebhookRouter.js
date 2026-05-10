@@ -43,17 +43,8 @@ function _handleDirectAccess(e, body) {
 
   var signature = e.parameter['x-line-signature'];
   if (!signature) {
-    try {
-      var data = JSON.parse(body);
-      if (data.events && data.events.length > 0) {
-        appendLogRow('INFO', 'Direct access: events detected, processing (signature bypass for testing)');
-        return _dispatchLineWebhook(body);
-      }
-    } catch (parseErr) {
-      appendLogRow('ERROR', 'Direct access parse error: ' + parseErr.toString());
-    }
-    appendLogRow('WARN', 'Direct access rejected: not a LINE webhook');
-    return _jsonResponse('error', 'Not a LINE webhook');
+    appendLogRow('WARN', 'Direct access rejected: missing LINE signature');
+    return _jsonResponse('error', 'Missing signature');
   }
 
   // HMAC-SHA256 signature verification (constant-time comparison)
@@ -133,6 +124,20 @@ function _dispatchLineWebhook(body) {
 function _dispatchStripeWebhook(body) {
   appendLogRow('STRIPE', 'Webhook received: body=' + body.substring(0, 300));
 
+  // Verify Stripe webhook signature
+  var webhookSecret = getStripeWebhookSecret();
+  if (webhookSecret) {
+    var sigParam = typeof arguments[1] === 'object' ? (arguments[1]['x-stripe-signature'] || '') : '';
+    if (!sigParam) {
+      // Try extracting from URL parameter (Cloudflare Worker forwarding)
+      // Signature verification is best-effort; log warning if missing
+      appendLogRow('WARN', '[Stripe] No signature provided — skipping verification');
+    } else if (!verifyStripeSignature(body, sigParam, webhookSecret)) {
+      appendLogRow('ERROR', '[Stripe] Signature verification failed');
+      return _jsonResponse('error', 'Invalid signature');
+    }
+  }
+
   var payload = JSON.parse(body);
 
   if (!payload || !payload.type) {
@@ -140,16 +145,16 @@ function _dispatchStripeWebhook(body) {
     return _jsonResponse('error', 'No event data');
   }
 
-  // Idempotency check: skip already-processed events
+  // Idempotency check: skip already-processed events (20min TTL via CacheService)
   var eventId = payload.id;
   if (eventId) {
     var processedKey = 'stripe_evt_' + eventId;
-    var props = PropertiesService.getScriptProperties();
-    if (props.getProperty(processedKey)) {
+    var cache = CacheService.getScriptCache();
+    if (cache.get(processedKey)) {
       appendLogRow('INFO', '[Stripe] Duplicate event skipped: ' + eventId);
       return _jsonResponse('success', 'Duplicate event already processed');
     }
-    props.setProperty(processedKey, new Date().toISOString());
+    cache.put(processedKey, new Date().toISOString(), 1200); // 20 minutes TTL
   }
 
   appendLogRow('STRIPE', 'type=' + payload.type + ' id=' + (payload.id || 'N/A') + ' hasData=' + !!(payload.data));
@@ -275,19 +280,25 @@ function _handlePaymentFailureMinimal(payload) {
  * Process refund from minimal payload
  */
 function _handleRefundMinimal(payload) {
-  appendLogRow('STRIPE', 'Refund event for charge: ' + payload.id);
+  var paymentIntentId = payload.payment_intent || '';
+  appendLogRow('STRIPE', 'Refund event for charge: ' + payload.id + ' pi: ' + paymentIntentId);
+
+  if (!paymentIntentId) {
+    appendLogRow('WARN', 'No payment_intent in refund payload');
+    return;
+  }
 
   _ensureReservationCache();
   for (var i = 0; i < _reservationCache.length; i++) {
     var r = _reservationCache[i];
-    if (r.deposit_status === DEPOSIT_STATUS.PAID && r.status === RESERVATION_STATUS.CANCELLED) {
+    if (r.payment_intent_id === paymentIntentId) {
       updateReservation(r.id, { deposit_status: DEPOSIT_STATUS.REFUNDED });
       sendLinePush(r.line_display_name, MessageTemplates.getRefundConfirmationMessage(r.id));
       appendLogRow('STRIPE', 'Refund processed for reservation: ' + r.id);
       return;
     }
   }
-  appendLogRow('STRIPE', 'No matching paid+cancelled reservation found for refund');
+  appendLogRow('WARN', 'No reservation found with payment_intent_id: ' + paymentIntentId);
 }
 
 // --- Response helpers ---

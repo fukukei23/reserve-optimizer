@@ -174,6 +174,15 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
+  // Handle waitlist slot reservation (RESERVE_SLOT:date:time)
+  if (text.indexOf('RESERVE_SLOT:') === 0) {
+    var parts = text.substring('RESERVE_SLOT:'.length).split(':');
+    if (parts.length >= 2) {
+      handleWaitlistSlotReservation(replyToken, userId, parts[0], parts[1]);
+      return;
+    }
+  }
+
   // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
   if (text === '営業時間・アクセス') {
     sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
@@ -195,11 +204,11 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
-  // Handle "戻る" — soft cancel (back to menu without losing data)
+  // Handle "戻る" — go back to menu (clears state, returns to welcome)
   if (text === '戻る' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
     var menuData = MessageTemplates.getWelcomeMessage();
-    sendQuickReply(replyToken, '操作を中止しました。', menuData.quickReplies);
+    sendQuickReply(replyToken, '操作を中止し、メニューに戻ります。\n\n「やめる」との違い：「戻る」＝メニューに戻る、「やめる」＝完全にキャンセル', menuData.quickReplies);
     return;
   }
 
@@ -353,6 +362,7 @@ function handleCommand(command, replyToken, userId) {
 var _KEYWORD_MAP = {
   '予約する': 'reserve', '予約したい': 'reserve', '新規予約': 'reserve',
   '予約お願い': 'reserve', '予約おねがい': 'reserve',
+  '予約確認': 'view', '予約状況': 'view', 'マイ予約': 'view',
   '予約変更・キャンセル': 'change', '予約変更': 'change', '変更': 'change',
   'キャンセル': 'change', '予約キャンセル': 'change',
   '変更したい': 'change', 'キャンセルしたい': 'change',
@@ -395,6 +405,8 @@ function handleIdleState(text, replyToken, userId) {
 
   if (action === 'reserve') {
     startReservationFlow(replyToken, userId);
+  } else if (action === 'view') {
+    handleViewReservations(replyToken, userId);
   } else if (action === 'change') {
     handleChangeFlow(replyToken, userId);
   } else if (action === 'waitlist') {
@@ -421,6 +433,47 @@ function handleWaitlistFlow(replyToken, userId) {
     { label: '午後', text: '午後' },
     { label: 'いつでもOK', text: 'いつでもOK' },
     { label: 'やめる', text: 'やめる' }
+  ]);
+}
+
+/**
+ * Show read-only reservation list for the user
+ */
+function handleViewReservations(replyToken, userId) {
+  var reservations = getReservationsByLineUserId(userId);
+  var active = [];
+  for (var i = 0; i < reservations.length; i++) {
+    var r = reservations[i];
+    if (r.status === RESERVATION_STATUS.CONFIRMED || r.status === RESERVATION_STATUS.PENDING) {
+      active.push(r);
+    }
+  }
+
+  if (active.length === 0) {
+    sendQuickReply(replyToken, '現在予約はありません。\n\n「予約する」から新しく予約できます。', [
+      { label: '予約する', text: '予約する' },
+      { label: 'メニューに戻る', text: 'メニュー' }
+    ]);
+    return;
+  }
+
+  var msg = '【現在の予約】\n\n';
+  for (var j = 0; j < active.length; j++) {
+    var res = active[j];
+    var statusLabel = res.status === RESERVATION_STATUS.CONFIRMED ? '確定' : '支払待ち';
+    msg += (j + 1) + '. ' + res.reserved_date + ' ' + res.reserved_start + ' - ' + (res.reserved_end || '') + '\n';
+    msg += '   ' + res.menu_type + ' / ' + statusLabel;
+    if (res.deposit_status === DEPOSIT_STATUS.PAID) {
+      msg += ' / デポジット済';
+    }
+    msg += '\n\n';
+  }
+  msg += '変更・キャンセルは「予約変更・キャンセル」からどうぞ。';
+
+  sendQuickReply(replyToken, msg, [
+    { label: '予約変更・キャンセル', text: '予約変更・キャンセル' },
+    { label: '予約する', text: '予約する' },
+    { label: 'メニューに戻る', text: 'メニュー' }
   ]);
 }
 
@@ -489,6 +542,44 @@ function handleAwaitingWaitlistTime(text, replyToken, userId) {
     { label: 'メニューに戻る', text: 'メニュー' }
   ]);
   appendLogRow('INFO', 'Waitlist registered: ' + userId + ' preferred: ' + preferredTime);
+}
+
+/**
+ * Handle waitlist slot reservation (from "この枠を予約する" button)
+ */
+function handleWaitlistSlotReservation(replyToken, userId, date, time) {
+  // Check if slot is still available
+  var bookedSlots = getBookedSlotsForDate(date);
+  var bookedCount = bookedSlots[time] || 0;
+  if (bookedCount >= getMaxConcurrentBookings()) {
+    sendQuickReply(replyToken, '申し訳ございません、この枠は既に他の方が予約しました。\n\n再度「当日空き枠通知を受け取る」から登録ください。', [
+      { label: '空き枠通知を受け取る', text: '当日空き枠通知を受け取る' },
+      { label: '予約する', text: '予約する' }
+    ]);
+    return;
+  }
+
+  // Get user info from last reservation
+  var lastRes = getLastReservationByLineUserId(userId);
+  if (!lastRes || !lastRes.patient_name) {
+    sendQuickReply(replyToken, '空き枠の予約には事前の予約履歴が必要です。\n\n「予約する」からまず予約をお願いします。', [
+      { label: '予約する', text: '予約する' }
+    ]);
+    return;
+  }
+
+  var tempData = {
+    patient_name: lastRes.patient_name,
+    phone: lastRes.phone || '',
+    is_returning: true,
+    menu_type: '再診（30分）',
+    visit_type: VISIT_TYPE.REPEAT,
+    reserved_date: date,
+    reserved_start: time,
+    reserved_end: calculateEndTime(time, getTreatmentDuration('再診（30分）'))
+  };
+
+  createReservationAndGoToPayment(replyToken, userId, tempData);
 }
 
 /**

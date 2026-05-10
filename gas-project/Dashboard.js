@@ -21,6 +21,7 @@ function createDashboardSheet() {
 
   var currentKPIs = getCurrentWeekKPIs();
   var targets = compareKPIsToTargets(currentKPIs);
+  var prevKPIs = getPreviousWeekKPIs();
   var L = DASHBOARD_LAYOUT;
 
   // Header
@@ -31,15 +32,17 @@ function createDashboardSheet() {
   sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setValue('【今週のサマリー】');
   sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setFontWeight('bold').setFontSize(14);
 
+  // Build previous week values and change
+  var pv = prevKPIs || {};
   var summaryData = [
     ['', '今週', '前週', '変化'],
-    ['総予約件数', currentKPIs.total_reservations, '-', '-'],
-    ['無断件数', currentKPIs.total_no_shows, '-', '-'],
-    ['無断率', currentKPIs.no_show_rate + '%', '-', '-'],
-    ['当日キャンセル', currentKPIs.same_day_cancellations, '-', '-'],
-    ['再販通知回数', currentKPIs.resale_notifications, '-', '-'],
-    ['再販成功数', currentKPIs.resale_success_count, '-', '-'],
-    ['推定回収額', currentKPIs.estimated_recovered_revenue + '円', '-', '-']
+    ['総予約件数', currentKPIs.total_reservations, pv.total_reservations || '-', _fmtChange(currentKPIs.total_reservations, pv.total_reservations)],
+    ['無断件数', currentKPIs.total_no_shows, pv.total_no_shows || '-', _fmtChange(currentKPIs.total_no_shows, pv.total_no_shows)],
+    ['無断率', currentKPIs.no_show_rate + '%', (pv.no_show_rate || '-') + (pv.no_show_rate ? '%' : ''), _fmtChange(parseFloat(currentKPIs.no_show_rate), pv.no_show_rate)],
+    ['当日キャンセル', currentKPIs.same_day_cancellations, pv.same_day_cancellations || '-', _fmtChange(currentKPIs.same_day_cancellations, pv.same_day_cancellations)],
+    ['再販通知回数', currentKPIs.resale_notifications, pv.resale_notifications || '-', _fmtChange(currentKPIs.resale_notifications, pv.resale_notifications)],
+    ['再販成功数', currentKPIs.resale_success_count, pv.resale_success_count || '-', _fmtChange(currentKPIs.resale_success_count, pv.resale_success_count)],
+    ['推定回収額', currentKPIs.estimated_recovered_revenue + '円', (pv.estimated_recovered_revenue || '-') + (pv.estimated_recovered_revenue ? '円' : ''), _fmtChange(currentKPIs.estimated_recovered_revenue, pv.estimated_recovered_revenue)]
   ];
 
   sheet.getRange(L.SUMMARY_DATA_START_ROW, 1, summaryData.length, summaryData[0].length).setValues(summaryData);
@@ -94,15 +97,17 @@ function updateDashboard() {
 
   var L = DASHBOARD_LAYOUT;
   var currentKPIs = getCurrentWeekKPIs();
+  var prevKPIs = getPreviousWeekKPIs();
+  var pv = prevKPIs || {};
 
   var summaryValues = [
-    ['', currentKPIs.total_reservations, '-', '-'],
-    ['', currentKPIs.total_no_shows, '-', '-'],
-    ['', currentKPIs.no_show_rate + '%', '-', '-'],
-    ['', currentKPIs.same_day_cancellations, '-', '-'],
-    ['', currentKPIs.resale_notifications, '-', '-'],
-    ['', currentKPIs.resale_success_count, '-', '-'],
-    ['', currentKPIs.estimated_recovered_revenue + '円', '-', '-']
+    ['', currentKPIs.total_reservations, pv.total_reservations || '-', _fmtChange(currentKPIs.total_reservations, pv.total_reservations)],
+    ['', currentKPIs.total_no_shows, pv.total_no_shows || '-', _fmtChange(currentKPIs.total_no_shows, pv.total_no_shows)],
+    ['', currentKPIs.no_show_rate + '%', (pv.no_show_rate || '-') + (pv.no_show_rate ? '%' : ''), _fmtChange(parseFloat(currentKPIs.no_show_rate), pv.no_show_rate)],
+    ['', currentKPIs.same_day_cancellations, pv.same_day_cancellations || '-', _fmtChange(currentKPIs.same_day_cancellations, pv.same_day_cancellations)],
+    ['', currentKPIs.resale_notifications, pv.resale_notifications || '-', _fmtChange(currentKPIs.resale_notifications, pv.resale_notifications)],
+    ['', currentKPIs.resale_success_count, pv.resale_success_count || '-', _fmtChange(currentKPIs.resale_success_count, pv.resale_success_count)],
+    ['', currentKPIs.estimated_recovered_revenue + '円', (pv.estimated_recovered_revenue || '-') + (pv.estimated_recovered_revenue ? '円' : ''), _fmtChange(currentKPIs.estimated_recovered_revenue, pv.estimated_recovered_revenue)]
   ];
 
   sheet.getRange(L.SUMMARY_DATA_START_ROW + 1, 2, summaryValues.length, L.SUMMARY_COLS).setValues(summaryValues);

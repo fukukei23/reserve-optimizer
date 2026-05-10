@@ -23,6 +23,7 @@ function startReservationFlow(replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
   var menuOptions;
+  var totalSteps = isReturning ? 3 : 4; // returning: 施術→日付→時間(3), new: 施術→日付→名前→電話(4)
   if (isReturning) {
     menuOptions = [
       { label: '再診（30分）', text: '再診（30分）' },
@@ -35,15 +36,18 @@ function startReservationFlow(replyToken, userId) {
       { label: 'やめる', text: 'やめる' }
     ];
   }
-  sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/3] 施術の種類を選択してください。', menuOptions);
+  tempData.total_steps = totalSteps;
+  sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/' + totalSteps + '] 施術の種類を選択してください。', menuOptions);
 }
 
 /**
  * Handle awaiting name
  */
 function handleAwaitingName(text, replyToken, userId) {
+  var tempDataN = getUserState(userId).context;
+  var total = tempDataN.total_steps || 4;
   if (text === FALLBACK_RETRY_TEXT) {
-    sendQuickReply(replyToken, '[Step 3/4] お名前を入力してください。', [
+    sendQuickReply(replyToken, '[Step 3/' + total + '] お名前を入力してください。', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -51,7 +55,7 @@ function handleAwaitingName(text, replyToken, userId) {
 
   var trimmed = text.trim();
   if (!trimmed || trimmed.length > 100) {
-    sendQuickReply(replyToken, '[Step 3/4] お名前を入力してください。\n（100文字以内でご入力ください）', [
+    sendQuickReply(replyToken, '[Step 3/' + total + '] お名前を入力してください。\n（100文字以内でご入力ください）', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -61,7 +65,7 @@ function handleAwaitingName(text, replyToken, userId) {
   tempData.patient_name = trimmed;
 
   setUserState(userId, USER_STATES.AWAITING_PHONE, tempData);
-  sendQuickReply(replyToken, 'お名前を確認しました。\n\n[Step 4/4] 電話番号を入力してください（例: 09012345678）。', [
+  sendQuickReply(replyToken, 'お名前を確認しました。\n\n[Step ' + total + '/' + total + '] 電話番号を入力してください（例: 09012345678）。', [
     { label: 'やめる', text: 'やめる' }
   ]);
 }
@@ -70,8 +74,10 @@ function handleAwaitingName(text, replyToken, userId) {
  * Handle awaiting phone
  */
 function handleAwaitingPhone(text, replyToken, userId) {
+  var tempDataP = getUserState(userId).context;
+  var totalP = tempDataP.total_steps || 4;
   if (text === FALLBACK_RETRY_TEXT) {
-    sendQuickReply(replyToken, '[Step 4/4] 電話番号を入力してください（例: 09012345678）。', [
+    sendQuickReply(replyToken, '[Step ' + totalP + '/' + totalP + '] 電話番号を入力してください（例: 09012345678）。', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -176,7 +182,16 @@ function handleAwaitingTime(text, replyToken, userId) {
   var bookedSlots = getBookedSlotsForDate(tempData.reserved_date);
   var bookedCount = bookedSlots[normalized] || 0;
   if (bookedCount >= getMaxConcurrentBookings()) {
-    sendQuickReply(replyToken, '申し訳ございません、' + tempData.reserved_date + ' ' + normalized + 'は既に予約で埋まっています。\n\n別の時間を選択してください。', [
+    // Suggest nearest available time slots
+    var alternativeMsg = '申し訳ございません、' + tempData.reserved_date + ' ' + normalized + 'は既に予約で埋まっています。';
+    var altSlots = _findNearestAvailableSlots(tempData.reserved_date, normalized, 3);
+    if (altSlots.length > 0) {
+      alternativeMsg += '\n\n以下の時間なら空きがあります：\n';
+      for (var ai = 0; ai < altSlots.length; ai++) {
+        alternativeMsg += '・' + altSlots[ai] + '\n';
+      }
+    }
+    sendQuickReply(replyToken, alternativeMsg + '\n別の時間を選択してください。', [
       { label: '別の時間', text: '別の時間' },
       { label: 'やめる', text: 'やめる' }
     ]);
@@ -416,4 +431,31 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
       { label: 'お問い合わせ', text: 'お問い合わせ' }
     ]);
   }
+}
+
+/**
+ * Find nearest available time slots on the same date
+ */
+function _findNearestAvailableSlots(date, requestedTime, maxSlots) {
+  var bookedSlots = getBookedSlotsForDate(date);
+  var maxBookings = getMaxConcurrentBookings();
+  var startH = parseInt((getProperty('BUSINESS_START_TIME') || '09:00').split(':')[0]);
+  var endH = parseInt((getProperty('BUSINESS_END_TIME') || '18:00').split(':')[0]);
+  var requestedMinutes = parseInt(requestedTime.split(':')[0]) * 60 + parseInt(requestedTime.split(':')[1]);
+
+  var available = [];
+  for (var h = startH; h < endH; h++) {
+    for (var m = 0; m < 60; m += 30) {
+      var slot = ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+      var slotCount = bookedSlots[slot] || 0;
+      if (slotCount < maxBookings) {
+        var slotMinutes = h * 60 + m;
+        var distance = Math.abs(slotMinutes - requestedMinutes);
+        available.push({ slot: slot, distance: distance });
+      }
+    }
+  }
+
+  available.sort(function(a, b) { return a.distance - b.distance; });
+  return available.slice(0, maxSlots).map(function(s) { return s.slot; });
 }

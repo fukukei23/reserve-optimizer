@@ -39,18 +39,30 @@ function doGet(e) {
     appendLogRow('DEBUG', 'doGet: source=' + source + ' body=' + body.substring(0, 300));
 
     if (source === 'line') {
-      return handleLineWebhookVerified(body);
+      return _dispatchLineWebhook(body);
     } else if (source === 'stripe') {
-      return handleStripeWebhookVerified(body);
+      var stripeParams = { 'x-stripe-signature': e.parameter['x-stripe-signature'] || '' };
+      return _dispatchStripeWebhook(body, stripeParams);
     } else {
-      return handleAutoDetect(body);
+      return _autoDetectWebhook(body);
     }
   }
 
-  // === Mode 2: gas-autopilot ===
+  // === Mode 2: gas-autopilot (requires Bearer auth) ===
   var fnName = (e && e.parameter && e.parameter.fn) || '';
 
   if (fnName && fnName in _GET_ROUTES) {
+    // Verify Bearer token from Authorization header
+    var authHeader = '';
+    if (e && e.headers && e.headers['Authorization']) {
+      authHeader = e.headers['Authorization'];
+    }
+    var expectedToken = PropertiesService.getScriptProperties().getProperty('GAS_AUTH_TOKEN');
+    if (!expectedToken || authHeader !== 'Bearer ' + expectedToken) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ ok: false, error: 'Unauthorized' })
+      ).setMimeType(ContentService.MimeType.JSON).setStatusCode(401);
+    }
     try {
       var result = _GET_ROUTES[fnName](e.parameter);
       return ContentService.createTextOutput(

@@ -260,6 +260,13 @@ function initializeDefaultProperties() {
       appendLogRow('INFO', 'Initialized property: ' + key + ' = ' + defaults[key]);
     }
   }
+
+  // Generate GAS_AUTH_TOKEN if not set (used for gas-run.sh autopilot authentication)
+  if (!properties.getProperty('GAS_AUTH_TOKEN')) {
+    var token = Utilities.getUuid().replace(/-/g, '');
+    properties.setProperty('GAS_AUTH_TOKEN', token);
+    appendLogRow('INFO', 'Generated GAS_AUTH_TOKEN. Set this in gas-run.sh to authenticate autopilot calls.');
+  }
 }
 
 /**

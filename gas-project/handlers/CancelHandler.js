@@ -5,6 +5,34 @@
  */
 
 /**
+ * Check if a reservation can be cancelled
+ * @param {object} reservation - Reservation object
+ * @returns {{ canCancel: boolean, reason: string }}
+ */
+function canCancelReservation(reservation) {
+  if (reservation.status === RESERVATION_STATUS.CANCELLED) {
+    return { canCancel: false, reason: '既にキャンセルされています。' };
+  }
+  if (reservation.status === RESERVATION_STATUS.VISITED) {
+    return { canCancel: false, reason: '既に来院されています。' };
+  }
+  if (reservation.status === RESERVATION_STATUS.NO_SHOW) {
+    return { canCancel: false, reason: '無断キャンセルとなっています。' };
+  }
+
+  var now = new Date();
+  var reservedDateTime = new Date(reservation.reserved_date + 'T' + reservation.reserved_start + ':00');
+  var hoursUntilReservation = (reservedDateTime - now) / (1000 * 60 * 60);
+  var deadlineHours = getCancellationDeadlineHours();
+
+  if (hoursUntilReservation < deadlineHours) {
+    return { canCancel: false, reason: 'キャンセル締切（' + deadlineHours + '時間前）を過ぎています。' };
+  }
+
+  return { canCancel: true, reason: '' };
+}
+
+/**
  * Notify waitlist candidates about a vacancy (best-effort, never blocks cancellation)
  */
 function _notifyWaitlistVacancy(reservation) {
@@ -18,7 +46,11 @@ function _notifyWaitlistVacancy(reservation) {
         reservation.reserved_start + '-' + reservation.reserved_end,
         reservation.menu_type
       );
-      sendLinePush(candidates[i].line_display_name, vacancyMsg);
+      if (vacancyMsg.quickReplies) {
+        sendLinePushQuickReply(candidates[i].line_display_name, vacancyMsg.text, vacancyMsg.quickReplies);
+      } else {
+        sendLinePush(candidates[i].line_display_name, vacancyMsg.text || vacancyMsg);
+      }
       appendLogRow('INFO', 'Sent vacancy notification to waitlist: ' + candidates[i].line_display_name);
     }
   } catch (e) {
@@ -190,7 +222,7 @@ function handleAwaitingCancelConfirm(text, replyToken, userId) {
   if (reservation.deposit_status === DEPOSIT_STATUS.PAID) {
     // Refund via Stripe
     try {
-      var refundResult = refundPayment(reservation.id, reservation.deposit_amount);
+      var refundResult = refundPayment(reservation.payment_intent_id, reservation.deposit_amount);
       if (refundResult) {
         refunded = true;
         updateReservation(reservationId, {

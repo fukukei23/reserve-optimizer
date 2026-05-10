@@ -90,6 +90,13 @@ function setupTriggers() {
     .atHour(REMINDER_HOUR)
     .create();
 
+  // Trigger 1b: Same-day morning reminders
+  ScriptApp.newTrigger('sendSameDayReminders')
+    .timeBased()
+    .everyDays(1)
+    .atHour(7)
+    .create();
+
   // Trigger 2: No-show check (one trigger per hour)
   for (var i = 0; i < NOSHOW_CHECK_HOURS.length; i++) {
     var hour = parseInt(NOSHOW_CHECK_HOURS[i]);
@@ -123,7 +130,13 @@ function setupTriggers() {
     .atHour(DASHBOARD_HOUR)
     .create();
 
-  Logger.log('Created ' + (2 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
+  // Trigger 6: Unpaid reservation auto-cancel (every 30 minutes)
+  ScriptApp.newTrigger('cancelExpiredUnpaidReservations')
+    .timeBased()
+    .everyMinutes(30)
+    .create();
+
+  Logger.log('Created ' + (3 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
 }
 
 /**

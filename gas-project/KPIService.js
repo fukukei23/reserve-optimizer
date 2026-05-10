@@ -205,3 +205,36 @@ function compareKPIsToTargets(kpiData) {
     }
   };
 }
+
+/**
+ * Get previous week KPIs from weekly_summary sheet
+ * Returns null if no data available
+ */
+function getPreviousWeekKPIs() {
+  var sheet = getWeeklySummarySheet();
+  var data = sheet.getDataRange().getValues();
+
+  if (data.length < 2) return null;
+
+  var lastRow = data[data.length - 1];
+  return {
+    total_reservations: parseInt(lastRow[1]) || 0,
+    total_no_shows: parseInt(lastRow[2]) || 0,
+    no_show_rate: parseFloat(lastRow[3]) || 0,
+    same_day_cancellations: parseInt(lastRow[4]) || 0,
+    resale_notifications: parseInt(lastRow[5]) || 0,
+    resale_success_count: parseInt(lastRow[6]) || 0,
+    estimated_recovered_revenue: parseInt(lastRow[7]) || 0
+  };
+}
+
+/**
+ * Calculate change between current and previous value
+ * Returns formatted string with +/- prefix
+ */
+function _fmtChange(current, previous) {
+  if (previous === null || previous === undefined || previous === 0) return '-';
+  var diff = current - previous;
+  var pct = ((diff / previous) * 100).toFixed(1);
+  return (diff >= 0 ? '+' : '') + diff + ' (' + (diff >= 0 ? '+' : '') + pct + '%)';
+}

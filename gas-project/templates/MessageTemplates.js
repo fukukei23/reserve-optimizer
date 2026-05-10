@@ -28,6 +28,7 @@ var MessageTemplates = {
       text: '整骨院へようこそ！\n\n以下から選択してください：',
       quickReplies: [
         {label: '予約する', text: '予約する'},
+        {label: '予約確認', text: '予約確認'},
         {label: '予約変更・キャンセル', text: '予約変更・キャンセル'},
         {label: '当日空き枠通知を受け取る', text: '当日空き枠通知を受け取る'}
       ]
@@ -41,7 +42,9 @@ var MessageTemplates = {
       '【日付】 {date}\n' +
       '【時間】 {time}\n' +
       '【施術】 {menu}\n\n' +
-      'デポジット（{depositAmount}円）のお支払いをお願いします。\n\n' +
+      'デポジット（{depositAmount}円）のお支払いをお願いします。\n' +
+      '※施術当日にお会計から差し引かれます\n' +
+      '※キャンセルは{deadline}時間前まで全額返金\n\n' +
       '{paymentLink}\n\n' +
       '決済完了後、自動的に予約が確定します。\n' +
       '数分経っても確定通知が来ない場合は「支払完了」と返信してください。',
@@ -51,6 +54,7 @@ var MessageTemplates = {
         time: time,
         menu: menu,
         depositAmount: getDepositAmount(),
+        deadline: getCancellationDeadlineHours(),
         paymentLink: paymentLink
       }
     );
@@ -82,15 +86,20 @@ var MessageTemplates = {
   },
 
   getReminderMessage: function(date, time, menu) {
-    return _fill(
-      '明日はご予約の日です。\n\n' +
-      '【日時】 {date} {time}\n' +
-      '【施術】 {menu}\n\n' +
-      '来院できますか？\n\n' +
-      '返信してください：\n' +
-      '「行きます」または「変更したい」または「キャンセル」',
-      { date: date, time: time, menu: menu }
-    );
+    return {
+      text: _fill(
+        '明日はご予約の日です。\n\n' +
+        '【日時】 {date} {time}\n' +
+        '【施術】 {menu}\n\n' +
+        '来院できますか？',
+        { date: date, time: time, menu: menu }
+      ),
+      quickReplies: [
+        { label: 'はい、行きます', text: 'はい、行きます' },
+        { label: '変更したい', text: '予約変更・キャンセル' },
+        { label: 'キャンセル', text: 'キャンセル' }
+      ]
+    };
   },
 
   getSameDayConfirmationMessage: function(date, time) {
@@ -101,15 +110,21 @@ var MessageTemplates = {
   },
 
   getResaleNotificationMessage: function(date, time, menu) {
-    return _fill(
-      '【当日空き枠のご案内】\n\n' +
-      '急な空き枠が出ました！\n\n' +
-      '【日時】 {date} {time}\n' +
-      '【施術】 {menu}\n\n' +
-      'ご希望の方は「希望」と返信してください。\n' +
-      '先着順で確定させていただきます。',
-      { date: date, time: time, menu: menu }
-    );
+    return {
+      text: _fill(
+        '【当日空き枠のご案内】\n\n' +
+        '急な空き枠が出ました！\n\n' +
+        '【日時】 {date} {time}\n' +
+        '【施術】 {menu}\n\n' +
+        'ご希望の方は下のボタンからお申し込みください。\n' +
+        '先着順で確定させていただきます。',
+        { date: date, time: time, menu: menu }
+      ),
+      quickReplies: [
+        { label: 'この枠を予約する', text: 'RESERVE_SLOT:' + date + ':' + time },
+        { label: 'また今度', text: 'また今度' }
+      ]
+    };
   },
 
   getNoShowPenaltyMessage: function(depositAmount) {

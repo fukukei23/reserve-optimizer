@@ -26,9 +26,12 @@ var USER_STATES = {
 
 // Temporary data storage key prefix (24-hour TTL)
 var TEMP_DATA_KEY_PREFIX = 'user_temp_';
+// CacheService TTL for user state (6 hours — auto-expire reduces cleanup need)
+var USER_STATE_CACHE_TTL = 21600;
 
 /**
  * Set user state with temporary data
+ * Primary: CacheService (fast, auto-TTL). Fallback: PropertiesService (persistent across eviction).
  */
 function setUserState(userId, state, context) {
   var key = TEMP_DATA_KEY_PREFIX + userId;
@@ -37,16 +40,30 @@ function setUserState(userId, state, context) {
     context: context || {},
     timestamp: Date.now()
   };
+  var json = JSON.stringify(data);
 
-  PropertiesService.getUserProperties().setProperty(key, JSON.stringify(data));
+  var cache = CacheService.getUserCache();
+  cache.put(key, json, USER_STATE_CACHE_TTL);
+
+  PropertiesService.getUserProperties().setProperty(key, json);
 }
 
 /**
  * Get user state
+ * Check CacheService first, then fallback to PropertiesService.
  */
 function getUserState(userId) {
   var key = TEMP_DATA_KEY_PREFIX + userId;
-  var data = PropertiesService.getUserProperties().getProperty(key);
+
+  var cache = CacheService.getUserCache();
+  var data = cache.get(key);
+
+  if (!data) {
+    data = PropertiesService.getUserProperties().getProperty(key);
+    if (data) {
+      cache.put(key, data, USER_STATE_CACHE_TTL);
+    }
+  }
 
   if (!data) {
     return {state: USER_STATES.IDLE, context: {}};
@@ -54,7 +71,6 @@ function getUserState(userId) {
 
   var parsed = JSON.parse(data);
 
-  // Check TTL (24 hours)
   if (Date.now() - parsed.timestamp > 24 * 60 * 60 * 1000) {
     clearUserState(userId);
     return {state: USER_STATES.IDLE, context: {}};
@@ -68,6 +84,8 @@ function getUserState(userId) {
  */
 function clearUserState(userId) {
   var key = TEMP_DATA_KEY_PREFIX + userId;
+
+  CacheService.getUserCache().remove(key);
   PropertiesService.getUserProperties().deleteProperty(key);
 }
 

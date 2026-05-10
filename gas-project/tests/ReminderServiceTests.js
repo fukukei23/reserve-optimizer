@@ -12,9 +12,9 @@ function testReminderService() {
   results.push(_rsTest('buildReservationObj structure', function() {
     var row = ['R0001', new Date(), '田中太郎', '09012345678', 'U123',
                'First', '初診（30分）', new Date(2026, 0, 15), new Date(2026, 0, 15, 10, 0), new Date(2026, 0, 15, 10, 30),
-               'Pending', 'Y', 3000, 'Unpaid', 'N', '', '', 'N', 'N', 5000, ''];
+               'Pending', 'Y', 3000, 'Unpaid', 'N', '', '', 'N', 'N', 5000, '', 'pi_test123'];
     var obj = _buildReservationObj(row, 1);
-    return obj.id === 'R0001' && obj.status === 'Pending' && obj.deposit_status === 'Unpaid';
+    return obj.id === 'R0001' && obj.status === 'Pending' && obj.deposit_status === 'Unpaid' && obj.payment_intent_id === 'pi_test123';
   }));
 
   // Test 2: formatDateObj handles null

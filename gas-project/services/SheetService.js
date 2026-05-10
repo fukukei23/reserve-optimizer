@@ -17,7 +17,7 @@ var _spreadsheetCache = null;
  */
 function _getCachedSpreadsheet() {
   if (!_spreadsheetCache) {
-    _spreadsheetCache = _getCachedSpreadsheet();
+    _spreadsheetCache = SpreadsheetApp.openById(getSpreadsheetId());
   }
   return _spreadsheetCache;
 }
@@ -48,6 +48,7 @@ function _buildReservationObj(row, i) {
     resale_success: row[18],
     average_unit_price: row[19],
     notes: row[20],
+    payment_intent_id: row[21] || '',
     row_number: i + 1
   };
 }
@@ -180,8 +181,12 @@ function getLogSheet() {
  */
 function appendLogRow(level, message) {
   var safeMsg = (message || '').toString().replace(/\r?\n/g, ' ').substring(0, 500);
-  var sheet = getLogSheet();
-  sheet.appendRow([new Date(), level || 'INFO', safeMsg]);
+  try {
+    var sheet = getLogSheet();
+    sheet.appendRow([new Date(), level || 'INFO', safeMsg]);
+  } catch (e) {
+    Logger.log('[' + (level || 'INFO') + '] ' + safeMsg + ' (log write failed: ' + e.message + ')');
+  }
 }
 
 /**
@@ -409,6 +414,9 @@ function addToWaitlist(waitlistData) {
   ];
 
   sheet.appendRow(row);
+
+  notifyAdmin('waitlist', 'ウェイティングリスト登録: ' + newId + ' / 電話: ' + (waitlistData.phone || 'なし') + ' / 希望時間: ' + (waitlistData.preferred_time || 'Any'));
+
   return sheet.getLastRow();
 }
 
@@ -468,51 +476,47 @@ function getBookedSlotsForDate(date) {
 function findWaitlistCandidate(appointmentDateTime) {
   var waitlist = getWaitlistReservations();
   var appointmentDate = new Date(appointmentDateTime);
-  var hours = appointmentDate.getHours();
+  var appointmentHour = appointmentDate.getHours();
 
-  var candidates = [];
-
+  var scored = [];
   for (var i = 0; i < waitlist.length; i++) {
     var entry = waitlist[i];
+    var score = 0;
 
-    // Check if already notified recently (within 24 hours)
+    // Same-day OK bonus
+    if (entry.same_day_ok === 'Y') {
+      score += 10;
+    }
+
+    // Time preference match
+    if (entry.preferred_time === 'Any') {
+      score += 5;
+    } else if (entry.preferred_time === 'Morning' && appointmentHour < 12) {
+      score += 5;
+    } else if (entry.preferred_time === 'Afternoon' && appointmentHour >= 12 && appointmentHour < 17) {
+      score += 5;
+    } else if (entry.preferred_time === 'Evening' && appointmentHour >= 17) {
+      score += 5;
+    }
+
+    // Recent notification penalty (avoid spamming)
     if (entry.last_notified_at) {
       var lastNotified = new Date(entry.last_notified_at);
       var hoursSinceNotification = (Date.now() - lastNotified.getTime()) / (1000 * 60 * 60);
       if (hoursSinceNotification < 24) {
-        continue;
+        score -= 5;
       }
     }
 
-    // Check preferred time match
-    var timeMatch = false;
-    if (entry.preferred_time === 'Any') {
-      timeMatch = true;
-    } else if (entry.preferred_time === 'Morning' && hours < 12) {
-      timeMatch = true;
-    } else if (entry.preferred_time === 'Afternoon' && hours >= 12 && hours < 17) {
-      timeMatch = true;
-    } else if (entry.preferred_time === 'Evening' && hours >= 17) {
-      timeMatch = true;
+    if (score > 0) {
+      scored.push({ entry: entry, score: score });
     }
-
-    // Prioritize same_day_ok=Y
-    candidates.push({
-      entry: entry,
-      timeMatch: timeMatch,
-      priority: entry.same_day_ok === 'Y' ? 1 : 0
-    });
   }
 
-  // Sort by priority and time match
-  candidates.sort(function(a, b) {
-    if (a.priority !== b.priority) {
-      return b.priority - a.priority;
-    }
-    return b.timeMatch - a.timeMatch;
-  });
+  // Sort by score descending
+  scored.sort(function(a, b) { return b.score - a.score; });
 
-  return candidates.slice(0, 3).map(function(c) { return c.entry; });
+  return scored.slice(0, 3).map(function(c) { return c.entry; });
 }
 
 /**
@@ -533,4 +537,47 @@ function markResaleSuccessful(reservationId) {
   updateReservation(reservationId, {
     resale_success: 'Y'
   });
+}
+
+/**
+ * Cancel expired unpaid reservations (3 hours threshold)
+ * Called by time-based trigger every 30 minutes
+ */
+function cancelExpiredUnpaidReservations() {
+  var UNPAID_EXPIRE_MS = 3 * 60 * 60 * 1000; // 3 hours
+  var now = new Date();
+
+  _ensureReservationCache();
+  var cancelled = 0;
+
+  for (var i = 0; i < _reservationCache.length; i++) {
+    var r = _reservationCache[i];
+    if (r.status !== RESERVATION_STATUS.PENDING) continue;
+    if (r.deposit_status !== DEPOSIT_STATUS.UNPAID && r.deposit_status !== DEPOSIT_STATUS.PENDING) continue;
+
+    var created = new Date(r.created_at);
+    if (isNaN(created.getTime())) continue;
+
+    if (now.getTime() - created.getTime() > UNPAID_EXPIRE_MS) {
+      updateReservation(r.id, {
+        status: RESERVATION_STATUS.CANCELLED,
+        cancel_time: now.toISOString(),
+        notes: 'Auto-cancelled: unpaid for 3 hours'
+      });
+
+      try {
+        sendLinePush(r.line_display_name,
+          '予約 ' + r.id + '（' + r.reserved_date + ' ' + r.reserved_start + '）はお支払いが確認できなかったため自動キャンセルされました。\n\n再度「予約する」からお試しください。');
+      } catch (pushErr) {
+        appendLogRow('ERROR', 'Auto-cancel notification failed: ' + pushErr.message);
+      }
+
+      appendLogRow('INFO', 'Auto-cancelled unpaid reservation: ' + r.id);
+      cancelled++;
+    }
+  }
+
+  if (cancelled > 0) {
+    appendLogRow('INFO', 'Auto-cancelled ' + cancelled + ' expired unpaid reservations');
+  }
 }
