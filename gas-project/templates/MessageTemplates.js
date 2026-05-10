@@ -344,13 +344,15 @@ var MessageTemplates = {
 
   getChangeConfirmMessage: function(reservation, field, newValue) {
     var fieldLabel = {date: '日付', time: '時間', treatment: '施術'}[field] || field;
+    var currentValue = {date: reservation.reserved_date, time: _fmtTimeRange(reservation.reserved_start, reservation.reserved_end), treatment: reservation.menu_type}[field] || '';
     return _fill(
       '以下の変更を行います。よろしいですか？\n\n' +
-      '【予約ID】 {id}\n' +
+      '【予約ID】 {id}\n\n' +
       '【変更項目】 {fieldLabel}\n' +
+      '【変更前】 {currentValue}\n' +
       '【変更後】 {newValue}\n\n' +
       '「はい」で変更、「いいえ」で中止します。',
-      { id: reservation.id, fieldLabel: fieldLabel, newValue: newValue }
+      { id: reservation.id, fieldLabel: fieldLabel, currentValue: currentValue, newValue: newValue }
     );
   },
 

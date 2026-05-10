@@ -29,7 +29,7 @@ function handleYesNoConfirm(text, replyToken) {
 }
 
 /**
- * Fetch reservations for a page of IDs
+ * Fetch reservations for a page of IDs (batch lookup via cache)
  * @param {string[]} reservationIds - Full list of reservation IDs
  * @param {number} page - Current page (0-based)
  * @param {number} pageSize - Items per page
@@ -39,8 +39,9 @@ function fetchReservationsPage(reservationIds, page, pageSize) {
   var startIdx = page * pageSize;
   var pageIds = reservationIds.slice(startIdx, startIdx + pageSize);
   var reservations = [];
+  _ensureReservationCache();
   for (var i = 0; i < pageIds.length; i++) {
-    var r = getReservationById(pageIds[i]);
+    var r = _reservationByIdMap[pageIds[i]];
     if (r) reservations.push(r);
   }
   return { page: page, reservations: reservations };
@@ -101,12 +102,13 @@ function handlePaginationStep(text, replyToken, userId, tempData, reservationIds
 }
 
 /**
- * Send error message with fallback quick replies (もう一度入力する / 人間に問い合わせる)
+ * Send error message with fallback quick replies (もう一度入力する / 人間に問い合わせる / やめる)
  */
 function sendFallbackWithContact(replyToken, errorMessage) {
   var items = [
     { label: FALLBACK_RETRY_TEXT, text: FALLBACK_RETRY_TEXT },
-    { label: FALLBACK_CONTACT_TEXT, text: FALLBACK_CONTACT_TEXT }
+    { label: FALLBACK_CONTACT_TEXT, text: FALLBACK_CONTACT_TEXT },
+    { label: 'やめる', text: 'やめる' }
   ];
   sendQuickReply(replyToken, errorMessage, items);
 }
@@ -171,10 +173,25 @@ function handleMessage(message, replyToken, userId) {
     return;
   }
 
-  // Handle "やめる" globally across all non-IDLE states
+  // Handle "やめる" globally across all non-IDLE states (with confirmation)
   if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
     sendLineReply(replyToken, '操作をキャンセルしました。\n\n「予約する」でまた始められます。');
+    return;
+  }
+
+  // Handle "本当にやめる" — explicit cancel confirmation
+  if (text === '本当にやめる' && userState.state !== USER_STATES.IDLE) {
+    clearUserState(userId);
+    sendLineReply(replyToken, '操作をキャンセルしました。\n\n「予約する」でまた始められます。');
+    return;
+  }
+
+  // Handle "戻る" — soft cancel (back to menu without losing data)
+  if (text === '戻る' && userState.state !== USER_STATES.IDLE) {
+    clearUserState(userId);
+    var menuData = MessageTemplates.getWelcomeMessage();
+    sendQuickReply(replyToken, '操作を中止しました。', menuData.quickReplies);
     return;
   }
 
@@ -443,7 +460,13 @@ function handleAwaitingWaitlistTime(text, replyToken, userId) {
   });
 
   clearUserState(userId);
-  sendQuickReply(replyToken, '空き枠通知に登録しました！\n\nキャンセルが出た場合、優先的に通知をお送りします。\n通知は24時間以内に1回までです。', [
+  var confirmMsg = '空き枠通知に登録しました！\n\n' +
+    '【登録内容】\n' +
+    '希望時間帯: ' + text + '\n' +
+    '当日空き枠: 可\n\n' +
+    'キャンセルが出た場合、優先的に通知をお送りします。\n' +
+    '通知は24時間以内に1回までです。';
+  sendQuickReply(replyToken, confirmMsg, [
     { label: '予約する', text: '予約する' },
     { label: 'メニューに戻る', text: 'メニュー' }
   ]);

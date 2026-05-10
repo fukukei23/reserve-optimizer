@@ -39,6 +39,7 @@ function runAllTests() {
   results.tests = results.tests.concat(testValidationUtils());
   results.tests = results.tests.concat(testDateUtils());
   results.tests = results.tests.concat(testMessageTemplates());
+  results.tests = results.tests.concat(testReminderService());
 
   // Integration tests
   results.tests = results.tests.concat(testSheetServiceIntegration());

@@ -2,7 +2,7 @@
  * Dashboard - KPI Visualization
  *
  * Rendering layer only. All data calculation is in KPIService.js
- * Uses Logger.log for sheet operations (no appendLogRow during sheet writes)
+ * Uses DASHBOARD_LAYOUT / WAITLIST_DASHBOARD_LAYOUT for positioning.
  */
 
 /**
@@ -21,14 +21,15 @@ function createDashboardSheet() {
 
   var currentKPIs = getCurrentWeekKPIs();
   var targets = compareKPIsToTargets(currentKPIs);
+  var L = DASHBOARD_LAYOUT;
 
   // Header
-  sheet.getRange(1, 1).setValue('予約管理システム - ダッシュボード');
-  sheet.getRange(1, 1).setFontWeight('bold').setFontSize(18);
+  sheet.getRange(L.HEADER_ROW, 1).setValue('予約管理システム - ダッシュボード');
+  sheet.getRange(L.HEADER_ROW, 1).setFontWeight('bold').setFontSize(18);
 
   // Current Week Summary
-  sheet.getRange(3, 1).setValue('【今週のサマリー】');
-  sheet.getRange(3, 1).setFontWeight('bold').setFontSize(14);
+  sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setValue('【今週のサマリー】');
+  sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setFontWeight('bold').setFontSize(14);
 
   var summaryData = [
     ['', '今週', '前週', '変化'],
@@ -41,11 +42,11 @@ function createDashboardSheet() {
     ['推定回収額', currentKPIs.estimated_recovered_revenue + '円', '-', '-']
   ];
 
-  sheet.getRange(4, 1, summaryData.length, summaryData[0].length).setValues(summaryData);
+  sheet.getRange(L.SUMMARY_DATA_START_ROW, 1, summaryData.length, summaryData[0].length).setValues(summaryData);
 
   // KPI Targets
-  sheet.getRange(13, 1).setValue('【KPI目標達成状況】');
-  sheet.getRange(13, 1).setFontWeight('bold').setFontSize(14);
+  sheet.getRange(L.TARGET_TITLE_ROW, 1).setValue('【KPI目標達成状況】');
+  sheet.getRange(L.TARGET_TITLE_ROW, 1).setFontWeight('bold').setFontSize(14);
 
   var targetData = [
     ['', '目標', '実績', '達成'],
@@ -53,12 +54,12 @@ function createDashboardSheet() {
     ['再販率', targets.resale_rate.target + '%', targets.resale_rate.actual + '%', targets.resale_rate.achieved ? '✓' : '✗']
   ];
 
-  sheet.getRange(14, 1, targetData.length, targetData[0].length).setValues(targetData);
+  sheet.getRange(L.TARGET_DATA_START_ROW, 1, targetData.length, targetData[0].length).setValues(targetData);
 
   // Color coding
   for (var i = 0; i < targetData.length - 1; i++) {
     var achieved = (targetData[i + 1][3] === '✓');
-    var cell = sheet.getRange(15 + i, 4);
+    var cell = sheet.getRange(L.TARGET_DATA_START_ROW + 1 + i, 4);
 
     if (achieved) {
       cell.setBackground('#4CAF50').setFontColor('white');
@@ -68,14 +69,13 @@ function createDashboardSheet() {
   }
 
   // Format columns
-  sheet.setColumnWidth(1, 250);
-  sheet.setColumnWidth(2, 150);
-  sheet.setColumnWidth(3, 150);
-  sheet.setColumnWidth(4, 100);
+  for (var c = 0; c < L.COL_WIDTHS.length; c++) {
+    sheet.setColumnWidth(c + 1, L.COL_WIDTHS[c]);
+  }
 
   // Last updated timestamp
-  sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date()));
-  sheet.getRange(20, 1).setFontStyle('italic').setFontSize(10);
+  sheet.getRange(L.UPDATED_ROW, 1).setValue('最終更新: ' + formatDateTime(new Date()));
+  sheet.getRange(L.UPDATED_ROW, 1).setFontStyle('italic').setFontSize(10);
 
   appendLogRow('INFO', 'Dashboard created');
 }
@@ -92,6 +92,7 @@ function updateDashboard() {
     return;
   }
 
+  var L = DASHBOARD_LAYOUT;
   var currentKPIs = getCurrentWeekKPIs();
 
   var summaryValues = [
@@ -104,17 +105,17 @@ function updateDashboard() {
     ['', currentKPIs.estimated_recovered_revenue + '円', '-', '-']
   ];
 
-  sheet.getRange(5, 2, summaryValues.length, 4).setValues(summaryValues);
+  sheet.getRange(L.SUMMARY_DATA_START_ROW + 1, 2, summaryValues.length, L.SUMMARY_COLS).setValues(summaryValues);
 
   var targets = compareKPIsToTargets(currentKPIs);
 
-  sheet.getRange(15, 3).setValue(targets.no_show_rate.actual + '%');
-  sheet.getRange(15, 4).setValue(targets.no_show_rate.achieved ? '✓' : '✗');
+  sheet.getRange(L.TARGET_DATA_START_ROW + 1, 3).setValue(targets.no_show_rate.actual + '%');
+  sheet.getRange(L.TARGET_DATA_START_ROW + 1, 4).setValue(targets.no_show_rate.achieved ? '✓' : '✗');
 
-  sheet.getRange(16, 3).setValue(targets.resale_rate.actual + '%');
-  sheet.getRange(16, 4).setValue(targets.resale_rate.achieved ? '✓' : '✗');
+  sheet.getRange(L.TARGET_DATA_START_ROW + 2, 3).setValue(targets.resale_rate.actual + '%');
+  sheet.getRange(L.TARGET_DATA_START_ROW + 2, 4).setValue(targets.resale_rate.achieved ? '✓' : '✗');
 
-  sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date()));
+  sheet.getRange(L.UPDATED_ROW, 1).setValue('最終更新: ' + formatDateTime(new Date()));
 
   appendLogRow('INFO', 'Dashboard updated');
 }
@@ -148,16 +149,17 @@ function createWaitlistDashboard() {
   }
 
   var sheet = ss.insertSheet(sheetName);
+  var L = WAITLIST_DASHBOARD_LAYOUT;
 
-  sheet.getRange(1, 1).setValue('待機リスト - ダッシュボード');
-  sheet.getRange(1, 1).setFontWeight('bold').setFontSize(18);
+  sheet.getRange(L.HEADER_ROW, 1).setValue('待機リスト - ダッシュボード');
+  sheet.getRange(L.HEADER_ROW, 1).setFontWeight('bold').setFontSize(18);
 
   var waitlistEntries = getWaitlistReservations();
   var totalCount = waitlistEntries.length;
   var sameDayOkCount = waitlistEntries.filter(function(e) { return e.same_day_ok === 'Y'; }).length;
 
-  sheet.getRange(3, 1).setValue('【待機リストサマリー】');
-  sheet.getRange(3, 1).setFontWeight('bold').setFontSize(14);
+  sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setValue('【待機リストサマリー】');
+  sheet.getRange(L.SUMMARY_TITLE_ROW, 1).setFontWeight('bold').setFontSize(14);
 
   var summaryData = [
     ['総登録数', totalCount + '人'],
@@ -165,15 +167,15 @@ function createWaitlistDashboard() {
     ['直近24時間通知', '0人']
   ];
 
-  sheet.getRange(4, 1, summaryData.length, 2).setValues(summaryData);
+  sheet.getRange(L.SUMMARY_DATA_START_ROW, 1, summaryData.length, L.SUMMARY_COLS).setValues(summaryData);
 
-  sheet.getRange(7, 1).setValue('【登録者一覧】');
-  sheet.getRange(7, 1).setFontWeight('bold').setFontSize(14);
+  sheet.getRange(L.ENTRIES_TITLE_ROW, 1).setValue('【登録者一覧】');
+  sheet.getRange(L.ENTRIES_TITLE_ROW, 1).setFontWeight('bold').setFontSize(14);
 
   if (totalCount > 0) {
     var entriesData = [['ID', '電話', '希望時間', '当日OK', '最終通知']];
 
-    for (var i = 0; i < Math.min(waitlistEntries.length, 20); i++) {
+    for (var i = 0; i < Math.min(waitlistEntries.length, L.MAX_ENTRIES); i++) {
       var entry = waitlistEntries[i];
       entriesData.push([
         entry.id,
@@ -184,16 +186,14 @@ function createWaitlistDashboard() {
       ]);
     }
 
-    sheet.getRange(8, 1, entriesData.length, entriesData[0].length).setValues(entriesData);
+    sheet.getRange(L.ENTRIES_DATA_START_ROW, 1, entriesData.length, entriesData[0].length).setValues(entriesData);
   } else {
-    sheet.getRange(8, 1).setValue('登録者なし');
+    sheet.getRange(L.ENTRIES_DATA_START_ROW, 1).setValue('登録者なし');
   }
 
-  sheet.setColumnWidth(1, 150);
-  sheet.setColumnWidth(2, 150);
-  sheet.setColumnWidth(3, 150);
-  sheet.setColumnWidth(4, 100);
-  sheet.setColumnWidth(5, 150);
+  for (var c = 0; c < L.COL_WIDTHS.length; c++) {
+    sheet.setColumnWidth(c + 1, L.COL_WIDTHS[c]);
+  }
 
   appendLogRow('INFO', 'Waitlist dashboard created');
 }

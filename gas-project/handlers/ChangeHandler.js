@@ -107,7 +107,8 @@ function handleAwaitingChangeSelect(text, replyToken, userId) {
   sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
     { label: '📅 日付', text: '日付' },
     { label: '🕐 時間', text: '時間' },
-    { label: '💆 施術', text: '施術' }
+    { label: '💆 施術', text: '施術' },
+    { label: '🔙 戻る', text: '戻る' }
   ]);
 }
 
@@ -273,7 +274,7 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_CHANGE_CONFIRM, tempData);
 
   var reservation = getReservationById(tempData.selected_reservation_id);
-  var duration = reservation.menu_type === '再診（60分）' ? 60 : 30;
+  var duration = getTreatmentDuration(reservation.menu_type);
 
   if (tempData.new_date) {
     // Combined date+time change confirmation
@@ -357,7 +358,7 @@ function handleAwaitingChangeConfirm(text, replyToken, userId) {
     changeLabel += '日付 → ' + tempData.new_date;
   }
   if (tempData.new_time) {
-    var duration = (reservation.menu_type === '再診（60分）') ? 60 : 30;
+    var duration = getTreatmentDuration(reservation.menu_type);
     updates.reserved_start = tempData.new_time;
     updates.reserved_end = calculateEndTime(tempData.new_time, duration);
     if (changeLabel) changeLabel += ', ';

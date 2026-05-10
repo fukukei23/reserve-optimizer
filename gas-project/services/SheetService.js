@@ -10,6 +10,17 @@ var _reservationCache = null;
 var _reservationByIdMap = null;
 var _reservationsByLineUserIdMap = null;
 var _reservationsByDateMap = null;
+var _spreadsheetCache = null;
+
+/**
+ * Get cached Spreadsheet instance
+ */
+function _getCachedSpreadsheet() {
+  if (!_spreadsheetCache) {
+    _spreadsheetCache = _getCachedSpreadsheet();
+  }
+  return _spreadsheetCache;
+}
 
 /**
  * Build reservation object from raw sheet row data
@@ -120,7 +131,7 @@ function formatTimeObj(d) {
  * Get reservations sheet
  */
 function getReservationsSheet() {
-  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.RESERVATIONS);
   if (!sheet) {
     sheet = createSheetWithHeaders(ss, SHEET_NAMES.RESERVATIONS, RESERVATIONS_HEADERS);
@@ -132,7 +143,7 @@ function getReservationsSheet() {
  * Get waitlist sheet
  */
 function getWaitlistSheet() {
-  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.WAITLIST);
   if (!sheet) {
     sheet = createSheetWithHeaders(ss, SHEET_NAMES.WAITLIST, WAITLIST_HEADERS);
@@ -144,7 +155,7 @@ function getWaitlistSheet() {
  * Get weekly summary sheet
  */
 function getWeeklySummarySheet() {
-  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.WEEKLY_SUMMARY);
   if (!sheet) {
     sheet = createSheetWithHeaders(ss, SHEET_NAMES.WEEKLY_SUMMARY, WEEKLY_SUMMARY_HEADERS);
@@ -156,7 +167,7 @@ function getWeeklySummarySheet() {
  * Get log sheet (creates with headers if missing)
  */
 function getLogSheet() {
-  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.LOG);
   if (!sheet) {
     sheet = createSheetWithHeaders(ss, SHEET_NAMES.LOG, LOG_HEADERS);
@@ -243,7 +254,7 @@ function createReservation(reservationData) {
 }
 
 /**
- * Update reservation by ID
+ * Update reservation by ID — batch writes all fields in a single setValues call
  */
 function updateReservation(reservationId, updates) {
   _ensureReservationCache();
@@ -255,12 +266,28 @@ function updateReservation(reservationId, updates) {
   var rowIndex = cached.row_number;
   var sheet = getReservationsSheet();
 
-  // Update only provided fields
+  // Batch: collect all updates into a single range write
+  var minCol = Infinity;
+  var maxCol = 0;
+  var colValues = {};
+
   for (var key in updates) {
     var columnIndex = RESERVATIONS_COLUMNS[key.toUpperCase()];
     if (columnIndex) {
-      sheet.getRange(rowIndex, columnIndex).setValue(updates[key]);
+      if (columnIndex < minCol) minCol = columnIndex;
+      if (columnIndex > maxCol) maxCol = columnIndex;
+      colValues[columnIndex] = updates[key];
     }
+  }
+
+  if (minCol <= maxCol) {
+    var width = maxCol - minCol + 1;
+    var row = [];
+    for (var c = 0; c < width; c++) {
+      var colIdx = minCol + c;
+      row.push(colValues[colIdx] !== undefined ? colValues[colIdx] : sheet.getRange(rowIndex, colIdx).getValue());
+    }
+    sheet.getRange(rowIndex, minCol, 1, width).setValues([row]);
   }
 
   appendLogRow('INFO', 'Updated reservation: ' + reservationId);
@@ -368,8 +395,11 @@ function addToWaitlist(waitlistData) {
   var sheet = getWaitlistSheet();
   var now = new Date();
 
+  var lastRow = sheet.getLastRow();
+  var newId = lastRow < 2 ? 'W0001' : 'W' + String(lastRow).padStart(4, '0');
+
   var row = [
-    sheet.getLastRow(),
+    newId,
     waitlistData.line_display_name || '',
     waitlistData.phone || '',
     waitlistData.preferred_time || 'Any',

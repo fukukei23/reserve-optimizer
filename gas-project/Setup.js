@@ -72,55 +72,58 @@ function createAllSheets() {
 }
 
 /**
- * Setup time-based triggers
+ * Setup time-based triggers — schedule reads from ScriptProperties with defaults
  */
 function setupTriggers() {
-  // Delete existing triggers
   deleteExistingTriggers();
 
-  var now = new Date();
+  var REMINDER_HOUR = parseInt(getProperty('TRIGGER_REMINDER_HOUR', '8'));
+  var NOSHOW_CHECK_HOURS = (getProperty('TRIGGER_NOSHOW_CHECK_HOURS', '9,10,11,12,13,14,15,16,17') || '').split(',');
+  var CLEANUP_HOUR = parseInt(getProperty('TRIGGER_CLEANUP_HOUR', '22'));
+  var WEEKLY_REPORT_HOUR = parseInt(getProperty('TRIGGER_WEEKLY_REPORT_HOUR', '22'));
+  var DASHBOARD_HOUR = parseInt(getProperty('TRIGGER_DASHBOARD_HOUR', '8'));
 
-  // Trigger 1: Day-before reminders (8:00 AM daily)
+  // Trigger 1: Day-before reminders
   ScriptApp.newTrigger('sendDayBeforeReminders')
     .timeBased()
     .everyDays(1)
-    .atHour(8)
+    .atHour(REMINDER_HOUR)
     .create();
 
-  // Trigger 2: No-show check (hourly, 9:00-17:00)
-  // 9 triggers to stay under GAS 20-trigger limit (total: 13)
-  var checkTimes = [9, 10, 11, 12, 13, 14, 15, 16, 17];
-
-  for (var i = 0; i < checkTimes.length; i++) {
-    ScriptApp.newTrigger('checkForNoShows')
-      .timeBased()
-      .everyDays(1)
-      .atHour(Math.floor(checkTimes[i]))
-      .create();
+  // Trigger 2: No-show check (one trigger per hour)
+  for (var i = 0; i < NOSHOW_CHECK_HOURS.length; i++) {
+    var hour = parseInt(NOSHOW_CHECK_HOURS[i]);
+    if (!isNaN(hour)) {
+      ScriptApp.newTrigger('checkForNoShows')
+        .timeBased()
+        .everyDays(1)
+        .atHour(hour)
+        .create();
+    }
   }
 
-  // Trigger 3: Waitlist cleanup (10:00 PM daily)
+  // Trigger 3: Waitlist cleanup
   ScriptApp.newTrigger('cleanupWaitlist')
     .timeBased()
     .everyDays(1)
-    .atHour(22)
+    .atHour(CLEANUP_HOUR)
     .create();
 
-  // Trigger 4: Weekly report (Sunday, 10:00 PM)
+  // Trigger 4: Weekly report (Sunday)
   ScriptApp.newTrigger('generateWeeklyReport')
     .timeBased()
     .onWeekDay(ScriptApp.WeekDay.SUNDAY)
-    .atHour(22)
+    .atHour(WEEKLY_REPORT_HOUR)
     .create();
 
-  // Trigger 5: Dashboard update (daily at 8:05 AM)
+  // Trigger 5: Dashboard update
   ScriptApp.newTrigger('updateDashboard')
     .timeBased()
     .everyDays(1)
-    .atHour(8)
+    .atHour(DASHBOARD_HOUR)
     .create();
 
-  Logger.log('Created ' + (2 + checkTimes.length + 3) + ' triggers');
+  Logger.log('Created ' + (2 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
 }
 
 /**

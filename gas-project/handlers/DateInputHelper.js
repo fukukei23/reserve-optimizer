@@ -15,7 +15,7 @@ function parseDateInput(text) {
   // Strip trailing (曜日) suffix e.g. "4/25(金)" → "4/25"
   s = s.replace(/\([月火水木金土日]\)$/, '');
 
-  var tz = 'Asia/Tokyo';
+  var tz = TIMEZONE;
   var now = new Date();
   var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   var currentYear = parseInt(Utilities.formatDate(now, tz, 'yyyy'));
@@ -85,7 +85,7 @@ function pad2(n) {
 function addDaysToDateStr(dateStr, days) {
   var d = new Date(dateStr + 'T12:00:00+09:00');
   d.setDate(d.getDate() + days);
-  return Utilities.formatDate(d, 'Asia/Tokyo', 'yyyy-MM-dd');
+  return Utilities.formatDate(d, TIMEZONE, 'yyyy-MM-dd');
 }
 
 function getNextWeekday(now, targetDow, tz) {
@@ -118,7 +118,7 @@ function getThisOrNextWeekday(now, targetDow, tz) {
  * @param {string} pageStartDate - optional 'YYYY-MM-DD' to start showing from a specific date
  */
 function sendDatePromptWithQuickReply(replyToken, userId, pageStartDate) {
-  var tz = 'Asia/Tokyo';
+  var tz = TIMEZONE;
   var now = new Date();
   var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   var todayDate = new Date(todayStr + 'T00:00:00+09:00');
@@ -209,7 +209,7 @@ function sendDatePromptWithQuickReply(replyToken, userId, pageStartDate) {
  * @param {string} date - YYYY-MM-DD format (optional, defaults to today)
  */
 function sendTimePromptWithQuickReply(replyToken, date) {
-  var targetDate = date || Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd');
+  var targetDate = date || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
   var leadTime = getBookingLeadTimeMinutes();
   var maxConcurrent = getMaxConcurrentBookings();
   var bookedSlots = getBookedSlotsForDate(targetDate);
@@ -240,7 +240,7 @@ function sendTimePromptWithQuickReply(replyToken, date) {
 
   var timeOptions = availableSlots.map(function(t) { return { label: t, text: t }; });
   timeOptions.push({ label: 'やめる', text: 'やめる' });
-  sendQuickReply(replyToken, '希望時間を選択してください。（空き枠のみ表示）', timeOptions);
+  sendQuickReply(replyToken, '希望時間を選択してください。（空き枠のみ表示、初診30分/再診30or60分）', timeOptions);
 }
 
 /**
@@ -258,7 +258,7 @@ function validateTreatmentTimeOrdering(userId, date, time, treatmentType, exclud
   var isShoshin = treatmentType.indexOf('初診') !== -1;
   var tParts = time.split(':');
   var timeMins = parseInt(tParts[0]) * 60 + parseInt(tParts[1]);
-  var duration = treatmentType === '再診（60分）' ? 60 : 30;
+  var duration = getTreatmentDuration(treatmentType);
   var endMins = timeMins + duration;
 
   for (var i = 0; i < reservations.length; i++) {

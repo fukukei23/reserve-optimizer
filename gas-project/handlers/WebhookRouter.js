@@ -56,9 +56,9 @@ function _handleDirectAccess(e, body) {
     return _jsonResponse('error', 'Not a LINE webhook');
   }
 
-  // HMAC-SHA256 signature verification
+  // HMAC-SHA256 signature verification (constant-time comparison)
   var expectedSig = _computeLineSignature(channelSecret, body);
-  if (signature !== expectedSig) {
+  if (!_constantTimeEqual(signature, expectedSig)) {
     appendLogRow('ERROR', 'Direct access rejected: LINE signature mismatch');
     return _jsonResponse('error', 'Invalid signature');
   }
@@ -74,6 +74,19 @@ function _computeLineSignature(secret, body) {
   var key = Utilities.newBlob(secret);
   var hmac = Utilities.computeHmacSha256Signature(blob.getBytes(), key);
   return Utilities.base64Encode(hmac);
+}
+
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+function _constantTimeEqual(a, b) {
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  var result = 0;
+  for (var i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /**
@@ -242,7 +255,7 @@ function _handlePaymentSuccessMinimal(payload) {
   });
 
   sendLinePush(reservation.line_display_name, MessageTemplates.getConfirmationMessage(reservation));
-  _notifyAdminPaymentReceived(reservation, reservationId);
+  _notifyAdmin('新しい予約が確定しました', reservation);
 }
 
 /**
@@ -275,20 +288,6 @@ function _handleRefundMinimal(payload) {
     }
   }
   appendLogRow('STRIPE', 'No matching paid+cancelled reservation found for refund');
-}
-
-/**
- * Notify admin of received payment
- */
-function _notifyAdminPaymentReceived(reservation, reservationId) {
-  var adminUserId = getLineAdminUserId();
-  if (!adminUserId) return;
-
-  var adminMessage = '新しい予約が確定しました。\n\n' +
-    'ID: ' + reservationId + '\n' +
-    '患者: ' + reservation.patient_name + '\n' +
-    '日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
-  sendLinePush(adminUserId, adminMessage);
 }
 
 // --- Response helpers ---

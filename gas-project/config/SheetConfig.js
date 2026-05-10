@@ -57,6 +57,21 @@ var WAITLIST_COLUMNS = {
   NOTES: 7
 };
 
+// Timezone constant (used across the application)
+var TIMEZONE = 'Asia/Tokyo';
+
+// QuickReply button label conventions
+var QR_LABELS = {
+  CANCEL: 'やめる',
+  BACK: '戻る',
+  CONFIRM_YES: 'はい',
+  CONFIRM_NO: 'いいえ',
+  RETRY: '再試行',
+  CONTACT: 'お問い合わせ',
+  NEXT_PAGE: '次の5件 ▶',
+  PREV_PAGE: '◀ 前の5件'
+};
+
 // Waitlist sheet headers
 var WAITLIST_HEADERS = [
   'waitlist_id', 'line_display_name', 'phone', 'preferred_time',
@@ -118,6 +133,35 @@ var TIME_SLOTS = {
 // Closed days (day-of-week, 0=Sunday)
 var CLOSED_DAYS = [0]; // Sunday
 
+// Pagination
+var PAGE_SIZE = 5;
+
+// Booking limits
+var MAX_BOOKING_DAYS_AHEAD = 90;
+
+// Treatment duration (minutes) — menu_type → duration
+var TREATMENT_DURATIONS = {
+  '初診（30分）': 30,
+  '再診（30分）': 30,
+  '再診（60分）': 60
+};
+
+// Default treatment duration fallback
+var DEFAULT_TREATMENT_DURATION = 30;
+
+// User state TTL (milliseconds)
+var USER_STATE_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Max payment retry attempts
+var MAX_PAYMENT_RETRIES = 5;
+
+/**
+ * Get treatment duration by menu_type
+ */
+function getTreatmentDuration(menuType) {
+  return TREATMENT_DURATIONS[menuType] || DEFAULT_TREATMENT_DURATION;
+}
+
 // Get column index by name
 function getReservationColumn(columnName) {
   return RESERVATIONS_COLUMNS[columnName];
@@ -130,3 +174,28 @@ function getWaitlistColumn(columnName) {
 function getWeeklySummaryColumn(columnName) {
   return WEEKLY_SUMMARY_COLUMNS[columnName];
 }
+
+// Dashboard layout constants (row/column positions)
+var DASHBOARD_LAYOUT = {
+  HEADER_ROW: 1,
+  SUMMARY_TITLE_ROW: 3,
+  SUMMARY_DATA_START_ROW: 4,
+  SUMMARY_DATA_ROWS: 8,
+  SUMMARY_COLS: 4,
+  TARGET_TITLE_ROW: 13,
+  TARGET_DATA_START_ROW: 14,
+  TARGET_DATA_ROWS: 3,
+  UPDATED_ROW: 20,
+  COL_WIDTHS: [250, 150, 150, 100]
+};
+
+var WAITLIST_DASHBOARD_LAYOUT = {
+  HEADER_ROW: 1,
+  SUMMARY_TITLE_ROW: 3,
+  SUMMARY_DATA_START_ROW: 4,
+  SUMMARY_COLS: 2,
+  ENTRIES_TITLE_ROW: 7,
+  ENTRIES_DATA_START_ROW: 8,
+  MAX_ENTRIES: 20,
+  COL_WIDTHS: [150, 150, 150, 100, 150]
+};

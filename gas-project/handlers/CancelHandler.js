@@ -5,6 +5,28 @@
  */
 
 /**
+ * Notify waitlist candidates about a vacancy (best-effort, never blocks cancellation)
+ */
+function _notifyWaitlistVacancy(reservation) {
+  try {
+    var candidates = findWaitlistCandidate(
+      reservation.reserved_date + 'T' + reservation.reserved_start
+    );
+    for (var i = 0; i < candidates.length; i++) {
+      var vacancyMsg = MessageTemplates.getResaleNotificationMessage(
+        reservation.reserved_date,
+        reservation.reserved_start + '-' + reservation.reserved_end,
+        reservation.menu_type
+      );
+      sendLinePush(candidates[i].line_display_name, vacancyMsg);
+      appendLogRow('INFO', 'Sent vacancy notification to waitlist: ' + candidates[i].line_display_name);
+    }
+  } catch (e) {
+    appendLogRow('ERROR', 'Waitlist notification error: ' + e.message);
+  }
+}
+
+/**
  * Handle cancel flow - search reservations by LINE userId
  * Shows max 5 cancellable reservations at a time with pagination
  */
@@ -46,7 +68,7 @@ function handleCancelFlow(replyToken, userId) {
 
   // Multiple reservations — show paginated list
   var allIds = activeReservations.map(function(r) { return r.id; });
-  var pageSize = 5;
+  var pageSize = PAGE_SIZE;
   var pageReservations = activeReservations.slice(0, pageSize);
 
   setUserState(userId, USER_STATES.AWAITING_CANCEL_SELECT, {
@@ -75,7 +97,7 @@ function handleAwaitingCancelSelect(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
   var reservationIds = tempData.reservation_ids || [];
   var page = tempData.page || 0;
-  var pageSize = tempData.page_size || 5;
+  var pageSize = tempData.page_size || PAGE_SIZE;
 
   if (text === 'やめる') {
     clearUserState(userId);
@@ -163,6 +185,7 @@ function handleAwaitingCancelConfirm(text, replyToken, userId) {
 
   // Execute cancellation
   var refunded = false;
+  var refundFailed = false;
 
   if (reservation.deposit_status === DEPOSIT_STATUS.PAID) {
     // Refund via Stripe
@@ -182,47 +205,32 @@ function handleAwaitingCancelConfirm(text, replyToken, userId) {
           cancel_time: new Date(),
           notes: 'REFUND_FAILED'
         });
-        clearUserState(userId);
-        sendLineReply(replyToken, MessageTemplates.getCancelRefundFailedMessage(reservation));
+        refundFailed = true;
         appendLogRow('ERROR', 'Refund failed for reservation: ' + reservationId);
-        return;
       }
     } catch (e) {
-      // Refund error — still cancel but notify
+      // Refund error — still cancel but mark
       updateReservation(reservationId, {
         status: RESERVATION_STATUS.CANCELLED,
         cancel_time: new Date(),
         notes: 'REFUND_ERROR:' + e.message
       });
-      clearUserState(userId);
-      sendLineReply(replyToken, MessageTemplates.getCancelRefundFailedMessage(reservation));
+      refundFailed = true;
       appendLogRow('ERROR', 'Refund error for reservation ' + reservationId + ': ' + e.message);
-      return;
     }
   } else {
     // No refund needed (unpaid or already forfeited)
     handleCancellation(reservationId, 'User cancelled via LINE');
   }
 
-  // Notify waitlist candidates about the vacancy
-  try {
-    var candidates = findWaitlistCandidate(
-      reservation.reserved_date + 'T' + reservation.reserved_start
-    );
-    for (var i = 0; i < candidates.length; i++) {
-      var vacancyMsg = MessageTemplates.getResaleNotificationMessage(
-        reservation.reserved_date,
-        reservation.reserved_start + '-' + reservation.reserved_end,
-        reservation.menu_type
-      );
-      sendLinePush(candidates[i].line_display_name, vacancyMsg);
-      appendLogRow('INFO', 'Sent vacancy notification to waitlist: ' + candidates[i].line_display_name);
-    }
-  } catch (e) {
-    appendLogRow('ERROR', 'Waitlist notification error: ' + e.message);
-  }
+  // Notify waitlist candidates about the vacancy (always, regardless of refund outcome)
+  _notifyWaitlistVacancy(reservation);
 
   clearUserState(userId);
-  sendLineReply(replyToken, MessageTemplates.getCancelCompletedMessage(reservation, refunded));
-  appendLogRow('INFO', 'Reservation cancelled: ' + reservationId + ' Refunded: ' + refunded);
+  if (refundFailed) {
+    sendLineReply(replyToken, MessageTemplates.getCancelRefundFailedMessage(reservation));
+  } else {
+    sendLineReply(replyToken, MessageTemplates.getCancelCompletedMessage(reservation, refunded));
+  }
+  appendLogRow('INFO', 'Reservation cancelled: ' + reservationId + ' Refunded: ' + refunded + ' RefundFailed: ' + refundFailed);
 }

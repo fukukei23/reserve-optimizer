@@ -35,7 +35,7 @@ function startReservationFlow(replyToken, userId) {
       { label: 'やめる', text: 'やめる' }
     ];
   }
-  sendQuickReply(replyToken, '予約を開始します。\n\n施術の種類を選択してください。', menuOptions);
+  sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/3] 施術の種類を選択してください。', menuOptions);
 }
 
 /**
@@ -43,7 +43,7 @@ function startReservationFlow(replyToken, userId) {
  */
 function handleAwaitingName(text, replyToken, userId) {
   if (text === FALLBACK_RETRY_TEXT) {
-    sendQuickReply(replyToken, 'お名前を入力してください。', [
+    sendQuickReply(replyToken, '[Step 3/4] お名前を入力してください。', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -51,7 +51,7 @@ function handleAwaitingName(text, replyToken, userId) {
 
   var trimmed = text.trim();
   if (!trimmed || trimmed.length > 100) {
-    sendQuickReply(replyToken, 'お名前を入力してください。\n（100文字以内でご入力ください）', [
+    sendQuickReply(replyToken, '[Step 3/4] お名前を入力してください。\n（100文字以内でご入力ください）', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -61,7 +61,7 @@ function handleAwaitingName(text, replyToken, userId) {
   tempData.patient_name = trimmed;
 
   setUserState(userId, USER_STATES.AWAITING_PHONE, tempData);
-  sendQuickReply(replyToken, 'お名前を確認しました。\n\n電話番号を入力してください（例: 09012345678）。', [
+  sendQuickReply(replyToken, 'お名前を確認しました。\n\n[Step 4/4] 電話番号を入力してください（例: 09012345678）。', [
     { label: 'やめる', text: 'やめる' }
   ]);
 }
@@ -71,7 +71,7 @@ function handleAwaitingName(text, replyToken, userId) {
  */
 function handleAwaitingPhone(text, replyToken, userId) {
   if (text === FALLBACK_RETRY_TEXT) {
-    sendQuickReply(replyToken, '電話番号を入力してください（例: 09012345678）。', [
+    sendQuickReply(replyToken, '[Step 4/4] 電話番号を入力してください（例: 09012345678）。', [
       { label: 'やめる', text: 'やめる' }
     ]);
     return;
@@ -163,7 +163,7 @@ function handleAwaitingTime(text, replyToken, userId) {
   }
 
   tempData.reserved_start = normalized;
-  var duration = tempData.menu_type === '再診（60分）' ? 60 : 30;
+  var duration = getTreatmentDuration(tempData.menu_type);
   tempData.reserved_end = calculateEndTime(normalized, duration);
 
   // Check if this time slot is in the past (with lead time buffer)
@@ -199,7 +199,7 @@ function handleAwaitingTime(text, replyToken, userId) {
   } else {
     // First-time user: collect name → phone → reservation creation
     setUserState(userId, USER_STATES.AWAITING_NAME, tempData);
-    sendQuickReply(replyToken, 'お名前を入力してください。', [
+    sendQuickReply(replyToken, '[Step 3/4] お名前を入力してください。', [
       { label: 'やめる', text: 'やめる' }
     ]);
   }
@@ -224,7 +224,7 @@ function handleAwaitingTreatment(text, replyToken, userId) {
       return { label: opt, text: opt };
     });
     menuOptions.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions);
+    sendQuickReply(replyToken, '[Step 1/3] 施術の種類を選択してください。', menuOptions);
     return;
   }
   tempData.menu_type = text;
@@ -260,6 +260,15 @@ function handleAwaitingPayment(text, replyToken, userId) {
 
   // Retry payment link creation if previous attempt failed
   if (text === '再試行' && !storedLink) {
+    var retryCount = tempData.retry_count || 0;
+    if (retryCount >= MAX_PAYMENT_RETRIES) {
+      sendQuickReply(replyToken, 'リトライ回数の上限に達しました。\n\n管理者にお問い合わせください。', [
+        { label: 'お問い合わせ', text: 'お問い合わせ' },
+        { label: 'やめる', text: 'やめる' }
+      ]);
+      return;
+    }
+    tempData.retry_count = retryCount + 1;
     try {
       var retryLink = createPaymentLink(reservationId, reservation ? reservation.patient_name : '', getDepositAmount());
       if (retryLink) {
@@ -314,25 +323,28 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     return;
   }
 
-  // Check for duplicate reservation (same date+time for this user)
-  for (var di = 0; di < existingReservations.length; di++) {
-    var er = existingReservations[di];
-    if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
-      clearUserState(userId);
-      sendQuickReply(replyToken, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
-        { label: '予約する', text: '予約する' },
-        { label: 'やめる', text: 'やめる' }
-      ]);
-      return;
-    }
-  }
-
   // Final conflict check with LockService (race condition guard)
   var lock = LockService.getScriptLock();
   lock.waitLock(10000); // Wait up to 10 seconds for the lock
   try {
     // Re-check booked slots under lock
     _invalidateReservationCache();
+
+    // Duplicate check under lock (prevents race condition)
+    var lockedExisting = getReservationsByLineUserId(userId);
+    for (var di = 0; di < lockedExisting.length; di++) {
+      var er = lockedExisting[di];
+      if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
+        lock.releaseLock();
+        clearUserState(userId);
+        sendQuickReply(replyToken, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
+          { label: '予約する', text: '予約する' },
+          { label: 'やめる', text: 'やめる' }
+        ]);
+        return;
+      }
+    }
+
     var bookedSlotsFinal = getBookedSlotsForDate(tempData.reserved_date);
     var bookedCountFinal = bookedSlotsFinal[tempData.reserved_start] || 0;
     if (bookedCountFinal >= getMaxConcurrentBookings()) {
@@ -396,7 +408,7 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     try { lock.releaseLock(); } catch (le) { /* already released */ }
     appendLogRow('ERROR', 'createReservationAndGoToPayment lock error: ' + e.message);
     clearUserState(userId);
-    sendQuickReply(replyToken, '予約の作成中にエラーが発生しました。もう一度お試しください。', [
+    sendQuickReply(replyToken, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
       { label: '予約する', text: '予約する' },
       { label: 'お問い合わせ', text: 'お問い合わせ' }
     ]);

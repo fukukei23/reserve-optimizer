@@ -9,7 +9,7 @@
  */
 function formatDate(date) {
   if (!date) return '';
-  return Utilities.formatDate(date, 'Asia/Tokyo', 'yyyy-MM-dd');
+  return Utilities.formatDate(date, TIMEZONE, 'yyyy-MM-dd');
 }
 
 /**
@@ -17,7 +17,7 @@ function formatDate(date) {
  */
 function formatTime(date) {
   if (!date) return '';
-  return Utilities.formatDate(date, 'Asia/Tokyo', 'HH:mm');
+  return Utilities.formatDate(date, TIMEZONE, 'HH:mm');
 }
 
 /**
@@ -25,7 +25,7 @@ function formatTime(date) {
  */
 function formatDateTime(date) {
   if (!date) return '';
-  return Utilities.formatDate(date, 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
+  return Utilities.formatDate(date, TIMEZONE, 'yyyy-MM-dd HH:mm');
 }
 
 /**
@@ -43,7 +43,7 @@ function parseDate(dateString) {
 
   for (var i = 0; i < formats.length; i++) {
     try {
-      return Utilities.parseDate(dateString, 'Asia/Tokyo', formats[i]);
+      return Utilities.parseDate(dateString, TIMEZONE, formats[i]);
     } catch (e) {
       continue;
     }
@@ -230,7 +230,7 @@ function getAgeInDays(date) {
 function isPastDateTime(dateStr, timeStr, leadTimeMinutes) {
   if (!dateStr || !timeStr) return true;
   var leadTime = leadTimeMinutes || 0;
-  var tz = 'Asia/Tokyo';
+  var tz = TIMEZONE;
   var now = new Date();
   var nowStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
   var nowTimeStr = Utilities.formatDate(now, tz, 'HH:mm');

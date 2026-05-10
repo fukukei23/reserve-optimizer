@@ -12,7 +12,7 @@ function sendDayBeforeReminders() {
   var now = new Date();
   var tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  var tomorrowStr = Utilities.formatDate(tomorrow, 'Asia/Tokyo', 'yyyy-MM-dd');
+  var tomorrowStr = Utilities.formatDate(tomorrow, TIMEZONE, 'yyyy-MM-dd');
 
   var reminderHoursBefore = getReminderHoursBefore();
   var sentCount = 0;
@@ -42,8 +42,8 @@ function sendDayBeforeReminders() {
  */
 function checkForNoShows() {
   var now = new Date();
-  var currentTime = Utilities.formatDate(now, 'Asia/Tokyo', 'HH:mm');
-  var currentDate = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd');
+  var currentTime = Utilities.formatDate(now, TIMEZONE, 'HH:mm');
+  var currentDate = Utilities.formatDate(now, TIMEZONE, 'yyyy-MM-dd');
 
   var noShowCount = 0;
 

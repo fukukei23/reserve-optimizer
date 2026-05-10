@@ -26,17 +26,17 @@ function calculateWeeklyKPIs(weekStart) {
 
   for (var i = 1; i < data.length; i++) {
     var reservation = data[i];
-    var reservedDate = parseDate(reservation[7]);
+    var reservedDate = parseDate(reservation[RESERVATIONS_COLUMNS.RESERVED_DATE - 1]);
 
     if (!reservedDate || reservedDate < parseDate(weekStart) || reservedDate > weekEnd) {
       continue;
     }
 
-    var status = reservation[10];
-    var depositStatus = reservation[13];
-    var depositAmount = reservation[12];
-    var resaleNotified = reservation[17];
-    var resaleSuccess = reservation[18];
+    var status = reservation[RESERVATIONS_COLUMNS.STATUS - 1];
+    var depositStatus = reservation[RESERVATIONS_COLUMNS.DEPOSIT_STATUS - 1];
+    var depositAmount = reservation[RESERVATIONS_COLUMNS.DEPOSIT_AMOUNT - 1];
+    var resaleNotified = reservation[RESERVATIONS_COLUMNS.RESALE_NOTIFIED - 1];
+    var resaleSuccess = reservation[RESERVATIONS_COLUMNS.RESALE_SUCCESS - 1];
 
     if (status !== RESERVATION_STATUS.PENDING) {
       stats.total_reservations++;
@@ -47,8 +47,8 @@ function calculateWeeklyKPIs(weekStart) {
     }
 
     if (status === RESERVATION_STATUS.CANCELLED) {
-      var cancelTime = new Date(reservation[16]);
-      var reservedDateTime = new Date(reservation[7] + 'T' + reservation[8] + ':00');
+      var cancelTime = new Date(reservation[RESERVATIONS_COLUMNS.CANCEL_TIME - 1]);
+      var reservedDateTime = new Date(reservation[RESERVATIONS_COLUMNS.RESERVED_DATE - 1] + 'T' + reservation[RESERVATIONS_COLUMNS.RESERVED_START - 1] + ':00');
       var hoursUntil = (reservedDateTime - cancelTime) / (1000 * 60 * 60);
       if (hoursUntil < 24) {
         stats.same_day_cancellations++;
@@ -187,9 +187,9 @@ function getCurrentWeekKPIs() {
  */
 function compareKPIsToTargets(kpiData) {
   var targets = {
-    no_show_rate: 5.0,
-    resale_rate: 20.0,
-    line_completion_rate: 40.0
+    no_show_rate: parseFloat(getProperty('KPI_TARGET_NO_SHOW_RATE', '5.0')),
+    resale_rate: parseFloat(getProperty('KPI_TARGET_RESALE_RATE', '20.0')),
+    line_completion_rate: parseFloat(getProperty('KPI_TARGET_LINE_COMPLETION_RATE', '40.0'))
   };
 
   return {

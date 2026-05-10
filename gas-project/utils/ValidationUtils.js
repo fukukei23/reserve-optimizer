@@ -263,12 +263,12 @@ function validateAmount(amount) {
 }
 
 /**
- * Validate date for booking (past check, 90-day limit, Sunday check)
+ * Validate date for booking (past check, 90-day limit, Sunday check, holiday check)
  * @param {string} parsedDate - YYYY-MM-DD format date string
  * @returns {{ valid: boolean, errorMessage: string|null }}
  */
 function validateDateForBooking(parsedDate) {
-  var tz = 'Asia/Tokyo';
+  var tz = TIMEZONE;
 
   // Basic format and range check (month 1-12, day 1-31)
   var parts = parsedDate.split(/[-/]/);
@@ -286,20 +286,107 @@ function validateDateForBooking(parsedDate) {
 
   var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var maxDate = new Date(todayStr + 'T00:00:00+09:00');
-  maxDate.setDate(maxDate.getDate() + 90);
+  maxDate.setDate(maxDate.getDate() + MAX_BOOKING_DAYS_AHEAD);
   var maxDateStr = Utilities.formatDate(maxDate, tz, 'yyyy-MM-dd');
 
   if (parsedDate < todayStr) {
     return { valid: false, errorMessage: '過去の日付は選択できません。別の日を選択してください。' };
   }
   if (parsedDate > maxDateStr) {
-    return { valid: false, errorMessage: '予約は90日以内のみ可能です。' };
+    return { valid: false, errorMessage: '予約は' + MAX_BOOKING_DAYS_AHEAD + '日以内のみ可能です。' };
   }
 
   var bookingDate = new Date(parsedDate + 'T12:00:00+09:00');
-  if (bookingDate.getDay() === 0) {
-    return { valid: false, errorMessage: '日曜日は休業日です。別の日を選択してください。' };
+  var dow = bookingDate.getDay();
+
+  // Check closed days
+  for (var ci = 0; ci < CLOSED_DAYS.length; ci++) {
+    if (dow === CLOSED_DAYS[ci]) {
+      var dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+      return { valid: false, errorMessage: dayNames[dow] + '曜日は休業日です。別の日を選択してください。' };
+    }
+  }
+
+  // Check Japanese public holidays
+  if (isJapaneseHoliday(parsedDate)) {
+    return { valid: false, errorMessage: '祝日は休業日です。別の日を選択してください。' };
   }
 
   return { valid: true, errorMessage: null };
+}
+
+/**
+ * Check if a date is a Japanese public holiday
+ * Uses a simple lookup for the current + next year
+ * @param {string} dateStr - YYYY-MM-DD format
+ * @returns {boolean}
+ */
+function isJapaneseHoliday(dateStr) {
+  var year = parseInt(dateStr.substring(0, 4));
+  var holidays = _getJapaneseHolidays(year);
+  return holidays.indexOf(dateStr) !== -1;
+}
+
+/**
+ * Get Japanese public holidays for a given year
+ * Includes: New Year, Coming of Age, Foundation Day, Vernal Equinox, Showa Day,
+ * Constitution Day, Greenery Day, Children's Day, Marine Day, Mountain Day,
+ * Respect for the Aged, Sports Day, Culture Day, Labor Thanksgiving, Emperor's Birthday
+ * @param {number} year
+ * @returns {string[]} Array of YYYY-MM-DD strings
+ */
+function _getJapaneseHolidays(year) {
+  var equinoxVernal = _vernalEquinoxDate(year);
+  var equinoxAutumn = _autumnalEquinoxDate(year);
+
+  var fixed = [
+    year + '-01-01', year + '-01-02', year + '-01-03',  // New Year
+    year + '-02-11',  // Foundation Day
+    year + '-02-23',  // Emperor's Birthday
+    year + '-04-29',  // Showa Day
+    year + '-05-03',  // Constitution Day
+    year + '-05-04',  // Greenery Day
+    year + '-05-05',  // Children's Day
+    year + '-07-21',  // Marine Day (3rd Monday July from 2024)
+    year + '-08-11',  // Mountain Day
+    year + '-09-15',  // Respect for the Aged (3rd Monday Sep from 2024, date varies)
+    year + '-11-03',  // Culture Day
+    year + '-11-23'   // Labor Thanksgiving Day
+  ];
+
+  // Coming of Age: 2nd Monday of January
+  fixed.push(_nthMonday(year, 1, 2));
+  // Sports Day: 2nd Monday of October
+  fixed.push(_nthMonday(year, 10, 2));
+  // Equinoxes
+  fixed.push(equinoxVernal);
+  fixed.push(equinoxAutumn);
+
+  return fixed;
+}
+
+/**
+ * Calculate vernal equinox date (approximate)
+ */
+function _vernalEquinoxDate(year) {
+  var day = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return year + '-03-' + pad2(String(day));
+}
+
+/**
+ * Calculate autumnal equinox date (approximate)
+ */
+function _autumnalEquinoxDate(year) {
+  var day = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return year + '-09-' + pad2(String(day));
+}
+
+/**
+ * Get the Nth Monday of a given month
+ */
+function _nthMonday(year, month, n) {
+  var firstDay = new Date(year, month - 1, 1).getDay();
+  var firstMonday = firstDay <= 1 ? 2 - firstDay : 9 - firstDay;
+  var targetDay = firstMonday + (n - 1) * 7;
+  return year + '-' + pad2(String(month)) + '-' + pad2(String(targetDay));
 }
