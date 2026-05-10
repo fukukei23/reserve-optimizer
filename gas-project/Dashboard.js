@@ -1,7 +1,8 @@
 /**
  * Dashboard - KPI Visualization
  *
- * Generates dashboard views and charts for monitoring
+ * Rendering layer only. All data calculation is in KPIService.js
+ * Uses Logger.log for sheet operations (no appendLogRow during sheet writes)
  */
 
 /**
@@ -11,7 +12,6 @@ function createDashboardSheet() {
   var ss = SpreadsheetApp.openById(getSpreadsheetId());
   var sheetName = 'Dashboard';
 
-  // Check if dashboard exists
   var existingSheet = ss.getSheetByName(sheetName);
   if (existingSheet) {
     ss.deleteSheet(existingSheet);
@@ -19,7 +19,6 @@ function createDashboardSheet() {
 
   var sheet = ss.insertSheet(sheetName);
 
-  // Create dashboard layout
   var currentKPIs = getCurrentWeekKPIs();
   var targets = compareKPIsToTargets(currentKPIs);
 
@@ -75,11 +74,10 @@ function createDashboardSheet() {
   sheet.setColumnWidth(4, 100);
 
   // Last updated timestamp
-  var lastUpdatedRow = 20;
-  sheet.getRange(lastUpdatedRow, 1).setValue('最終更新: ' + formatDateTime(new Date()));
-  sheet.getRange(lastUpdatedRow, 1).setFontStyle('italic').setFontSize(10);
+  sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date()));
+  sheet.getRange(20, 1).setFontStyle('italic').setFontSize(10);
 
-  Logger.log('Dashboard created');
+  appendLogRow('INFO', 'Dashboard created');
 }
 
 /**
@@ -94,7 +92,6 @@ function updateDashboard() {
     return;
   }
 
-  // Update current week data
   var currentKPIs = getCurrentWeekKPIs();
 
   var summaryValues = [
@@ -109,7 +106,6 @@ function updateDashboard() {
 
   sheet.getRange(5, 2, summaryValues.length, 4).setValues(summaryValues);
 
-  // Update targets
   var targets = compareKPIsToTargets(currentKPIs);
 
   sheet.getRange(15, 3).setValue(targets.no_show_rate.actual + '%');
@@ -118,14 +114,13 @@ function updateDashboard() {
   sheet.getRange(16, 3).setValue(targets.resale_rate.actual + '%');
   sheet.getRange(16, 4).setValue(targets.resale_rate.achieved ? '✓' : '✗');
 
-  // Update timestamp
   sheet.getRange(20, 1).setValue('最終更新: ' + formatDateTime(new Date()));
 
-  Logger.log('Dashboard updated');
+  appendLogRow('INFO', 'Dashboard updated');
 }
 
 /**
- * Get dashboard summary for LINE
+ * Get dashboard summary for LINE message
  */
 function getDashboardSummaryForLine() {
   var kpis = getCurrentWeekKPIs();
@@ -157,7 +152,6 @@ function createWaitlistDashboard() {
   sheet.getRange(1, 1).setValue('待機リスト - ダッシュボード');
   sheet.getRange(1, 1).setFontWeight('bold').setFontSize(18);
 
-  // Waitlist summary
   var waitlistEntries = getWaitlistReservations();
   var totalCount = waitlistEntries.length;
   var sameDayOkCount = waitlistEntries.filter(function(e) { return e.same_day_ok === 'Y'; }).length;
@@ -173,7 +167,6 @@ function createWaitlistDashboard() {
 
   sheet.getRange(4, 1, summaryData.length, 2).setValues(summaryData);
 
-  // Active waitlist entries
   sheet.getRange(7, 1).setValue('【登録者一覧】');
   sheet.getRange(7, 1).setFontWeight('bold').setFontSize(14);
 
@@ -202,5 +195,5 @@ function createWaitlistDashboard() {
   sheet.setColumnWidth(4, 100);
   sheet.setColumnWidth(5, 150);
 
-  Logger.log('Waitlist dashboard created');
+  appendLogRow('INFO', 'Waitlist dashboard created');
 }

@@ -2,9 +2,53 @@
  * Stripe Service - Stripe Payment Integration
  *
  * Handles payment link creation and Stripe API interactions
+ * All API methods return Result objects: { success: boolean, data?: any, error?: string }
  */
 
 var STRIPE_API_BASE = 'https://api.stripe.com/v1';
+
+/**
+ * Call Stripe API with consistent error handling
+ * @param {string} method - HTTP method
+ * @param {string} path - API path (e.g. '/checkout/sessions')
+ * @param {object} [payload] - Request payload (will be form-encoded)
+ * @returns {{ success: boolean, data?: object, error?: string }}
+ */
+function _callStripeApi(method, path, payload) {
+  var apiKey = getStripeApiKey();
+  if (!apiKey) {
+    return { success: false, error: 'STRIPE_API_KEY not configured' };
+  }
+
+  var options = {
+    method: method,
+    contentType: 'application/x-www-form-urlencoded',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey
+    },
+    muteHttpExceptions: true
+  };
+
+  if (payload) {
+    options.payload = typeof payload === 'string' ? payload : flattenForStripe(payload).join('&');
+  }
+
+  try {
+    var response = UrlFetchApp.fetch(STRIPE_API_BASE + path, options);
+    var code = response.getResponseCode();
+
+    if (code >= 200 && code < 300) {
+      return { success: true, data: JSON.parse(response.getContentText()) };
+    }
+
+    var errorBody = response.getContentText();
+    appendLogRow('ERROR', 'Stripe API ' + method + ' ' + path + ' returned ' + code + ': ' + errorBody.substring(0, 300));
+    return { success: false, error: 'Stripe API error ' + code + ': ' + errorBody.substring(0, 200) };
+  } catch (e) {
+    appendLogRow('ERROR', 'Stripe API exception: ' + e.message);
+    return { success: false, error: e.message };
+  }
+}
 
 /**
  * Flatten nested object to Stripe-compatible form-encoded string
@@ -33,15 +77,9 @@ function flattenForStripe(obj, prefix) {
 
 /**
  * Create payment link for reservation deposit
+ * @returns {string|null} Checkout session URL or null on failure
  */
 function createPaymentLink(reservationId, patientName, amount) {
-  var apiKey = getStripeApiKey();
-  if (!apiKey) {
-    Logger.log('[createPaymentLink] STRIPE_API_KEY not set');
-    return null;
-  }
-
-  // Build flattened payload for Stripe Payment Links API
   var linkData = {
     line_items: [{
       price_data: {
@@ -63,58 +101,27 @@ function createPaymentLink(reservationId, patientName, amount) {
     }
   };
 
-  var formBody = flattenForStripe(linkData).join('&');
-  Logger.log('[createPaymentLink] Payload: ' + formBody.substring(0, 200));
-
-  var options = {
-    method: 'post',
-    contentType: 'application/x-www-form-urlencoded',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey
-    },
-    payload: formBody,
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(
-    STRIPE_API_BASE + '/checkout/sessions',
-    options
-  );
-
-  if (response.getResponseCode() !== 200) {
-    Logger.log('[createPaymentLink] Error ' + response.getResponseCode() + ': ' + response.getContentText());
+  var result = _callStripeApi('post', '/checkout/sessions', linkData);
+  if (!result.success) {
+    appendLogRow('ERROR', '[createPaymentLink] Failed for ' + reservationId + ': ' + result.error);
     return null;
   }
 
-  var link = JSON.parse(response.getContentText());
-  Logger.log('[createPaymentLink] Created: ' + link.url + ' for reservation: ' + reservationId);
-
-  return link.url;
+  appendLogRow('INFO', '[createPaymentLink] Created: ' + result.data.url + ' for reservation: ' + reservationId);
+  return result.data.url;
 }
 
 /**
  * Get payment intent by ID
+ * @returns {object|null} Payment intent object or null on failure
  */
 function getPaymentIntent(paymentIntentId) {
-  var apiKey = getStripeApiKey();
-  var url = STRIPE_API_BASE + '/payment_intents/' + paymentIntentId;
-
-  var options = {
-    method: 'get',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey
-    },
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-
-  if (response.getResponseCode() !== 200) {
-    Logger.log('Stripe Get Intent Error: ' + response.getContentText());
+  var result = _callStripeApi('get', '/payment_intents/' + paymentIntentId);
+  if (!result.success) {
+    appendLogRow('ERROR', '[getPaymentIntent] Failed for ' + paymentIntentId + ': ' + result.error);
     return null;
   }
-
-  return JSON.parse(response.getContentText());
+  return result.data;
 }
 
 /**
@@ -151,101 +158,30 @@ function verifyStripeSignature(payload, signature, secret) {
 
 /**
  * Refund payment
+ * @returns {object|null} Refund object or null on failure
  */
 function refundPayment(paymentIntentId, amount) {
-  var apiKey = getStripeApiKey();
-  var url = STRIPE_API_BASE + '/refunds';
-
-  var refundData = {
+  var result = _callStripeApi('post', '/refunds', {
     payment_intent: paymentIntentId,
     amount: amount
-  };
-
-  var options = {
-    method: 'post',
-    contentType: 'application/x-www-form-urlencoded',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey
-    },
-    payload: refundData,
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-
-  if (response.getResponseCode() !== 200) {
-    Logger.log('Stripe Refund Error: ' + response.getContentText());
+  });
+  if (!result.success) {
+    appendLogRow('ERROR', '[refundPayment] Failed for ' + paymentIntentId + ': ' + result.error);
     return null;
   }
-
-  return JSON.parse(response.getContentText());
+  return result.data;
 }
 
 /**
  * Get checkout session by ID from Stripe API
+ * @returns {object|null} Session object or null on failure
  */
 function getCheckoutSession(sessionId) {
-  var apiKey = getStripeApiKey();
-  if (!apiKey) {
-    Logger.log('[getCheckoutSession] STRIPE_API_KEY not set');
+  var result = _callStripeApi('get', '/checkout/sessions/' + sessionId);
+  if (!result.success) {
+    appendLogRow('ERROR', '[getCheckoutSession] Failed for ' + sessionId + ': ' + result.error);
     return null;
   }
-
-  var url = STRIPE_API_BASE + '/checkout/sessions/' + sessionId;
-
-  var options = {
-    method: 'get',
-    headers: {
-      'Authorization': 'Bearer ' + apiKey
-    },
-    muteHttpExceptions: true
-  };
-
-  var response = UrlFetchApp.fetch(url, options);
-
-  if (response.getResponseCode() !== 200) {
-    Logger.log('[getCheckoutSession] Error ' + response.getResponseCode() + ': ' + response.getContentText());
-    return null;
-  }
-
-  return JSON.parse(response.getContentText());
+  return result.data;
 }
 
-/**
- * Handle successful payment
- */
-function handlePaymentSuccess(event) {
-  var paymentIntent = event.data.object;
-  var reservationId = paymentIntent.metadata.reservation_id;
-
-  Logger.log('Payment succeeded for reservation: ' + reservationId);
-
-  // Update reservation
-  var reservation = getReservationById(reservationId);
-  if (reservation) {
-    updateReservation(reservationId, {
-      deposit_status: DEPOSIT_STATUS.PAID,
-      status: RESERVATION_STATUS.CONFIRMED
-    });
-
-    // Send confirmation message
-    var message = MessageTemplates.getConfirmationMessage(reservation);
-    sendLinePush(reservation.line_display_name, message);
-  }
-}
-
-/**
- * Handle failed payment
- */
-function handlePaymentFailure(event) {
-  var paymentIntent = event.data.object;
-  var reservationId = paymentIntent.metadata.reservation_id;
-
-  Logger.log('Payment failed for reservation: ' + reservationId);
-
-  var reservation = getReservationById(reservationId);
-  if (reservation) {
-    var message = MessageTemplates.getPaymentFailedMessage();
-    sendLinePush(reservation.line_display_name, message);
-  }
-}

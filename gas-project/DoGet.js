@@ -1,33 +1,41 @@
 /**
  * Web App GET handler
  *
- * 2つのモードを処理:
+ * 3つのモードを処理:
  * 1. Worker転送モード: x-verified=true & x-body=<body> → Webhook処理
  * 2. gas-autopilotモード: fn=<functionName> → 関数実行
  * 3. ヘルスチェック: パラメータなし → ステータス返却
  */
-function doGet(e) {
-  // 最初に必ずログ出力（デバッグ用）
-  try {
-    var ss = SpreadsheetApp.openById(getSpreadsheetId());
-    var logSheet = ss.getSheetByName('ログ');
-    if (!logSheet) {
-      logSheet = ss.insertSheet('ログ');
-      logSheet.appendRow(['timestamp', 'level', 'message']);
-    }
-    logSheet.appendRow([new Date(), 'ENTRY', 'doGet called: params=' + JSON.stringify(Object.keys(e.parameter || {})).substring(0, 200)]);
-  } catch(entryErr) {
-    // スプレッドシート書き込み失敗は致命的ではない
-  }
 
-  // === モード1: Worker転送 ===
+/**
+ * Autopilot function routing table
+ * Maps function names to their handler functions
+ */
+var _GET_ROUTES = {
+  runSetup: runSetup,
+  healthCheck: healthCheck,
+  getSystemStatus: getSystemStatus,
+  testConfig: testConfig,
+  testCancelFlow: testCancelFlow,
+  testChangeFlow: testChangeFlow,
+  testLineReply: testLineReply,
+  debugDoPost: debugDoPost,
+  debugStripeLink: debugStripeLink,
+  setupRichMenuFromProperty: setupRichMenuFromProperty,
+  storeRichMenuImage: _storeRichMenuImageChunk,
+  clearRichMenuImage: _clearRichMenuImageProperty,
+  initializeDefaultProperties: initializeDefaultProperties,
+  renameResources: renameResources
+};
+
+function doGet(e) {
+  // === Mode 1: Worker forwarding ===
   var verified = e.parameter['x-verified'];
   var source = e.parameter['x-source'] || '';
   var body = e.parameter['x-body'] || '';
 
   if (verified === 'true' && body) {
     body = decodeURIComponent(body);
-    console.log('[doGet] Worker forwarding: source=' + source + ' body_length=' + body.length);
     appendLogRow('DEBUG', 'doGet: source=' + source + ' body=' + body.substring(0, 300));
 
     if (source === 'line') {
@@ -39,38 +47,12 @@ function doGet(e) {
     }
   }
 
-  // === モード2: gas-autopilot ===
+  // === Mode 2: gas-autopilot ===
   var fnName = (e && e.parameter && e.parameter.fn) || '';
-  var param1 = (e && e.parameter && e.parameter.p1) || '';
 
-  var allowedFunctions = {
-    runSetup: runSetup,
-    healthCheck: healthCheck,
-    getSystemStatus: getSystemStatus,
-    testConfig: testConfig,
-    testCancelFlow: testCancelFlow,
-    testChangeFlow: testChangeFlow,
-    testLineReply: testLineReply,
-    debugDoPost: debugDoPost,
-    debugStripeLink: debugStripeLink,
-    setupRichMenuFromProperty: setupRichMenuFromProperty,
-    storeRichMenuImage: function() {
-      if (!param1) return { ok: false, error: 'p1 (base64 chunk) required' };
-      var existing = PropertiesService.getScriptProperties().getProperty('RICHMENU_IMAGE_B64') || '';
-      PropertiesService.getScriptProperties().setProperty('RICHMENU_IMAGE_B64', existing + param1);
-      return { ok: true, length: (existing + param1).length };
-    },
-    clearRichMenuImage: function() {
-      PropertiesService.getScriptProperties().deleteProperty('RICHMENU_IMAGE_B64');
-      return { ok: true };
-    },
-    initializeDefaultProperties: initializeDefaultProperties,
-    renameResources: renameResources
-  };
-
-  if (fnName && fnName in allowedFunctions) {
+  if (fnName && fnName in _GET_ROUTES) {
     try {
-      var result = allowedFunctions[fnName]();
+      var result = _GET_ROUTES[fnName](e.parameter);
       return ContentService.createTextOutput(
         JSON.stringify({ ok: true, function: fnName, result: result || null })
       ).setMimeType(ContentService.MimeType.JSON);
@@ -81,10 +63,29 @@ function doGet(e) {
     }
   }
 
-  // === モード3: ヘルスチェック ===
+  // === Mode 3: Health check ===
   return ContentService.createTextOutput(
     JSON.stringify({ status: 'ok', message: 'Reserve Optimizer GAS', timestamp: new Date().toISOString() })
   ).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Rich menu image chunk storage helper
+ */
+function _storeRichMenuImageChunk(params) {
+  var param1 = params && params.p1 || '';
+  if (!param1) return { ok: false, error: 'p1 (base64 chunk) required' };
+  var existing = PropertiesService.getScriptProperties().getProperty('RICHMENU_IMAGE_B64') || '';
+  PropertiesService.getScriptProperties().setProperty('RICHMENU_IMAGE_B64', existing + param1);
+  return { ok: true, length: (existing + param1).length };
+}
+
+/**
+ * Rich menu image property cleanup helper
+ */
+function _clearRichMenuImageProperty() {
+  PropertiesService.getScriptProperties().deleteProperty('RICHMENU_IMAGE_B64');
+  return { ok: true };
 }
 
 /**
@@ -147,8 +148,6 @@ function debugDoPost() {
   };
 
   try {
-    console.log('[debugDoPost] Starting...');
-    console.log('[debugDoPost] Test event: ' + JSON.stringify(testEvent));
     handleLineEvent(testEvent);
     return { success: true, note: 'handleLineEvent completed (reply will fail due to invalid token)' };
   } catch (e) {
@@ -197,6 +196,3 @@ function debugStripeLink() {
     return { error: e.message, stack: e.stack || 'no stack' };
   }
 }
-
-// handleLineWebhookVerified, handleStripeWebhookVerified, handleAutoDetect
-// は Code.js で定義済み（GAS は全 .js ファイルでグローバル名前空間を共有）

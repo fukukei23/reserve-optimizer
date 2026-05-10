@@ -261,3 +261,30 @@ function validateAmount(amount) {
   var num = parseInt(amount);
   return !isNaN(num) && num > 0 && num <= 1000000;
 }
+
+/**
+ * Validate date for booking (past check, 90-day limit, Sunday check)
+ * @param {string} parsedDate - YYYY-MM-DD format date string
+ * @returns {{ valid: boolean, errorMessage: string|null }}
+ */
+function validateDateForBooking(parsedDate) {
+  var tz = 'Asia/Tokyo';
+  var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var maxDate = new Date(todayStr + 'T00:00:00+09:00');
+  maxDate.setDate(maxDate.getDate() + 90);
+  var maxDateStr = Utilities.formatDate(maxDate, tz, 'yyyy-MM-dd');
+
+  if (parsedDate < todayStr) {
+    return { valid: false, errorMessage: '過去の日付は選択できません。別の日を選択してください。' };
+  }
+  if (parsedDate > maxDateStr) {
+    return { valid: false, errorMessage: '予約は90日以内のみ可能です。' };
+  }
+
+  var bookingDate = new Date(parsedDate + 'T12:00:00+09:00');
+  if (bookingDate.getDay() === 0) {
+    return { valid: false, errorMessage: '日曜日は休業日です。別の日を選択してください。' };
+  }
+
+  return { valid: true, errorMessage: null };
+}

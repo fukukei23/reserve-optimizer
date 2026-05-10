@@ -2,14 +2,13 @@
  * Reminder Service - Automatic Notifications
  *
  * Handles day-before reminders, no-show detection, and resale notifications
+ * Uses SheetService cache for all data access
  */
 
 /**
  * Send day-before reminders
  */
 function sendDayBeforeReminders() {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
   var now = new Date();
   var tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -18,36 +17,23 @@ function sendDayBeforeReminders() {
   var reminderHoursBefore = getReminderHoursBefore();
   var sentCount = 0;
 
-  for (var i = 1; i < data.length; i++) {
-    var reservation = data[i];
-    var reservationId = reservation[0];
-    var reservedDate = reservation[7];
-    var reminderSent = reservation[14];
-    var status = reservation[10];
+  _ensureReservationCache();
+  for (var i = 0; i < _reservationCache.length; i++) {
+    var r = _reservationCache[i];
 
-    // Skip if not tomorrow, already sent reminder, or not confirmed
-    if (reservedDate !== tomorrowStr || reminderSent === 'Y' || status !== RESERVATION_STATUS.CONFIRMED) {
+    if (r.reserved_date !== tomorrowStr || r.reminder_sent === 'Y' || r.status !== RESERVATION_STATUS.CONFIRMED) {
       continue;
     }
 
-    // Send reminder
-    var lineDisplayName = reservation[4];
-    var reservedStart = reservation[8];
-    var menuType = reservation[6];
+    var message = MessageTemplates.getReminderMessage(tomorrowStr, r.reserved_start, r.menu_type);
 
-    var message = MessageTemplates.getReminderMessage(
-      tomorrowStr,
-      reservedStart,
-      menuType
-    );
-
-    if (sendLinePush(lineDisplayName, message)) {
-      markReminderSent(reservationId);
+    if (sendLinePush(r.line_display_name, message)) {
+      markReminderSent(r.id);
       sentCount++;
     }
   }
 
-  Logger.log('Sent ' + sentCount + ' day-before reminders for ' + tomorrowStr);
+  appendLogRow('INFO', 'Sent ' + sentCount + ' day-before reminders for ' + tomorrowStr);
   return sentCount;
 }
 
@@ -55,39 +41,27 @@ function sendDayBeforeReminders() {
  * Check for no-shows
  */
 function checkForNoShows() {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
   var now = new Date();
   var currentTime = Utilities.formatDate(now, 'Asia/Tokyo', 'HH:mm');
   var currentDate = Utilities.formatDate(now, 'Asia/Tokyo', 'yyyy-MM-dd');
 
   var noShowCount = 0;
 
-  for (var i = 1; i < data.length; i++) {
-    var reservation = data[i];
-    var reservationId = reservation[0];
-    var reservedDate = reservation[7];
-    var reservedEnd = reservation[9];
-    var status = reservation[10];
-    var depositStatus = reservation[13];
+  _ensureReservationCache();
+  for (var i = 0; i < _reservationCache.length; i++) {
+    var r = _reservationCache[i];
 
-    // Check if appointment time passed and still confirmed
-    if (reservedDate === currentDate &&
-        reservedEnd <= currentTime &&
-        status === RESERVATION_STATUS.CONFIRMED) {
+    if (r.reserved_date === currentDate &&
+        r.reserved_end <= currentTime &&
+        r.status === RESERVATION_STATUS.CONFIRMED) {
 
-      Logger.log('No-show detected: ' + reservationId);
+      appendLogRow('INFO', 'No-show detected: ' + r.id);
+      markNoShow(r.id);
 
-      // Mark as no-show
-      markNoShow(reservationId);
-
-      // Send penalty notification if deposit paid
-      if (depositStatus === DEPOSIT_STATUS.PAID) {
-        var lineDisplayName = reservation[4];
+      if (r.deposit_status === DEPOSIT_STATUS.PAID) {
         var noShowDepositAmount = getNoShowDepositAmount();
-
         var message = MessageTemplates.getNoShowPenaltyMessage(noShowDepositAmount);
-        sendLinePush(lineDisplayName, message);
+        sendLinePush(r.line_display_name, message);
       }
 
       noShowCount++;
@@ -95,7 +69,7 @@ function checkForNoShows() {
   }
 
   if (noShowCount > 0) {
-    Logger.log('Detected ' + noShowCount + ' no-shows');
+    appendLogRow('INFO', 'Detected ' + noShowCount + ' no-shows');
   }
 
   return noShowCount;
@@ -108,7 +82,7 @@ function handleSameDayCancellation(reservationId, reason) {
   var reservation = getReservationById(reservationId);
 
   if (!reservation) {
-    Logger.log('Reservation not found: ' + reservationId);
+    appendLogRow('WARN', 'Reservation not found: ' + reservationId);
     return;
   }
 
@@ -151,6 +125,8 @@ function handleSameDayCancellation(reservationId, reason) {
       .timeBased()
       .after(10 * 60 * 1000)
       .create();
+
+    appendLogRow('INFO', 'Scheduled waitlist response check for: ' + reservationId);
   }
 }
 
@@ -158,22 +134,15 @@ function handleSameDayCancellation(reservationId, reason) {
  * Check waitlist responses for resale
  */
 function checkWaitlistResponses() {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
+  _ensureReservationCache();
+  for (var i = 0; i < _reservationCache.length; i++) {
+    var r = _reservationCache[i];
 
-  for (var i = 1; i < data.length; i++) {
-    var reservation = data[i];
-    var resaleNotified = reservation[17];
-    var resaleSuccess = reservation[18];
-
-    // Skip if not notified or already successful
-    if (resaleNotified !== 'Y' || resaleSuccess === 'Y') {
+    if (r.resale_notified !== 'Y' || r.resale_success === 'Y') {
       continue;
     }
 
-    // TODO: Check for waitlist responses via webhook or polling
-    // For now, this is a placeholder for manual confirmation
-    Logger.log('Waitlist response check needed for: ' + reservation[0]);
+    appendLogRow('INFO', 'Waitlist response check needed for: ' + r.id);
   }
 }
 
@@ -201,5 +170,5 @@ function cleanupWaitlist() {
     sheet.deleteRow(rowsToDelete[j]);
   }
 
-  Logger.log('Cleaned up ' + rowsToDelete.length + ' old waitlist entries');
+  appendLogRow('INFO', 'Cleaned up ' + rowsToDelete.length + ' old waitlist entries');
 }

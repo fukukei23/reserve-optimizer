@@ -2,7 +2,92 @@
  * Sheet Service - Google Sheets Operations
  *
  * Handles all CRUD operations for reservations, waitlist, and weekly summary
+ * Uses per-execution cache with Map indexes for O(1) lookups
  */
+
+// Per-execution cache (GAS reinitializes globals each execution)
+var _reservationCache = null;
+var _reservationByIdMap = null;
+var _reservationsByLineUserIdMap = null;
+var _reservationsByDateMap = null;
+
+/**
+ * Build reservation object from raw sheet row data
+ */
+function _buildReservationObj(row, i) {
+  return {
+    id: row[0],
+    created_at: row[1],
+    patient_name: row[2],
+    phone: row[3],
+    line_display_name: row[4],
+    visit_type: row[5],
+    menu_type: row[6],
+    reserved_date: formatDateObj(row[7]),
+    reserved_start: formatTimeObj(row[8]),
+    reserved_end: formatTimeObj(row[9]),
+    status: row[10],
+    deposit_required: row[11],
+    deposit_amount: row[12],
+    deposit_status: row[13],
+    reminder_sent: row[14],
+    reminder_response: row[15],
+    cancel_time: row[16],
+    resale_notified: row[17],
+    resale_success: row[18],
+    average_unit_price: row[19],
+    notes: row[20],
+    row_number: i + 1
+  };
+}
+
+/**
+ * Load all reservations into cache with indexed Maps
+ * Called lazily on first search access; stays valid for the GAS execution lifetime
+ */
+function _ensureReservationCache() {
+  if (_reservationCache !== null) return;
+
+  var sheet = getReservationsSheet();
+  var data = sheet.getDataRange().getValues();
+
+  _reservationCache = [];
+  _reservationByIdMap = {};
+  _reservationsByLineUserIdMap = {};
+  _reservationsByDateMap = {};
+
+  for (var i = 1; i < data.length; i++) {
+    var obj = _buildReservationObj(data[i], i);
+    _reservationCache.push(obj);
+
+    // Index by ID
+    _reservationByIdMap[obj.id] = obj;
+
+    // Index by LINE user ID (array per user)
+    var lineKey = String(data[i][4]);
+    if (!_reservationsByLineUserIdMap[lineKey]) {
+      _reservationsByLineUserIdMap[lineKey] = [];
+    }
+    _reservationsByLineUserIdMap[lineKey].push(obj);
+
+    // Index by date (array per date)
+    var dateKey = obj.reserved_date;
+    if (!_reservationsByDateMap[dateKey]) {
+      _reservationsByDateMap[dateKey] = [];
+    }
+    _reservationsByDateMap[dateKey].push(obj);
+  }
+}
+
+/**
+ * Invalidate cache (call after create/update/delete)
+ */
+function _invalidateReservationCache() {
+  _reservationCache = null;
+  _reservationByIdMap = null;
+  _reservationsByLineUserIdMap = null;
+  _reservationsByDateMap = null;
+}
 
 /**
  * Format a Date object to YYYY-MM-DD string
@@ -148,6 +233,7 @@ function createReservation(reservationData) {
   ];
 
   sheet.appendRow(row);
+  _invalidateReservationCache();
   Logger.log('Created reservation: ' + reservationId);
 
   return {
@@ -160,20 +246,14 @@ function createReservation(reservationData) {
  * Update reservation by ID
  */
 function updateReservation(reservationId, updates) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
-
-  var rowIndex = -1;
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === reservationId) {
-      rowIndex = i + 1;
-      break;
-    }
-  }
-
-  if (rowIndex === -1) {
+  _ensureReservationCache();
+  var cached = _reservationByIdMap[reservationId];
+  if (!cached) {
     throw new Error('Reservation not found: ' + reservationId);
   }
+
+  var rowIndex = cached.row_number;
+  var sheet = getReservationsSheet();
 
   // Update only provided fields
   for (var key in updates) {
@@ -184,107 +264,38 @@ function updateReservation(reservationId, updates) {
   }
 
   Logger.log('Updated reservation: ' + reservationId);
+  _invalidateReservationCache();
 }
 
 /**
  * Get reservation by ID
  */
 function getReservationById(reservationId) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === reservationId) {
-      return {
-        id: data[i][0],
-        created_at: data[i][1],
-        patient_name: data[i][2],
-        phone: data[i][3],
-        line_display_name: data[i][4],
-        visit_type: data[i][5],
-        menu_type: data[i][6],
-        reserved_date: formatDateObj(data[i][7]),
-        reserved_start: formatTimeObj(data[i][8]),
-        reserved_end: formatTimeObj(data[i][9]),
-        status: data[i][10],
-        deposit_required: data[i][11],
-        deposit_amount: data[i][12],
-        deposit_status: data[i][13],
-        reminder_sent: data[i][14],
-        reminder_response: data[i][15],
-        cancel_time: data[i][16],
-        resale_notified: data[i][17],
-        resale_success: data[i][18],
-        average_unit_price: data[i][19],
-        notes: data[i][20],
-        row_number: i + 1
-      };
-    }
-  }
-
-  return null;
+  _ensureReservationCache();
+  return _reservationByIdMap[reservationId] || null;
 }
 
 /**
  * Get reservations by date
  */
 function getReservationsByDate(date) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
-  var results = [];
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][7] === date) {
-      results.push({
-        id: data[i][0],
-        patient_name: data[i][2],
-        phone: data[i][3],
-        line_display_name: data[i][4],
-        visit_type: data[i][5],
-        menu_type: data[i][6],
-        reserved_date: formatDateObj(data[i][7]),
-        reserved_start: formatTimeObj(data[i][8]),
-        reserved_end: formatTimeObj(data[i][9]),
-        status: data[i][10]
-      });
-    }
-  }
-
-  return results;
+  _ensureReservationCache();
+  return _reservationsByDateMap[date] || [];
 }
 
 /**
  * Get active reservations by LINE User ID (Pending or Confirmed only)
  */
 function getReservationsByLineUserId(lineUserId) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
+  _ensureReservationCache();
+  var all = _reservationsByLineUserIdMap[lineUserId] || [];
   var results = [];
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][4] === lineUserId) {  // line_display_name column (col 5, 0-based index 4)
-      var status = data[i][10];
-      if (status === RESERVATION_STATUS.PENDING || status === RESERVATION_STATUS.CONFIRMED) {
-        results.push({
-          id: data[i][0],
-          patient_name: data[i][2],
-          phone: data[i][3],
-          line_display_name: data[i][4],
-          visit_type: data[i][5],
-          menu_type: data[i][6],
-          reserved_date: formatDateObj(data[i][7]),
-          reserved_start: formatTimeObj(data[i][8]),
-          reserved_end: formatTimeObj(data[i][9]),
-          status: status,
-          deposit_required: data[i][11],
-          deposit_amount: data[i][12],
-          deposit_status: data[i][13],
-          row_number: i + 1
-        });
-      }
+  for (var i = 0; i < all.length; i++) {
+    var s = all[i].status;
+    if (s === RESERVATION_STATUS.PENDING || s === RESERVATION_STATUS.CONFIRMED) {
+      results.push(all[i]);
     }
   }
-
   return results;
 }
 
@@ -293,25 +304,19 @@ function getReservationsByLineUserId(lineUserId) {
  * Used for returning user detection to skip name/phone input
  */
 function getLastReservationByLineUserId(lineUserId) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
-  var lastReservation = null;
-
-  for (var i = data.length - 1; i >= 1; i--) {
-    if (data[i][4] === lineUserId) {
-      var status = data[i][10];
-      if (status === RESERVATION_STATUS.CONFIRMED) {
-        var patientName = data[i][2];
-        if (patientName) {
-          return {
-            patient_name: String(patientName),
-            phone: data[i][3] ? String(data[i][3]) : ''
-          };
-        }
+  _ensureReservationCache();
+  var all = _reservationsByLineUserIdMap[lineUserId] || [];
+  for (var i = all.length - 1; i >= 0; i--) {
+    if (all[i].status === RESERVATION_STATUS.CONFIRMED) {
+      var name = all[i].patient_name;
+      if (name) {
+        return {
+          patient_name: String(name),
+          phone: all[i].phone ? String(all[i].phone) : ''
+        };
       }
     }
   }
-
   return null;
 }
 
@@ -319,21 +324,18 @@ function getLastReservationByLineUserId(lineUserId) {
  * Get reservations by phone number
  */
 function getReservationsByPatient(phoneNumber) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
+  _ensureReservationCache();
   var results = [];
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][3] === phoneNumber) {
+  for (var i = 0; i < _reservationCache.length; i++) {
+    if (_reservationCache[i].phone === phoneNumber) {
       results.push({
-        id: data[i][0],
-        reserved_date: formatDateObj(data[i][7]),
-        reserved_start: formatTimeObj(data[i][8]),
-        status: data[i][10]
+        id: _reservationCache[i].id,
+        reserved_date: _reservationCache[i].reserved_date,
+        reserved_start: _reservationCache[i].reserved_start,
+        status: _reservationCache[i].status
       });
     }
   }
-
   return results;
 }
 
@@ -416,21 +418,17 @@ function handleCancellation(reservationId, reason) {
  * Used for concurrent booking conflict detection
  */
 function getBookedSlotsForDate(date) {
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
+  _ensureReservationCache();
   var slots = {};
-
-  for (var i = 1; i < data.length; i++) {
-    var rowDate = formatDateObj(data[i][7]);
-    var status = data[i][10];
-    if (rowDate === date && (status === RESERVATION_STATUS.PENDING || status === RESERVATION_STATUS.CONFIRMED)) {
-      var startTime = formatTimeObj(data[i][8]);
-      if (startTime) {
-        slots[startTime] = (slots[startTime] || 0) + 1;
+  var dateReservations = _reservationsByDateMap[date] || [];
+  for (var i = 0; i < dateReservations.length; i++) {
+    var r = dateReservations[i];
+    if (r.status === RESERVATION_STATUS.PENDING || r.status === RESERVATION_STATUS.CONFIRMED) {
+      if (r.reserved_start) {
+        slots[r.reserved_start] = (slots[r.reserved_start] || 0) + 1;
       }
     }
   }
-
   return slots;
 }
 

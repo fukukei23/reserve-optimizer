@@ -1,7 +1,8 @@
 /**
  * KPI Service - Key Performance Indicators
  *
- * Calculates and tracks weekly KPIs for the reservation system
+ * Pure data calculation layer. No HTML/sheet rendering.
+ * Rendering is handled by Dashboard.js
  */
 
 /**
@@ -23,12 +24,10 @@ function calculateWeeklyKPIs(weekStart) {
     forfeited_deposits: 0
   };
 
-  // Scan all reservations
   for (var i = 1; i < data.length; i++) {
     var reservation = data[i];
     var reservedDate = parseDate(reservation[7]);
 
-    // Check if in target week
     if (!reservedDate || reservedDate < parseDate(weekStart) || reservedDate > weekEnd) {
       continue;
     }
@@ -39,50 +38,40 @@ function calculateWeeklyKPIs(weekStart) {
     var resaleNotified = reservation[17];
     var resaleSuccess = reservation[18];
 
-    // Count total reservations
     if (status !== RESERVATION_STATUS.PENDING) {
       stats.total_reservations++;
     }
 
-    // Count no-shows
     if (status === RESERVATION_STATUS.NO_SHOW) {
       stats.total_no_shows++;
     }
 
-    // Count same-day cancellations
     if (status === RESERVATION_STATUS.CANCELLED) {
       var cancelTime = new Date(reservation[16]);
       var reservedDateTime = new Date(reservation[7] + 'T' + reservation[8] + ':00');
-
       var hoursUntil = (reservedDateTime - cancelTime) / (1000 * 60 * 60);
-
       if (hoursUntil < 24) {
         stats.same_day_cancellations++;
       }
     }
 
-    // Count resale notifications
     if (resaleNotified === 'Y') {
       stats.resale_notifications++;
     }
 
-    // Count resale successes
     if (resaleSuccess === 'Y') {
       stats.resale_success_count++;
     }
 
-    // Track deposits
     if (depositStatus === DEPOSIT_STATUS.PAID) {
       stats.total_deposits += depositAmount;
     }
 
-    // Track forfeited deposits
     if (depositStatus === DEPOSIT_STATUS.FORFEITED) {
       stats.forfeited_deposits += depositAmount;
     }
   }
 
-  // Calculate derived metrics
   var noShowRate = stats.total_reservations > 0
     ? ((stats.total_no_shows / stats.total_reservations) * 100).toFixed(2)
     : '0.00';
@@ -126,30 +115,28 @@ function saveWeeklySummary(kpiData) {
   ];
 
   sheet.appendRow(row);
-  Logger.log('Saved weekly summary for: ' + kpiData.week_start);
+  appendLogRow('INFO', 'Saved weekly summary for: ' + kpiData.week_start);
 }
 
 /**
  * Generate and send weekly report
  */
 function generateWeeklyReport() {
-  Logger.log('Generating weekly report...');
+  appendLogRow('INFO', 'Generating weekly report...');
 
   var now = new Date();
   var weekStart = formatDate(getWeekStart(now));
   var kpiData = calculateWeeklyKPIs(weekStart);
 
-  // Save to spreadsheet
   saveWeeklySummary(kpiData);
 
-  // Send LINE report to admin
   var adminUserId = getLineAdminUserId();
   if (adminUserId) {
     var message = MessageTemplates.getWeeklySummaryMessage(kpiData);
     sendLinePush(adminUserId, message);
   }
 
-  Logger.log('Weekly report generated: ' + weekStart);
+  appendLogRow('INFO', 'Weekly report generated: ' + weekStart);
 }
 
 /**
@@ -165,18 +152,17 @@ function getKPITrend() {
     trend.push({
       week_start: data[i][0],
       no_show_rate: parseFloat(data[i][3]) || 0,
-      resale_rate: calculateResaleRateFromRow(data[i])
+      resale_rate: _calculateResaleRateFromRow(data[i])
     });
   }
 
-  // Return last 8 weeks or all if less
   return trend.slice(-8);
 }
 
 /**
  * Calculate resale rate from summary row
  */
-function calculateResaleRateFromRow(row) {
+function _calculateResaleRateFromRow(row) {
   var sameDayCancellations = row[4];
   var resaleSuccessCount = row[6];
 

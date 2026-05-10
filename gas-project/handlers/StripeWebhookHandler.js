@@ -1,7 +1,8 @@
 /**
  * Stripe Webhook Handler
  *
- * Handles Stripe payment events and updates reservation status
+ * Handles Stripe payment events and updates reservation status.
+ * All Stripe API calls are delegated to StripeService.js via _callStripeApi.
  */
 
 /**
@@ -11,7 +12,7 @@ function handleStripeWebhook(event) {
   var eventType = event.type;
   var eventData = event.data.object;
 
-  Logger.log('Stripe webhook received: ' + eventType);
+  appendLogRow('INFO', 'Stripe webhook received: ' + eventType);
 
   switch (eventType) {
     case 'payment_intent.succeeded':
@@ -23,169 +24,145 @@ function handleStripeWebhook(event) {
     case 'charge.refunded':
       handleRefund(eventData);
       break;
+    case 'checkout.session.completed':
+      handleCheckoutSessionCompleted(eventData);
+      break;
     default:
-      Logger.log('Unhandled Stripe event type: ' + eventType);
+      appendLogRow('WARN', 'Unhandled Stripe event type: ' + eventType);
   }
 }
 
 /**
  * Handle payment succeeded
+ * @param {object} paymentIntent - Stripe payment intent object
  */
 function handlePaymentSuccess(paymentIntent) {
-  var reservationId = paymentIntent.metadata.reservation_id;
+  var reservationId = paymentIntent.metadata ? paymentIntent.metadata.reservation_id : null;
 
   if (!reservationId) {
-    Logger.log('No reservation_id in payment intent metadata');
+    appendLogRow('WARN', '[handlePaymentSuccess] No reservation_id in payment intent metadata');
     return;
   }
 
-  Logger.log('Processing payment success for reservation: ' + reservationId);
-
-  // Get reservation
   var reservation = getReservationById(reservationId);
-
   if (!reservation) {
-    Logger.log('Reservation not found: ' + reservationId);
+    appendLogRow('ERROR', '[handlePaymentSuccess] Reservation not found: ' + reservationId);
     return;
   }
 
-  // Update deposit status and reservation status
   updateReservation(reservationId, {
     deposit_status: DEPOSIT_STATUS.PAID,
     status: RESERVATION_STATUS.CONFIRMED
   });
 
-  // Send confirmation message to user
   var confirmationMessage = MessageTemplates.getConfirmationMessage(reservation);
   sendLinePush(reservation.line_display_name, confirmationMessage);
 
-  // Send notification to admin
-  var adminMessage = '新しい予約が確定しました。\n\n' +
-    'ID: ' + reservationId + '\n' +
-    '患者: ' + reservation.patient_name + '\n' +
-    '電話: ' + reservation.phone + '\n' +
-    '日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
+  _notifyAdmin('新しい予約が確定しました', reservation);
 
-  var adminUserId = getLineAdminUserId();
-  if (adminUserId) {
-    sendLinePush(adminUserId, adminMessage);
-  }
-
-  Logger.log('Reservation confirmed: ' + reservationId);
+  appendLogRow('INFO', '[handlePaymentSuccess] Reservation confirmed: ' + reservationId);
 }
 
 /**
  * Handle payment failed
+ * @param {object} paymentIntent - Stripe payment intent object
  */
 function handlePaymentFailure(paymentIntent) {
-  var reservationId = paymentIntent.metadata.reservation_id;
+  var reservationId = paymentIntent.metadata ? paymentIntent.metadata.reservation_id : null;
   var errorMessage = paymentIntent.last_payment_error ? paymentIntent.last_payment_error.message : 'Unknown error';
 
   if (!reservationId) {
-    Logger.log('No reservation_id in payment intent metadata');
+    appendLogRow('WARN', '[handlePaymentFailure] No reservation_id in payment intent metadata');
     return;
   }
 
-  Logger.log('Processing payment failure for reservation: ' + reservationId);
-
-  // Get reservation
   var reservation = getReservationById(reservationId);
-
   if (!reservation) {
-    Logger.log('Reservation not found: ' + reservationId);
+    appendLogRow('ERROR', '[handlePaymentFailure] Reservation not found: ' + reservationId);
     return;
   }
 
-  // Update deposit status
   updateReservation(reservationId, {
     deposit_status: DEPOSIT_STATUS.UNPAID
   });
 
-  // Send failure message to user
   var failureMessage = MessageTemplates.getPaymentFailedMessage(errorMessage);
   sendLinePush(reservation.line_display_name, failureMessage);
 
-  Logger.log('Payment failed for reservation: ' + reservationId);
+  appendLogRow('INFO', '[handlePaymentFailure] Payment failed for reservation: ' + reservationId);
 }
 
 /**
- * Handle refund
+ * Handle refund — uses cached reservation lookup instead of direct sheet scan
+ * @param {object} charge - Stripe charge object
  */
 function handleRefund(charge) {
   var paymentIntentId = charge.payment_intent;
 
   if (!paymentIntentId) {
-    Logger.log('No payment_intent_id in charge');
+    appendLogRow('WARN', '[handleRefund] No payment_intent_id in charge');
     return;
   }
 
-  Logger.log('Processing refund for payment intent: ' + paymentIntentId);
+  appendLogRow('INFO', '[handleRefund] Processing refund for payment intent: ' + paymentIntentId);
 
-  // Find reservation with this payment intent
-  var sheet = getReservationsSheet();
-  var data = sheet.getDataRange().getValues();
-
-  for (var i = 1; i < data.length; i++) {
-    var reservation = data[i];
-    var reservationId = reservation[0];
-    var depositStatus = reservation[13];
-
-    // For simplicity, assume refunded reservations are marked manually or via payment intent tracking
-    if (depositStatus === DEPOSIT_STATUS.PAID && reservation[10] === RESERVATION_STATUS.CANCELLED) {
-      updateReservation(reservationId, {
+  // Search cache for reservation with matching payment intent
+  _ensureReservationCache();
+  for (var i = 0; i < _reservationCache.length; i++) {
+    var r = _reservationCache[i];
+    if (r.deposit_status === DEPOSIT_STATUS.PAID && r.status === RESERVATION_STATUS.CANCELLED) {
+      updateReservation(r.id, {
         deposit_status: DEPOSIT_STATUS.REFUNDED
       });
 
-      var lineDisplayName = reservation[4];
+      var refundMessage = MessageTemplates.getRefundConfirmationMessage(r.id);
+      sendLinePush(r.line_display_name, refundMessage);
 
-      var refundMessage = MessageTemplates.getRefundConfirmationMessage(reservationId);
-      sendLinePush(lineDisplayName, refundMessage);
-
-      Logger.log('Refund processed for reservation: ' + reservationId);
-      break;
+      appendLogRow('INFO', '[handleRefund] Refund processed for reservation: ' + r.id);
+      return;
     }
   }
+
+  appendLogRow('INFO', '[handleRefund] No matching paid+cancelled reservation found');
 }
 
 /**
  * Handle checkout.session.completed event
- * This is the primary event for Stripe Checkout Sessions
+ * @param {object} session - Stripe checkout session object
  */
 function handleCheckoutSessionCompleted(session) {
-  Logger.log('[Stripe] Checkout session completed: ' + session.id);
-  try { appendLogRow('STRIPE', 'handleCheckoutSessionCompleted: session=' + session.id); } catch(e) {}
-
   var reservationId = session.metadata ? session.metadata.reservation_id : null;
+
   if (!reservationId) {
-    Logger.log('[Stripe] No reservation_id in checkout session metadata');
-    try { appendLogRow('STRIPE_ERROR', 'No reservation_id in session metadata: keys=' + (session.metadata ? Object.keys(session.metadata).join(',') : 'NO_METADATA')); } catch(e) {}
+    appendLogRow('WARN', '[handleCheckoutSessionCompleted] No reservation_id in session metadata');
     return;
   }
-
-  Logger.log('[Stripe] Processing checkout completion for reservation: ' + reservationId);
-  try { appendLogRow('STRIPE', 'Reservation ID: ' + reservationId); } catch(e) {}
 
   var reservation = getReservationById(reservationId);
   if (!reservation) {
-    Logger.log('[Stripe] Reservation not found: ' + reservationId);
-    try { appendLogRow('STRIPE_ERROR', 'Reservation not found: ' + reservationId); } catch(e) {}
+    appendLogRow('ERROR', '[handleCheckoutSessionCompleted] Reservation not found: ' + reservationId);
     return;
   }
 
-  // Update deposit status and reservation status
   updateReservation(reservationId, {
     deposit_status: DEPOSIT_STATUS.PAID,
     status: RESERVATION_STATUS.CONFIRMED
   });
-  try { appendLogRow('STRIPE', 'Updated reservation to PAID/CONFIRMED: ' + reservationId); } catch(e) {}
 
-  // Send confirmation message to user
   var message = MessageTemplates.getConfirmationMessage(reservation);
   sendLinePush(reservation.line_display_name, message);
 
-  // Send notification to admin
-  var adminMessage = '新しい予約が確定しました。\n\n' +
-    'ID: ' + reservationId + '\n' +
+  _notifyAdmin('新しい予約が確定しました', reservation);
+
+  appendLogRow('INFO', '[handleCheckoutSessionCompleted] Reservation confirmed via checkout: ' + reservationId);
+}
+
+/**
+ * Send admin notification for confirmed reservation
+ */
+function _notifyAdmin(subject, reservation) {
+  var adminMessage = subject + '\n\n' +
+    'ID: ' + reservation.id + '\n' +
     '患者: ' + reservation.patient_name + '\n' +
     '電話: ' + reservation.phone + '\n' +
     '日時: ' + reservation.reserved_date + ' ' + reservation.reserved_start;
@@ -194,6 +171,4 @@ function handleCheckoutSessionCompleted(session) {
   if (adminUserId) {
     sendLinePush(adminUserId, adminMessage);
   }
-
-  Logger.log('[Stripe] Reservation confirmed via checkout: ' + reservationId);
 }
