@@ -176,6 +176,10 @@ function handleSameDayCancellation(reservationId, reason) {
  * Check waitlist responses for resale
  */
 function checkWaitlistResponses() {
+  // TODO: Implement waitlist response verification logic.
+  // Current behavior: logs reservations that were notified but not yet claimed.
+  // Future: check if notified user has created a reservation within timeout,
+  // and if not, notify the next waitlist candidate.
   _ensureReservationCache();
   for (var i = 0; i < _reservationCache.length; i++) {
     var r = _reservationCache[i];

@@ -260,7 +260,7 @@ function _handlePaymentSuccessMinimal(payload) {
   });
 
   sendLinePush(reservation.line_display_name, MessageTemplates.getConfirmationMessage(reservation));
-  _notifyAdmin('新しい予約が確定しました', reservation);
+  notifyReservationAdmin('新しい予約が確定しました', reservation);
 }
 
 /**

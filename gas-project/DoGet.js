@@ -15,17 +15,21 @@ var _GET_ROUTES = {
   runSetup: runSetup,
   healthCheck: healthCheck,
   getSystemStatus: getSystemStatus,
-  testConfig: testConfig,
-  testCancelFlow: testCancelFlow,
-  testChangeFlow: testChangeFlow,
-  testLineReply: testLineReply,
-  debugDoPost: debugDoPost,
-  debugStripeLink: debugStripeLink,
   setupRichMenuFromProperty: setupRichMenuFromProperty,
   storeRichMenuImage: _storeRichMenuImageChunk,
   clearRichMenuImage: _clearRichMenuImageProperty,
   initializeDefaultProperties: initializeDefaultProperties,
   renameResources: renameResources
+};
+
+// Debug/test routes — only available in non-production environments
+var _DEBUG_ROUTES = {
+  testConfig: testConfig,
+  testCancelFlow: testCancelFlow,
+  testChangeFlow: testChangeFlow,
+  testLineReply: testLineReply,
+  debugDoPost: debugDoPost,
+  debugStripeLink: debugStripeLink
 };
 
 function doGet(e) {
@@ -51,7 +55,17 @@ function doGet(e) {
   // === Mode 2: gas-autopilot (requires Bearer auth) ===
   var fnName = (e && e.parameter && e.parameter.fn) || '';
 
-  if (fnName && fnName in _GET_ROUTES) {
+  if (fnName && (fnName in _GET_ROUTES || fnName in _DEBUG_ROUTES)) {
+    // Block debug routes in production
+    if (fnName in _DEBUG_ROUTES) {
+      var isProduction = PropertiesService.getScriptProperties().getProperty('ENV') === 'production';
+      if (isProduction) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ ok: false, error: 'Debug routes not available in production' })
+        ).setMimeType(ContentService.MimeType.JSON).setStatusCode(403);
+      }
+    }
+    var routeTable = fnName in _GET_ROUTES ? _GET_ROUTES : _DEBUG_ROUTES;
     // Verify Bearer token from Authorization header
     var authHeader = '';
     if (e && e.headers && e.headers['Authorization']) {
@@ -64,7 +78,7 @@ function doGet(e) {
       ).setMimeType(ContentService.MimeType.JSON).setStatusCode(401);
     }
     try {
-      var result = _GET_ROUTES[fnName](e.parameter);
+      var result = routeTable[fnName](e.parameter);
       return ContentService.createTextOutput(
         JSON.stringify({ ok: true, function: fnName, result: result || null })
       ).setMimeType(ContentService.MimeType.JSON);

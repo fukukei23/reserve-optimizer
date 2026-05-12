@@ -168,7 +168,7 @@ function handleAwaitingChangeField(text, replyToken, userId) {
 
   if (text === '施術') {
     setUserState(userId, USER_STATES.AWAITING_CHANGE_TREATMENT, tempData);
-    var menuOptions = ['初診（30分）', '再診（30分）', '再診（60分）'];
+    var menuOptions = Object.keys(TREATMENT_DURATIONS);
     sendQuickReply(replyToken, '施術の種類を選択してください。', menuOptions.map(function(opt) {
       return { label: opt, text: opt };
     }).concat([{ label: 'やめる', text: 'やめる' }]));
@@ -297,7 +297,7 @@ function handleAwaitingChangeTime(text, replyToken, userId) {
 function handleAwaitingChangeTreatment(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
 
-  var validOptions = ['初診（30分）', '再診（30分）', '再診（60分）'];
+  var validOptions = Object.keys(TREATMENT_DURATIONS);
   var found = false;
   for (var i = 0; i < validOptions.length; i++) {
     if (text === validOptions[i]) { found = true; break; }

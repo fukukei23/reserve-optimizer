@@ -58,7 +58,7 @@ function handlePaymentSuccess(paymentIntent) {
   var confirmationMessage = MessageTemplates.getConfirmationMessage(reservation);
   sendLinePush(reservation.line_display_name, confirmationMessage);
 
-  _notifyAdmin('新しい予約が確定しました', reservation);
+  notifyReservationAdmin('新しい予約が確定しました', reservation);
 
   appendLogRow('INFO', '[handlePaymentSuccess] Reservation confirmed: ' + reservationId);
 }
@@ -155,7 +155,7 @@ function handleCheckoutSessionCompleted(session) {
   var message = MessageTemplates.getConfirmationMessage(reservation);
   sendLinePush(reservation.line_display_name, message);
 
-  _notifyAdmin('新しい予約が確定しました', reservation);
+  notifyReservationAdmin('新しい予約が確定しました', reservation);
 
   appendLogRow('INFO', '[handleCheckoutSessionCompleted] Reservation confirmed via checkout: ' + reservationId);
 }
@@ -163,7 +163,7 @@ function handleCheckoutSessionCompleted(session) {
 /**
  * Send admin notification for confirmed reservation
  */
-function _notifyAdmin(subject, reservation) {
+function notifyReservationAdmin(subject, reservation) {
   var adminMessage = subject + '\n\n' +
     'ID: ' + reservation.id + '\n' +
     '患者: ' + reservation.patient_name + '\n' +
