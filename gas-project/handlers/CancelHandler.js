@@ -33,29 +33,10 @@ function canCancelReservation(reservation) {
 }
 
 /**
- * Notify waitlist candidates about a vacancy (best-effort, never blocks cancellation)
+ * Notify waitlist candidates about a vacancy (delegates to WaitlistService)
  */
 function _notifyWaitlistVacancy(reservation) {
-  try {
-    var candidates = findWaitlistCandidate(
-      reservation.reserved_date + 'T' + reservation.reserved_start
-    );
-    for (var i = 0; i < candidates.length; i++) {
-      var vacancyMsg = MessageTemplates.getResaleNotificationMessage(
-        reservation.reserved_date,
-        reservation.reserved_start + '-' + reservation.reserved_end,
-        reservation.menu_type
-      );
-      if (vacancyMsg.quickReplies) {
-        sendLinePushQuickReply(candidates[i].line_display_name, vacancyMsg.text, vacancyMsg.quickReplies);
-      } else {
-        sendLinePush(candidates[i].line_display_name, vacancyMsg.text || vacancyMsg);
-      }
-      appendLogRow('INFO', 'Sent vacancy notification to waitlist: ' + candidates[i].line_display_name);
-    }
-  } catch (e) {
-    appendLogRow('ERROR', 'Waitlist notification error: ' + e.message);
-  }
+  notifyWaitlistCandidates(reservation);
 }
 
 /**

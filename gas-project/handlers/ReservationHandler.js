@@ -22,20 +22,8 @@ function startReservationFlow(replyToken, userId) {
 
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
-  var menuOptions;
+  var menuOptions = _buildTreatmentMenuOptions(isReturning);
   var totalSteps = isReturning ? 3 : 4; // returning: 施術→日付→時間(3), new: 施術→日付→名前→電話(4)
-  if (isReturning) {
-    menuOptions = [
-      { label: '再診（30分）', text: '再診（30分）' },
-      { label: '再診（60分）', text: '再診（60分）' },
-      { label: 'やめる', text: 'やめる' }
-    ];
-  } else {
-    menuOptions = [
-      { label: '初診（30分）', text: '初診（30分）' },
-      { label: 'やめる', text: 'やめる' }
-    ];
-  }
   tempData.total_steps = totalSteps;
   sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/' + totalSteps + '] 施術の種類を選択してください。', menuOptions);
 }
@@ -226,9 +214,7 @@ function handleAwaitingTime(text, replyToken, userId) {
 function handleAwaitingTreatment(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
   var isReturning = tempData.is_returning;
-  var validOptions = isReturning
-    ? ['再診（30分）', '再診（60分）']
-    : ['初診（30分）'];
+  var validOptions = _getValidTreatmentOptions(isReturning);
   var found = false;
   for (var i = 0; i < validOptions.length; i++) {
     if (text === validOptions[i]) { found = true; break; }
@@ -239,7 +225,7 @@ function handleAwaitingTreatment(text, replyToken, userId) {
       return { label: opt, text: opt };
     });
     menuOptions.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '[Step 1/3] 施術の種類を選択してください。', menuOptions);
+    sendQuickReply(replyToken, '[Step 1/' + (tempData.total_steps || 3) + '] 施術の種類を選択してください。', menuOptions);
     return;
   }
   tempData.menu_type = text;
@@ -458,4 +444,33 @@ function _findNearestAvailableSlots(date, requestedTime, maxSlots) {
 
   available.sort(function(a, b) { return a.distance - b.distance; });
   return available.slice(0, maxSlots).map(function(s) { return s.slot; });
+}
+
+/**
+ * Build treatment QuickReply menu options from TREATMENT_DURATIONS
+ */
+function _buildTreatmentMenuOptions(isReturning) {
+  var prefix = isReturning ? '再診' : '初診';
+  var options = [];
+  for (var key in TREATMENT_DURATIONS) {
+    if (key.indexOf(prefix) === 0) {
+      options.push({ label: key, text: key });
+    }
+  }
+  options.push({ label: 'やめる', text: 'やめる' });
+  return options;
+}
+
+/**
+ * Get valid treatment option strings from TREATMENT_DURATIONS
+ */
+function _getValidTreatmentOptions(isReturning) {
+  var prefix = isReturning ? '再診' : '初診';
+  var options = [];
+  for (var key in TREATMENT_DURATIONS) {
+    if (key.indexOf(prefix) === 0) {
+      options.push(key);
+    }
+  }
+  return options;
 }

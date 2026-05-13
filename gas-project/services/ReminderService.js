@@ -131,45 +131,19 @@ function handleSameDayCancellation(reservationId, reason) {
   // Cancel reservation
   handleCancellation(reservationId, reason);
 
-  // Find waitlist candidates
-  var appointmentDateTime = reservation.reserved_date + ' ' + reservation.reserved_start;
-  var candidates = findWaitlistCandidate(appointmentDateTime);
+  // Notify waitlist candidates (delegates to WaitlistService)
+  notifyWaitlistCandidates(reservation);
 
-  if (candidates.length > 0) {
-    // Notify waitlist candidates
-    for (var i = 0; i < candidates.length; i++) {
-      var candidate = candidates[i];
-      var message = MessageTemplates.getResaleNotificationMessage(
-        reservation.reserved_date,
-        reservation.reserved_start,
-        reservation.menu_type
-      );
+  // Mark resale notified
+  resellVacancy(reservationId, '');
 
-      sendLinePush(candidate.line_display_name, message);
+  // Schedule check for responses
+  ScriptApp.newTrigger('checkWaitlistResponses')
+    .timeBased()
+    .after(10 * 60 * 1000)
+    .create();
 
-      // Update last notified time
-      var sheet = getWaitlistSheet();
-      var waitlistData = sheet.getDataRange().getValues();
-
-      for (var j = 1; j < waitlistData.length; j++) {
-        if (waitlistData[j][0] == candidate.id) {
-          sheet.getRange(j + 1, 6).setValue(new Date());
-          break;
-        }
-      }
-    }
-
-    // Mark resale notified
-    resellVacancy(reservationId, candidates[0].id);
-
-    // Schedule check for responses
-    ScriptApp.newTrigger('checkWaitlistResponses')
-      .timeBased()
-      .after(10 * 60 * 1000)
-      .create();
-
-    appendLogRow('INFO', 'Scheduled waitlist response check for: ' + reservationId);
-  }
+  appendLogRow('INFO', 'Scheduled waitlist response check for: ' + reservationId);
 }
 
 /**
