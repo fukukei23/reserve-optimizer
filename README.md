@@ -4,6 +4,16 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AIによる予約・決済・AIチャットの統合システム。
 
+[![JavaScript](https://img.shields.io/badge/lang-JavaScript%20%2B%20TypeScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Cloudflare Workers](https://img.shields.io/badge/runtime-Cloudflare%20Workers-orange)](https://workers.cloudflare.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+---
+
+## なぜ作ったか
+
+整骨院の予約管理は電話・紙ベースが多く、スタッフの負担が大きい。LINE Botで24時間自動受付・Stripe決済・AIチャット対応を実現し、予約業務をゼロにするために開発した。
+
 ---
 
 ## アーキテクチャ
@@ -233,5 +243,27 @@ echo -n "<値>" | npx wrangler secret put LINE_CHANNEL_SECRET
 
 ## 詳細ドキュメント
 
-- **仕様書・設計判断**: [obsidian-ssot/01_DECISIONS/reserve-optimizer/](https://github.com/fukukei23/obsidian-ssot/tree/main/01_DECISIONS/reserve-optimizer)
-- **開発ガイドライン**: [DEVELOPMENT.md](./DEVELOPMENT.md)
+| ドキュメント | 内容 |
+|---|---|
+| [開発ガイドライン](./DEVELOPMENT.md) | コーディング規約・テスト方針 |
+| [仕様書・設計判断](https://github.com/fukukei23/obsidian-ssot/tree/main/01_DECISIONS/reserve-optimizer) | 設計判断の変遷（SSOT） |
+
+---
+
+## テスト
+
+```bash
+# GASテスト（clasp経由）
+cd gas-project
+npm test
+
+# Workerテスト
+cd worker
+npm test
+```
+
+---
+
+## ライセンス
+
+MIT License — 詳細は [LICENSE](LICENSE) を参照。
