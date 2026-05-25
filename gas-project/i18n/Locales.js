@@ -399,5 +399,25 @@ var MESSAGES = {
     ja: 'リマインダー時刻を変更する場合は下から選択してください。',
     en: 'Select a new reminder time below.'
   },
-  'router.back_to_menu_label': { ja: 'メニューに戻る', en: 'Back to menu' }
+  'router.back_to_menu_label': { ja: 'メニューに戻る', en: 'Back to menu' },
+
+  // --- CRM Follow-up ---
+  'crm.followup.title': {
+    ja: '本日はご来院いただき、ありがとうございました！',
+    en: 'Thank you for visiting us today!'
+  },
+  'crm.followup.next_booking': {
+    ja: '次回のご予約は「予約する」からいつでもどうぞ。',
+    en: 'Book your next visit anytime from "Book".'
+  },
+  'crm.followup.feedback': {
+    ja: 'ご要望・ご意見がございましたら、お気軽にお聞かせください。',
+    en: 'We welcome any feedback or requests.'
+  },
+
+  // --- CRM Tags ---
+  'crm.tag.new': { ja: '新規', en: 'new' },
+  'crm.tag.regular': { ja: '常連', en: 'regular' },
+  'crm.tag.vip': { ja: 'VIP', en: 'VIP' },
+  'crm.tag.no_show_warn': { ja: '要注意', en: 'no-show warning' }
 };

@@ -98,6 +98,13 @@ function checkForNoShows() {
       appendLogRow('INFO', 'No-show detected: ' + r.id);
       markNoShow(r.id);
 
+      // CRM: increment no-show count
+      if (r.phone) {
+        try { incrementNoShowCount(r.phone); } catch (crmErr) {
+          appendLogRow('WARN', 'CRM no-show update failed: ' + crmErr.message);
+        }
+      }
+
       if (r.deposit_status === DEPOSIT_STATUS.PAID) {
         var noShowDepositAmount = getNoShowDepositAmount();
         var message = MessageTemplates.getNoShowPenaltyMessage(noShowDepositAmount);
@@ -191,4 +198,12 @@ function cleanupWaitlist() {
   }
 
   appendLogRow('INFO', 'Cleaned up ' + rowsToDelete.length + ' old waitlist entries');
+}
+
+
+/**
+ * Run all periodic CRM tasks (called from trigger)
+ */
+function runCrmPeriodicTasks() {
+  processFollowups(60);
 }

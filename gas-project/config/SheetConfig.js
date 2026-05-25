@@ -9,6 +9,7 @@ var SHEET_NAMES = {
   RESERVATIONS: 'reservations',
   WAITLIST: 'waitlist',
   WEEKLY_SUMMARY: 'weekly_summary',
+  CUSTOMERS: 'customers',
   LOG: 'ログ'
 };
 
@@ -199,4 +200,29 @@ var WAITLIST_DASHBOARD_LAYOUT = {
   ENTRIES_DATA_START_ROW: 8,
   MAX_ENTRIES: 20,
   COL_WIDTHS: [150, 150, 150, 100, 150]
+};
+
+// Customers sheet column indices (1-based)
+var CUSTOMERS_COLUMNS = {
+  CUSTOMER_ID: 1,    // phone-based
+  PHONE: 2,
+  LINE_USER_ID: 3,
+  NAME: 4,
+  VISIT_COUNT: 5,
+  NO_SHOW_COUNT: 6,
+  LAST_VISIT: 7,
+  TAGS: 8,           // comma-separated
+  NOTES: 9
+};
+
+var CUSTOMERS_HEADERS = [
+  'customer_id', 'phone', 'line_user_id', 'name',
+  'visit_count', 'no_show_count', 'last_visit', 'tags', 'notes'
+];
+
+// CRM auto-tag thresholds
+var CRM_TAG_THRESHOLDS = {
+  REGULAR: 3,    // 3+ visits
+  VIP: 10,       // 10+ visits
+  NO_SHOW_WARN: 2  // 2+ no-shows
 };

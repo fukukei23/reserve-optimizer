@@ -262,6 +262,15 @@ function _handlePaymentSuccessMinimal(payload) {
 
   sendLinePush(reservation.line_display_name, MessageTemplates.getConfirmationMessage(reservation));
   notifyReservationAdmin('新しい予約が確定しました', reservation);
+
+  // CRM: fire confirmed webhook
+  try {
+    _fireCrmWebhook('reservation.confirmed', {
+      reservation_id: reservationId, phone: reservation.phone
+    });
+  } catch (crmErr) {
+    appendLogRow('WARN', 'CRM confirmed hook error: ' + crmErr.message);
+  }
 }
 
 /**
@@ -413,6 +422,16 @@ function _handleCreateReservationApi(data) {
     // Post-creation hooks
     try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
       appendLogRow('WARN', 'Web API post-create hook error: ' + hookErr.message);
+    }
+
+    // CRM: get or create customer, fire webhook
+    try {
+      getOrCreateCustomer(data.phone, data.name, 'WEB');
+      _fireCrmWebhook('reservation.created', {
+        reservation_id: result.id, phone: data.phone, date: data.date, time: normalized
+      });
+    } catch (crmErr) {
+      appendLogRow('WARN', 'CRM hook error: ' + crmErr.message);
     }
 
     appendLogRow('INFO', 'Web reservation created: ' + result.id);
