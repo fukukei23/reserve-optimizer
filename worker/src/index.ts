@@ -13,11 +13,31 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // ヘルスチェック
+    // ヘルスチェック（GAS到達性確認付き）
     if (url.pathname === "/health") {
-      return new Response(JSON.stringify({ status: "ok" }), {
-        headers: { "Content-Type": "application/json" },
-      });
+      let gasReachable = false;
+      let gasLatencyMs = -1;
+      try {
+        const gasStart = Date.now();
+        const gasResp = await fetch(env.GAS_WEBAPP_URL, {
+          method: "GET",
+          redirect: "manual",
+          signal: AbortSignal.timeout(5000),
+        });
+        gasLatencyMs = Date.now() - gasStart;
+        gasReachable = gasResp.status === 200 || gasResp.status === 302;
+      } catch {
+        gasReachable = false;
+      }
+      return new Response(
+        JSON.stringify({
+          status: gasReachable ? "ok" : "degraded",
+          gas_reachable: gasReachable,
+          gas_latency_ms: gasLatencyMs,
+          timestamp: new Date().toISOString(),
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // LINE webhook

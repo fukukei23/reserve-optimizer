@@ -255,6 +255,9 @@ function handleMessage(message, replyToken, userId) {
     case USER_STATES.AWAITING_PAYMENT:
       handleAwaitingPayment(text, replyToken, userId);
       break;
+    case USER_STATES.AWAITING_STAFF:
+      handleAwaitingStaff(text, replyToken, userId);
+      break;
     case USER_STATES.AWAITING_CANCEL_SELECT:
       handleAwaitingCancelSelect(text, replyToken, userId);
       break;
@@ -310,11 +313,7 @@ function handleCommand(command, replyToken, userId) {
       break;
     case '/status':
       if (isAdmin) {
-        var validation = validateRequiredProperties();
-        var statusMsg = '【System Status】\n' +
-          'Config: ' + (validation.valid ? 'OK' : 'MISSING: ' + validation.missing.join(', ')) + '\n' +
-          'Time: ' + new Date().toISOString();
-        sendLineReply(replyToken, statusMsg);
+        sendLineReply(replyToken, formatHealthReport());
       } else {
         sendLineReply(replyToken, 'このコマンドは管理者のみ利用可能です。');
       }

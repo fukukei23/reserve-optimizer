@@ -102,3 +102,80 @@ function _assert(name, actual, expected) {
     message: passed ? 'OK' : 'Expected: ' + JSON.stringify(expected) + ', Got: ' + JSON.stringify(actual)
   };
 }
+
+/**
+ * Assert not equal
+ */
+function _assertNotEqual(name, actual, unexpected) {
+  var passed = actual !== unexpected;
+  return {
+    name: name,
+    passed: passed,
+    message: passed ? 'OK' : 'Expected NOT: ' + JSON.stringify(unexpected) + ', Got: ' + JSON.stringify(actual)
+  };
+}
+
+/**
+ * Assert truthy
+ */
+function _assertTrue(name, actual) {
+  var passed = !!actual;
+  return {
+    name: name,
+    passed: passed,
+    message: passed ? 'OK' : 'Expected truthy, Got: ' + JSON.stringify(actual)
+  };
+}
+
+/**
+ * Assert falsy
+ */
+function _assertFalse(name, actual) {
+  var passed = !actual;
+  return {
+    name: name,
+    passed: passed,
+    message: passed ? 'OK' : 'Expected falsy, Got: ' + JSON.stringify(actual)
+  };
+}
+
+/**
+ * Assert throws — verifies that fn() throws an exception
+ * @param {string} name - Test name
+ * @param {Function} fn - Function to execute
+ * @returns {{name: string, passed: boolean, message: string}}
+ */
+function _assertThrows(name, fn) {
+  try {
+    fn();
+    return { name: name, passed: false, message: 'Expected exception but none was thrown' };
+  } catch (e) {
+    return { name: name, passed: true, message: 'OK (threw: ' + e.message + ')' };
+  }
+}
+
+/**
+ * Assert deep equal — compares arrays/objects by JSON serialization
+ */
+function _assertDeepEqual(name, actual, expected) {
+  var actualJson = JSON.stringify(actual);
+  var expectedJson = JSON.stringify(expected);
+  var passed = actualJson === expectedJson;
+  return {
+    name: name,
+    passed: passed,
+    message: passed ? 'OK' : 'Expected: ' + expectedJson + ', Got: ' + actualJson
+  };
+}
+
+/**
+ * Assert instance of
+ */
+function _assertInstanceOf(name, actual, expectedType) {
+  var passed = typeof actual === expectedType;
+  return {
+    name: name,
+    passed: passed,
+    message: passed ? 'OK' : 'Expected type: ' + expectedType + ', Got: ' + typeof actual + ' (' + JSON.stringify(actual) + ')'
+  };
+}

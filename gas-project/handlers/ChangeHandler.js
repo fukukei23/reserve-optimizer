@@ -32,29 +32,8 @@ function handleChangeFlow(replyToken, userId) {
   }
 
   // Multiple reservations — show paginated list (max 5 at a time)
-  var allIds = reservations.map(function(r) { return r.id; });
-  var page = 0;
-  var pageSize = 5;
-  var pageIds = allIds.slice(0, pageSize);
-  var pageReservations = reservations.slice(0, pageSize);
-
-  setUserState(userId, USER_STATES.AWAITING_CHANGE_SELECT, {
-    reservation_ids: allIds,
-    page: page,
-    page_size: pageSize
-  });
-
-  var msg = MessageTemplates.getChangeListMessage(pageReservations, page, Math.ceil(allIds.length / pageSize));
-  var items = [];
-  for (var i = 0; i < pageReservations.length; i++) {
-    items.push({ label: String(i + 1), text: String(i + 1) });
-  }
-  if (allIds.length > pageSize) {
-    var totalP = Math.ceil(allIds.length / pageSize);
-    items.push({ label: '次の5件 ▶ (2/' + totalP + ')', text: '次の5件' });
-  }
-  items.push({ label: 'やめる', text: 'やめる' });
-  sendQuickReply(replyToken, msg, items);
+  _showPaginatedReservationList(replyToken, userId, reservations,
+    MessageTemplates.getChangeListMessage, USER_STATES.AWAITING_CHANGE_SELECT);
 }
 
 /**
@@ -62,49 +41,24 @@ function handleChangeFlow(replyToken, userId) {
  */
 function handleAwaitingChangeSelect(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
-  var reservationIds = tempData.reservation_ids || [];
-  var page = tempData.page || 0;
-  var pageSize = tempData.page_size || 5;
+  var result = _handleReservationSelection(text, replyToken, userId, tempData,
+    MessageTemplates.getChangeListMessage, USER_STATES.AWAITING_CHANGE_SELECT);
 
-  if (text === 'やめる') {
-    clearUserState(userId);
-    sendLineReply(replyToken, '変更を中止しました。');
-    return;
-  }
-
-  // Handle pagination
-  if (handlePaginationStep(text, replyToken, userId, tempData, reservationIds, page, pageSize,
-      MessageTemplates.getChangeListMessage, USER_STATES.AWAITING_CHANGE_SELECT)) {
-    return;
-  }
-
-  var selection = parseInt(text);
-  var currentStartIdx = page * pageSize;
-
-  if (isNaN(selection) || selection < 1 || selection > pageSize || (currentStartIdx + selection - 1) >= reservationIds.length) {
-    var errorItems = [];
-    var maxOnPage = Math.min(pageSize, reservationIds.length - currentStartIdx);
-    for (var ei = 0; ei < maxOnPage; ei++) {
-      errorItems.push({ label: String(ei + 1), text: String(ei + 1) });
+  if (result.handled) {
+    if (result.action === 'cancel') {
+      clearUserState(userId);
+      sendLineReply(replyToken, '変更を中止しました。');
+    } else if (result.action === 'not_found') {
+      clearUserState(userId);
+      sendLineReply(replyToken, '予約が見つかりませんでした。最初からやり直してください。');
     }
-    errorItems.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '番号を選択してください（1〜' + maxOnPage + '）。', errorItems);
-    return;
-  }
-
-  var selectedId = reservationIds[currentStartIdx + selection - 1];
-  var reservation = getReservationById(selectedId);
-
-  if (!reservation) {
-    clearUserState(userId);
-    sendLineReply(replyToken, '予約が見つかりませんでした。最初からやり直してください。');
     return;
   }
 
   setUserState(userId, USER_STATES.AWAITING_CHANGE_FIELD, {
-    selected_reservation_id: selectedId
+    selected_reservation_id: result.selectedId
   });
-  sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(reservation), [
+  sendQuickReply(replyToken, MessageTemplates.getChangeFieldSelectMessage(result.reservation), [
     { label: '📅 日付', text: '日付' },
     { label: '🕐 時間', text: '時間' },
     { label: '💆 施術', text: '施術' },

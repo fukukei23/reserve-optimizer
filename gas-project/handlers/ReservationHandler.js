@@ -231,6 +231,52 @@ function handleAwaitingTreatment(text, replyToken, userId) {
   tempData.menu_type = text;
   tempData.visit_type = text.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
 
+  // Check if staff assignment is available for this treatment type
+  var treatmentPrefix = text.includes('初診') ? '初診' : '再診';
+  var staffOptions = buildStaffSelectionOptions(treatmentPrefix);
+  // staffOptions always includes '指名しない' and 'やめる' (at least 3 items)
+  if (staffOptions.length > 2) {
+    setUserState(userId, USER_STATES.AWAITING_STAFF, tempData);
+    var staffStep = isReturning ? 2 : 2;
+    sendQuickReply(replyToken, '[Step ' + staffStep + '/' + tempData.total_steps + '] スタッフを選択してください。\n指名がない場合は「指名しない」を選んでください。', staffOptions);
+  } else {
+    // No staff data — skip staff selection, go directly to date
+    setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
+    sendDatePromptWithQuickReply(replyToken, userId);
+  }
+}
+
+/**
+ * Handle awaiting staff selection
+ */
+function handleAwaitingStaff(text, replyToken, userId) {
+  var tempData = getUserState(userId).context;
+
+  if (text === 'やめる') {
+    clearUserState(userId);
+    sendLineReply(replyToken, '操作をキャンセルしました。');
+    return;
+  }
+
+  if (text === '指名しない') {
+    // No staff preference — proceed to date selection
+    setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
+    sendDatePromptWithQuickReply(replyToken, userId);
+    return;
+  }
+
+  // Validate staff name
+  var staff = getStaffByName(text);
+  if (!staff) {
+    var treatmentPrefix = tempData.menu_type.includes('初診') ? '初診' : '再診';
+    var staffOptions = buildStaffSelectionOptions(treatmentPrefix);
+    sendQuickReply(replyToken, 'スタッフが見つかりません。選択し直してください。', staffOptions);
+    return;
+  }
+
+  tempData.staff_id = staff.staff_id;
+  tempData.staff_name = staff.name;
+
   setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
   sendDatePromptWithQuickReply(replyToken, userId);
 }
@@ -362,6 +408,11 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     var profile = getLineProfile(userId);
     if (profile) {
       tempData.line_display_name = profile.userId;
+    }
+
+    // Embed staff info in notes for staff-specific booking lookup
+    if (tempData.staff_id) {
+      tempData.notes = (tempData.notes || '') + 'staff:' + tempData.staff_id;
     }
 
     var result = createReservation(tempData);

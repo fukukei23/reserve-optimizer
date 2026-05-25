@@ -57,20 +57,15 @@ function sendLineMessages(replyToken, messages) {
 }
 
 /**
- * Send push message to LINE user
+ * Internal: send push message to LINE user
  */
-function sendLinePush(userId, text) {
+function _sendPush(userId, messages) {
   var accessToken = getLineAccessToken();
   var url = 'https://api.line.me/v2/bot/message/push';
 
-  var message = {
-    type: 'text',
-    text: text
-  };
-
   var payload = {
     to: userId,
-    messages: [message]
+    messages: messages
   };
 
   var options = {
@@ -103,6 +98,13 @@ function sendLinePush(userId, text) {
 }
 
 /**
+ * Send push message to LINE user
+ */
+function sendLinePush(userId, text) {
+  return _sendPush(userId, [{ type: 'text', text: text }]);
+}
+
+/**
  * Get LINE user profile
  */
 function getLineProfile(userId) {
@@ -117,14 +119,19 @@ function getLineProfile(userId) {
     muteHttpExceptions: true
   };
 
-  var response = UrlFetchApp.fetch(url, options);
+  try {
+    var response = UrlFetchApp.fetch(url, options);
 
-  if (response.getResponseCode() !== 200) {
-    appendLogRow('ERROR', '[LINE Profile] Error: ' + response.getContentText().substring(0, 300));
+    if (response.getResponseCode() !== 200) {
+      appendLogRow('ERROR', '[LINE Profile] Error: ' + response.getContentText().substring(0, 300));
+      return null;
+    }
+
+    return JSON.parse(response.getContentText());
+  } catch (e) {
+    appendLogRow('ERROR', '[LINE Profile] Exception: ' + e.message);
     return null;
   }
-
-  return JSON.parse(response.getContentText());
 }
 
 /**
@@ -415,9 +422,6 @@ function sendQuickReply(replyToken, text, quickReplies) {
  * Send push message with quick reply buttons
  */
 function sendLinePushQuickReply(userId, text, quickReplies) {
-  var accessToken = getLineAccessToken();
-  var url = 'https://api.line.me/v2/bot/message/push';
-
   var message = {
     type: 'text',
     text: text,
@@ -435,35 +439,7 @@ function sendLinePushQuickReply(userId, text, quickReplies) {
     }
   };
 
-  var payload = {
-    to: userId,
-    messages: [message]
-  };
-
-  var options = {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {
-      'Authorization': 'Bearer ' + accessToken
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-
-  try {
-    var response = UrlFetchApp.fetch(url, options);
-    var statusCode = response.getResponseCode();
-
-    if (statusCode !== 200) {
-      appendLogRow('ERROR', '[LINE Push QR] Failed - status: ' + statusCode + ', body: ' + response.getContentText().substring(0, 300));
-      return false;
-    }
-
-    return true;
-  } catch (e) {
-    appendLogRow('ERROR', '[LINE Push QR] Exception: ' + e.message);
-    return false;
-  }
+  return _sendPush(userId, [message]);
 }
 
 /**

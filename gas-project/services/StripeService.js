@@ -152,8 +152,8 @@ function verifyStripeSignature(payload, signature, secret) {
     return ('0' + (b & 0xff).toString(16)).slice(-2);
   }).join('');
 
-  // Compare signatures
-  return v1Signature === expectedSignature;
+  // Compare signatures (constant-time to prevent timing attacks)
+  return _constantTimeEqual(v1Signature, expectedSignature);
 }
 
 /**

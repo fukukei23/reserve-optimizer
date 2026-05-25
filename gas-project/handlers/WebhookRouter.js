@@ -124,14 +124,13 @@ function _dispatchLineWebhook(body) {
 function _dispatchStripeWebhook(body) {
   appendLogRow('STRIPE', 'Webhook received: body=' + body.substring(0, 300));
 
-  // Verify Stripe webhook signature
+  // Verify Stripe webhook signature (mandatory)
   var webhookSecret = getStripeWebhookSecret();
   if (webhookSecret) {
     var sigParam = typeof arguments[1] === 'object' ? (arguments[1]['x-stripe-signature'] || '') : '';
     if (!sigParam) {
-      // Try extracting from URL parameter (Cloudflare Worker forwarding)
-      // Signature verification is best-effort; log warning if missing
-      appendLogRow('WARN', '[Stripe] No signature provided — skipping verification');
+      appendLogRow('ERROR', '[Stripe] No signature provided — rejecting');
+      return _jsonResponse('error', 'Missing signature', 400);
     } else if (!verifyStripeSignature(body, sigParam, webhookSecret)) {
       appendLogRow('ERROR', '[Stripe] Signature verification failed');
       return _jsonResponse('error', 'Invalid signature');

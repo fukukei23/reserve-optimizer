@@ -193,7 +193,10 @@ do_deploy() {
     exit 1
   fi
 
-  echo "$token"
+  # Output token to temp file (passed as $1) to avoid stdout leak
+  if [ -n "${1:-}" ]; then
+    echo "$token" > "$1"
+  fi
 }
 
 # --- Main ---
@@ -211,9 +214,10 @@ if [ "$CMD" = "setup" ]; then
   do_setup
   exit 0
 elif [ "$CMD" = "deploy" ]; then
-  deploy_output=$(do_deploy)
-  token=$(echo "$deploy_output" | tail -1)
-  echo "$deploy_output" | sed '$d'
+  _token_file=$(mktemp)
+  deploy_output=$(do_deploy "$_token_file")
+  token=$(cat "$_token_file" 2>/dev/null)
+  rm -f "$_token_file"
 
   FN="${2:-}"
   if [ -n "$FN" ]; then
