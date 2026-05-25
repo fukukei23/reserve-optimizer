@@ -9,6 +9,8 @@ export interface Env {
   GAS_WEBAPP_URL: string;
 }
 
+import RESERVE_PAGE_HTML from "./reserve-page.html";
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -48,6 +50,23 @@ export default {
     // Stripe webhook
     if (url.pathname === "/webhook/stripe" && request.method === "POST") {
       return handleStripeWebhook(request, env, ctx);
+    }
+
+    // Web reservation page
+    if (url.pathname === "/reserve") {
+      return new Response(RESERVE_PAGE_HTML, {
+        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" },
+      });
+    }
+
+    // API: availability check
+    if (url.pathname === "/api/availability" && request.method === "POST") {
+      return handleApiAvailability(request, env);
+    }
+
+    // API: create reservation
+    if (url.pathname === "/api/reserve" && request.method === "POST") {
+      return handleApiReserve(request, env);
     }
 
     return new Response("Not Found", { status: 404 });
@@ -255,4 +274,91 @@ function timingSafeEqual(a: string, b: string): boolean {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
   return result === 0;
+}
+
+// --- CORS headers for Web API ---
+const CORS_HEADERS: Record<string, string> = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function corsResponse(body: string, status = 200): Response {
+  return new Response(body, {
+    status,
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+  });
+}
+
+/**
+ * API: 空き枠取得
+ * POST /api/availability  { date: "2026/05/30" }
+ */
+async function handleApiAvailability(request: Request, env: Env): Promise<Response> {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  let body: { date?: string };
+  try {
+    body = await request.json() as { date?: string };
+  } catch {
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), 400);
+  }
+
+  if (!body.date || !/^\d{4}\/\d{2}\/\d{2}$/.test(body.date)) {
+    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), 400);
+  }
+
+  return forwardToGAS(
+    JSON.stringify({ action: "get_availability", date: body.date }),
+    env,
+    "api"
+  );
+}
+
+/**
+ * API: 予約作成
+ * POST /api/reserve  { name, phone, date, time, treatment }
+ */
+async function handleApiReserve(request: Request, env: Env): Promise<Response> {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  let body: { name?: string; phone?: string; date?: string; time?: string; treatment?: string };
+  try {
+    body = await request.json() as typeof body;
+  } catch {
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), 400);
+  }
+
+  const missing: string[] = [];
+  if (!body.name) missing.push("name");
+  if (!body.phone) missing.push("phone");
+  if (!body.date) missing.push("date");
+  if (!body.time) missing.push("time");
+  if (!body.treatment) missing.push("treatment");
+
+  if (missing.length > 0) {
+    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), 400);
+  }
+
+  const phoneDigits = body.phone.replace(/[-\s]/g, "");
+  if (!/^\d{10,11}$/.test(phoneDigits)) {
+    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), 400);
+  }
+
+  return forwardToGAS(
+    JSON.stringify({
+      action: "create_reservation",
+      name: body.name,
+      phone: phoneDigits,
+      date: body.date,
+      time: body.time,
+      treatment: body.treatment,
+    }),
+    env,
+    "api"
+  );
 }

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web予約</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#333;max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:1.2rem;text-align:center;padding:16px 0;border-bottom:2px solid #06c755}
+.step{display:none;background:#fff;border-radius:12px;padding:20px;margin:16px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.step.active{display:block}
+.step-title{font-size:1rem;font-weight:700;margin-bottom:16px}
+.btn{display:block;width:100%;padding:14px;margin:6px 0;border:2px solid #06c755;border-radius:8px;background:#fff;color:#06c755;font-size:1rem;font-weight:600;cursor:pointer;text-align:center}
+.btn:hover,.btn.selected{background:#06c755;color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:#06c755;color:#fff}
+.btn-primary:hover{background:#05a84a}
+input{width:100%;padding:14px;border:2px solid #ddd;border-radius:8px;font-size:1rem;margin:6px 0}
+input:focus{outline:none;border-color:#06c755}
+.slot-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.slot-btn{padding:12px;border:2px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;text-align:center;font-size:.9rem}
+.slot-btn:hover,.slot-btn.selected{border-color:#06c755;background:#e8f5ee}
+.slot-btn.full{opacity:.3;cursor:not-allowed}
+.confirm-box{background:#f0faf4;border-radius:8px;padding:16px;margin:12px 0}
+.confirm-box p{margin:4px 0;font-size:.9rem}
+.error{color:#d32f2f;font-size:.9rem;margin:8px 0}
+.progress{display:flex;justify-content:center;gap:8px;margin:12px 0}
+.dot{width:10px;height:10px;border-radius:50%;background:#ddd}
+.dot.active{background:#06c755}
+</style>
+</head>
+<body>
+<h1>Web予約</h1>
+<div class="progress" id="progress"></div>
+
+<div class="step active" id="step1">
+  <div class="step-title">Step 1: 施術を選択</div>
+  <div id="treatment-list"></div>
+</div>
+
+<div class="step" id="step2">
+  <div class="step-title">Step 2: 日付を選択</div>
+  <input type="date" id="date-input">
+  <div class="error" id="date-error"></div>
+  <button class="btn btn-primary" id="date-next">空き枠を確認</button>
+  <button class="btn" id="date-back">戻る</button>
+</div>
+
+<div class="step" id="step3">
+  <div class="step-title">Step 3: 時間を選択</div>
+  <div class="slot-grid" id="slot-list"></div>
+  <div class="error" id="slot-error"></div>
+  <button class="btn" id="slot-back">戻る</button>
+</div>
+
+<div class="step" id="step4">
+  <div class="step-title">Step 4: お客様情報</div>
+  <input type="text" id="name-input" placeholder="お名前">
+  <input type="tel" id="phone-input" placeholder="電話番号（09012345678）">
+  <div class="error" id="info-error"></div>
+  <button class="btn btn-primary" id="info-next">確認画面へ</button>
+  <button class="btn" id="info-back">戻る</button>
+</div>
+
+<div class="step" id="step5">
+  <div class="step-title">予約内容の確認</div>
+  <div class="confirm-box" id="confirm-details"></div>
+  <button class="btn btn-primary" id="confirm-submit">予約する</button>
+  <button class="btn" id="confirm-back">戻る</button>
+  <div class="error" id="confirm-error"></div>
+</div>
+
+<div class="step" id="step-done">
+  <div class="step-title" style="color:#06c755">予約完了</div>
+  <p id="done-msg"></p>
+</div>
+
+<script>
+(function() {
+  var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
+  var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
+  var currentStep = 1;
+
+  function showStep(n) {
+    currentStep = n;
+    for (var i = 1; i <= 5; i++) {
+      var el = document.getElementById("step" + i);
+      if (el) el.className = i === n ? "step active" : "step";
+    }
+    var doneEl = document.getElementById("step-done");
+    if (doneEl) doneEl.className = n === 6 ? "step active" : "step";
+    updateProgress();
+  }
+
+  function updateProgress() {
+    var p = document.getElementById("progress");
+    while (p.firstChild) p.removeChild(p.firstChild);
+    for (var i = 1; i <= 4; i++) {
+      var dot = document.createElement("div");
+      dot.className = "dot" + (i <= currentStep ? " active" : "");
+      p.appendChild(dot);
+    }
+  }
+
+  function setError(id, msg) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = msg;
+  }
+
+  function clearChildren(el) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+  }
+
+  // Step 1: treatment buttons
+  var list = document.getElementById("treatment-list");
+  treatments.forEach(function(t) {
+    var btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = t;
+    btn.addEventListener("click", function() {
+      selected.treatment = t;
+      showStep(2);
+    });
+    list.appendChild(btn);
+  });
+
+  // Step 2: date
+  var today = new Date();
+  var maxDate = new Date(today.getTime() + 90 * 86400000);
+  var dateInput = document.getElementById("date-input");
+  dateInput.min = today.toISOString().split("T")[0];
+  dateInput.max = maxDate.toISOString().split("T")[0];
+
+  document.getElementById("date-next").addEventListener("click", function() {
+    setError("date-error", "");
+    var val = dateInput.value;
+    if (!val) { setError("date-error", "日付を選択してください"); return; }
+    selected.date = val.replace(/-/g, "/");
+    fetchSlots();
+  });
+  document.getElementById("date-back").addEventListener("click", function() { showStep(1); });
+
+  function fetchSlots() {
+    var slotList = document.getElementById("slot-list");
+    clearChildren(slotList);
+    var loading = document.createElement("div");
+    loading.textContent = "読み込み中...";
+    slotList.appendChild(loading);
+    showStep(3);
+
+    fetch("/api/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: selected.date })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      clearChildren(slotList);
+      if (data.error) { setError("slot-error", data.error); return; }
+      var slots = data.slots || [];
+      if (slots.length === 0) { setError("slot-error", "空き枠がありません"); return; }
+      slots.forEach(function(s) {
+        var btn = document.createElement("button");
+        btn.className = "slot-btn" + (s.available ? "" : " full");
+        btn.textContent = s.time;
+        btn.disabled = !s.available;
+        if (s.available) {
+          btn.addEventListener("click", function() {
+            selected.time = s.time;
+            var allBtns = document.querySelectorAll(".slot-btn");
+            for (var k = 0; k < allBtns.length; k++) { allBtns[k].classList.remove("selected"); }
+            btn.classList.add("selected");
+            setTimeout(function() { showStep(4); }, 300);
+          });
+        }
+        slotList.appendChild(btn);
+      });
+    })
+    .catch(function() { setError("slot-error", "空き枠取得に失敗しました"); });
+  }
+
+  document.getElementById("slot-back").addEventListener("click", function() { showStep(2); });
+
+  // Step 4: name/phone
+  document.getElementById("info-next").addEventListener("click", function() {
+    setError("info-error", "");
+    var name = document.getElementById("name-input").value.trim();
+    var phone = document.getElementById("phone-input").value.trim();
+    if (!name) { setError("info-error", "お名前を入力してください"); return; }
+    if (!phone || !/^\d{10,11}$/.test(phone.replace(/[-\s]/g, ""))) {
+      setError("info-error", "電話番号は10-11桁で入力してください"); return;
+    }
+    selected.name = name;
+    selected.phone = phone.replace(/[-\s]/g, "");
+    showConfirm();
+  });
+  document.getElementById("info-back").addEventListener("click", function() { showStep(3); });
+
+  function showConfirm() {
+    showStep(5);
+    var box = document.getElementById("confirm-details");
+    clearChildren(box);
+    var items = [
+      ["施術", selected.treatment],
+      ["日付", selected.date],
+      ["時間", selected.time],
+      ["お名前", selected.name],
+      ["電話番号", selected.phone]
+    ];
+    items.forEach(function(item) {
+      var p = document.createElement("p");
+      var strong = document.createElement("strong");
+      strong.textContent = item[0] + ": ";
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(item[1]));
+      box.appendChild(p);
+    });
+  }
+
+  document.getElementById("confirm-back").addEventListener("click", function() { showStep(4); });
+
+  document.getElementById("confirm-submit").addEventListener("click", function() {
+    setError("confirm-error", "");
+    var btn = document.getElementById("confirm-submit");
+    btn.disabled = true;
+    btn.textContent = "送信中...";
+    fetch("/api/reserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: selected.name,
+        phone: selected.phone,
+        date: selected.date,
+        time: selected.time,
+        treatment: selected.treatment
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        setError("confirm-error", data.error);
+        btn.disabled = false;
+        btn.textContent = "予約する";
+        return;
+      }
+      showStep(6);
+      document.getElementById("done-msg").textContent =
+        "予約ID: " + (data.reservation_id || "") + " — 後ほどLINEから確認・お支払いができます。";
+    })
+    .catch(function() {
+      setError("confirm-error", "予約に失敗しました。時間をおいてもう一度お試しください。");
+      btn.disabled = false;
+      btn.textContent = "予約する";
+    });
+  });
+
+  updateProgress();
+})();
+</script>
+</body>
+</html>

@@ -19,6 +19,8 @@ function routeWebhook(e) {
       return _dispatchLineWebhook(body);
     } else if (source === 'stripe') {
       return _dispatchStripeWebhook(body);
+    } else if (source === 'api') {
+      return _dispatchApiRequest(body);
     } else {
       return _autoDetectWebhook(body);
     }
@@ -298,6 +300,146 @@ function _handleRefundMinimal(payload) {
     }
   }
   appendLogRow('WARN', 'No reservation found with payment_intent_id: ' + paymentIntentId);
+}
+
+// --- Web API handlers ---
+
+/**
+ * Dispatch API requests from Web reservation page (x-source=api)
+ */
+function _dispatchApiRequest(body) {
+  var data;
+  try {
+    data = JSON.parse(body);
+  } catch (e) {
+    return _apiResponse({ error: 'Invalid JSON' }, 400);
+  }
+
+  switch (data.action) {
+    case 'get_availability':
+      return _handleGetAvailability(data);
+    case 'create_reservation':
+      return _handleCreateReservationApi(data);
+    default:
+      return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
+  }
+}
+
+/**
+ * GET /api/availability — return available time slots for a date
+ */
+function _handleGetAvailability(data) {
+  if (!data.date) {
+    return _apiResponse({ error: 'date is required' }, 400);
+  }
+
+  var dateValidation = validateDateForBooking(data.date);
+  if (!dateValidation.valid) {
+    return _apiResponse({ error: dateValidation.errorMessage }, 400);
+  }
+
+  var bookedSlots = getBookedSlotsForDate(data.date);
+  var maxBookings = getMaxConcurrentBookings();
+  var startH = parseInt((getProperty('BUSINESS_START_TIME') || '09:00').split(':')[0]);
+  var endH = parseInt((getProperty('BUSINESS_END_TIME') || '18:00').split(':')[0]);
+
+  var slots = [];
+  for (var h = startH; h < endH; h++) {
+    for (var m = 0; m < 60; m += 30) {
+      var time = ('0' + h).slice(-2) + ':' + ('0' + m).slice(-2);
+      var count = bookedSlots[time] || 0;
+      slots.push({ time: time, available: count < maxBookings, booked: count, capacity: maxBookings });
+    }
+  }
+
+  return _apiResponse({ date: data.date, slots: slots });
+}
+
+/**
+ * POST /api/reserve — create reservation from Web form
+ */
+function _handleCreateReservationApi(data) {
+  if (!data.name || !data.phone || !data.date || !data.time || !data.treatment) {
+    return _apiResponse({ error: 'Missing required fields' }, 400);
+  }
+
+  // Validate treatment
+  if (!TREATMENT_DURATIONS[data.treatment]) {
+    return _apiResponse({ error: 'Invalid treatment type' }, 400);
+  }
+
+  // Validate date
+  var dateValidation = validateDateForBooking(data.date);
+  if (!dateValidation.valid) {
+    return _apiResponse({ error: dateValidation.errorMessage }, 400);
+  }
+
+  // Validate time
+  var normalized = normalizeTimeInput(data.time);
+  if (!validateTime(normalized)) {
+    return _apiResponse({ error: 'Invalid time format' }, 400);
+  }
+
+  // Check slot availability
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    _invalidateReservationCache();
+    var bookedSlots = getBookedSlotsForDate(data.date);
+    var bookedCount = bookedSlots[normalized] || 0;
+    if (bookedCount >= getMaxConcurrentBookings()) {
+      return _apiResponse({ error: 'この時間は既に予約で埋まっています' }, 409);
+    }
+
+    var duration = getTreatmentDuration(data.treatment);
+    var endTime = calculateEndTime(normalized, duration);
+
+    var tempData = {
+      patient_name: data.name,
+      phone: data.phone,
+      line_display_name: 'WEB',
+      visit_type: data.treatment.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT,
+      menu_type: data.treatment,
+      reserved_date: data.date,
+      reserved_start: normalized,
+      reserved_end: endTime,
+      status: RESERVATION_STATUS.PENDING,
+      deposit_status: DEPOSIT_STATUS.UNPAID,
+      notes: 'source:web'
+    };
+
+    var result = createReservation(tempData);
+
+    // Post-creation hooks
+    try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
+      appendLogRow('WARN', 'Web API post-create hook error: ' + hookErr.message);
+    }
+
+    appendLogRow('INFO', 'Web reservation created: ' + result.id);
+
+    return _apiResponse({
+      status: 'created',
+      reservation_id: result.id,
+      date: data.date,
+      time: normalized,
+      end_time: endTime,
+      menu_type: data.treatment
+    });
+  } catch (e) {
+    appendLogRow('ERROR', 'Web API reservation error: ' + e.message);
+    return _apiResponse({ error: '予約の作成に失敗しました' }, 500);
+  } finally {
+    try { lock.releaseLock(); } catch (le) { /* noop */ }
+  }
+}
+
+/**
+ * API response helper (JSON with CORS-friendly format)
+ */
+function _apiResponse(data, statusCode) {
+  var output = ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+  return output;
 }
 
 // --- Response helpers ---
