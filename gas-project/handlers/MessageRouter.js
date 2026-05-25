@@ -149,19 +149,20 @@ function handleMessage(message, replyToken, userId) {
 
   var text = message.text.trim();
   var userState = getUserState(userId);
+  var _locale = getUserLocale(userId);
 
   logLineMessage({userId: userId}, text);
 
   // Handle "人間に問い合わせる" regardless of state (so it is not validated as name/phone/date/time)
   if (text === '人間に問い合わせる') {
-    sendLineReply(replyToken, MessageTemplates.getContactMessage());
+    sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));
     clearUserState(userId);
     return;
   }
 
   // Handle "お問い合わせ" globally (rich menu action — same as "人間に問い合わせる")
   if (text === 'お問い合わせ') {
-    sendLineReply(replyToken, MessageTemplates.getContactMessage());
+    sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));
     clearUserState(userId);
     return;
   }
@@ -170,7 +171,7 @@ function handleMessage(message, replyToken, userId) {
   if (text.indexOf('SET_REMINDER:') === 0) {
     var timing = text.substring('SET_REMINDER:'.length);
     setUserPref(userId, 'reminder_timing', timing);
-    sendLineReply(replyToken, 'リマインダー時刻を ' + timing + ' に変更しました。');
+    sendLineReply(replyToken, t('router.reminder_changed', _locale) + timing + t('router.reminder_changed_suffix', _locale));
     return;
   }
 
@@ -185,7 +186,7 @@ function handleMessage(message, replyToken, userId) {
 
   // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
   if (text === '営業時間・アクセス') {
-    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
+    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage(_locale));
     clearUserState(userId);
     return;
   }
@@ -193,22 +194,22 @@ function handleMessage(message, replyToken, userId) {
   // Handle "やめる" globally across all non-IDLE states (with confirmation)
   if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
-    sendLineReply(replyToken, '操作をキャンセルしました。\n\n「予約する」でまた始められます。');
+    sendLineReply(replyToken, t('router.cancelled', _locale));
     return;
   }
 
   // Handle "本当にやめる" — explicit cancel confirmation
   if (text === '本当にやめる' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
-    sendLineReply(replyToken, '操作をキャンセルしました。\n\n「予約する」でまた始められます。');
+    sendLineReply(replyToken, t('router.cancelled', _locale));
     return;
   }
 
   // Handle "戻る" — go back to menu (clears state, returns to welcome)
   if (text === '戻る' && userState.state !== USER_STATES.IDLE) {
     clearUserState(userId);
-    var menuData = MessageTemplates.getWelcomeMessage();
-    sendQuickReply(replyToken, '操作を中止し、メニューに戻ります。\n\n「やめる」との違い：「戻る」＝メニューに戻る、「やめる」＝完全にキャンセル', menuData.quickReplies);
+    var menuData = MessageTemplates.getWelcomeMessage(_locale);
+    sendQuickReply(replyToken, t('router.back_to_menu', _locale), menuData.quickReplies);
     return;
   }
 
@@ -286,7 +287,7 @@ function handleMessage(message, replyToken, userId) {
       handleAwaitingWaitlistTime(text, replyToken, userId);
       break;
     default:
-      sendLineReply(replyToken, '何かお手伝いしましょうか？');
+      sendLineReply(replyToken, t('router.can_help', _locale));
   }
 }
 
@@ -315,15 +316,15 @@ function handleCommand(command, replyToken, userId) {
       if (isAdmin) {
         sendLineReply(replyToken, formatHealthReport());
       } else {
-        sendLineReply(replyToken, 'このコマンドは管理者のみ利用可能です。');
+        sendLineReply(replyToken, t('router.admin_only', _locale));
       }
       break;
     case '/cleanup':
       if (isAdmin) {
         cleanupExpiredStates();
-        sendLineReply(replyToken, '期限切れ状態のクリーンアップを実行しました。');
+        sendLineReply(replyToken, t('router.cleanup_done', _locale));
       } else {
-        sendLineReply(replyToken, 'このコマンドは管理者のみ利用可能です。');
+        sendLineReply(replyToken, t('router.admin_only', _locale));
       }
       break;
     case '/help':
@@ -348,7 +349,7 @@ function handleCommand(command, replyToken, userId) {
       ]);
       break;
     default:
-      sendLineReply(replyToken, '無効なコマンドです。/help でコマンド一覧を確認してください。');
+      sendLineReply(replyToken, t('router.invalid_command', _locale));
   }
 }
 
@@ -359,6 +360,7 @@ function handleCommand(command, replyToken, userId) {
  * and checked after exact match fails.
  */
 var _KEYWORD_MAP = {
+  // Japanese
   '予約する': 'reserve', '予約したい': 'reserve', '新規予約': 'reserve',
   '予約お願い': 'reserve', '予約おねがい': 'reserve',
   '予約確認': 'view', '予約状況': 'view', 'マイ予約': 'view',
@@ -370,11 +372,20 @@ var _KEYWORD_MAP = {
   '営業時間・アクセス': 'hours', '営業時間': 'hours', 'アクセス': 'hours',
   '住所': 'hours', 'どこ': 'hours', '場所': 'hours', '何時': 'hours', '時間': 'hours',
   'お問い合わせ': 'contact', 'お問合せ': 'contact',
-  '電話': 'contact', '電話番号': 'contact', '連絡': 'contact'
+  '電話': 'contact', '電話番号': 'contact', '連絡': 'contact',
+  // English
+  'book': 'reserve', 'reserve': 'reserve', 'appointment': 'reserve',
+  'my reservations': 'view', 'my booking': 'view', 'view': 'view',
+  'change': 'change', 'cancel': 'change',
+  'modify': 'change', 'reschedule': 'change',
+  'waitlist': 'waitlist', 'notify': 'waitlist', 'alert': 'waitlist',
+  'hours': 'hours', 'location': 'hours', 'address': 'hours',
+  'when': 'hours', 'where': 'hours',
+  'contact': 'contact', 'phone': 'contact', 'call': 'contact'
 };
 
 // Short keywords that also match as prefix (e.g. '予約' matches '予約したい')
-var _KEYWORD_PREFIXES = ['予約'];
+var _KEYWORD_PREFIXES = ['予約', 'book'];
 
 /**
  * Resolve normalized text to an action via keyword map
@@ -401,6 +412,7 @@ function resolveKeywordAction(normalized) {
 function handleIdleState(text, replyToken, userId) {
   var normalized = text.replace(/[\s　]+/g, '').replace(/！/g, '!').replace(/？/g, '?');
   var action = resolveKeywordAction(normalized);
+  var _locale = getUserLocale(userId);
 
   if (action === 'reserve') {
     startReservationFlow(replyToken, userId);
@@ -411,12 +423,12 @@ function handleIdleState(text, replyToken, userId) {
   } else if (action === 'waitlist') {
     handleWaitlistFlow(replyToken, userId);
   } else if (action === 'hours') {
-    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage());
+    sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage(_locale));
   } else if (action === 'contact') {
-    sendLineReply(replyToken, MessageTemplates.getContactMessage());
+    sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));
   } else {
     if (!handleLLMQuery(replyToken, text)) {
-      var welcomeData = MessageTemplates.getWelcomeMessage();
+      var welcomeData = MessageTemplates.getWelcomeMessage(_locale);
       sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
     }
   }
@@ -489,7 +501,7 @@ function handleFollow(userId, replyToken) {
     return;
   }
 
-  var welcomeData = MessageTemplates.getWelcomeMessage();
+  var welcomeData = MessageTemplates.getWelcomeMessage(getUserLocale(userId));
   if (replyToken) {
     sendQuickReply(replyToken, welcomeData.text, welcomeData.quickReplies);
   } else {

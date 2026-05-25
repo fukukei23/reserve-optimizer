@@ -443,7 +443,8 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
         tempData.reserved_date,
         tempData.reserved_start,
         tempData.menu_type,
-        paymentLink
+        paymentLink,
+        getUserLocale(userId)
       );
       sendLinePushQuickReply(userId, message, [
         { label: '支払完了', text: '支払完了' },
