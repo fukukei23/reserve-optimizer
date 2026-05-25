@@ -80,27 +80,8 @@ function handleCancelFlow(replyToken, userId) {
   }
 
   // Multiple reservations — show paginated list
-  var allIds = activeReservations.map(function(r) { return r.id; });
-  var pageSize = PAGE_SIZE;
-  var pageReservations = activeReservations.slice(0, pageSize);
-
-  setUserState(userId, USER_STATES.AWAITING_CANCEL_SELECT, {
-    reservation_ids: allIds,
-    page: 0,
-    page_size: pageSize
-  });
-
-  var msg = MessageTemplates.getCancelListMessage(pageReservations, 0, Math.ceil(allIds.length / pageSize));
-  var items = [];
-  for (var j = 0; j < pageReservations.length; j++) {
-    items.push({ label: String(j + 1), text: String(j + 1) });
-  }
-  if (allIds.length > pageSize) {
-    var totalP = Math.ceil(allIds.length / pageSize);
-    items.push({ label: '次の5件 ▶ (2/' + totalP + ')', text: '次の5件' });
-  }
-  items.push({ label: 'やめる', text: 'やめる' });
-  sendQuickReply(replyToken, msg, items);
+  _showPaginatedReservationList(replyToken, userId, activeReservations,
+    MessageTemplates.getCancelListMessage, USER_STATES.AWAITING_CANCEL_SELECT);
 }
 
 /**
@@ -108,57 +89,32 @@ function handleCancelFlow(replyToken, userId) {
  */
 function handleAwaitingCancelSelect(text, replyToken, userId) {
   var tempData = getUserState(userId).context;
-  var reservationIds = tempData.reservation_ids || [];
-  var page = tempData.page || 0;
-  var pageSize = tempData.page_size || PAGE_SIZE;
+  var result = _handleReservationSelection(text, replyToken, userId, tempData,
+    MessageTemplates.getCancelListMessage, USER_STATES.AWAITING_CANCEL_SELECT);
 
-  if (text === 'やめる') {
-    clearUserState(userId);
-    sendLineReply(replyToken, 'キャンセルを中止しました。');
-    return;
-  }
-
-  // Handle pagination
-  if (handlePaginationStep(text, replyToken, userId, tempData, reservationIds, page, pageSize,
-      MessageTemplates.getCancelListMessage, USER_STATES.AWAITING_CANCEL_SELECT)) {
-    return;
-  }
-
-  var selection = parseInt(text);
-  var currentStartIdx = page * pageSize;
-
-  if (isNaN(selection) || selection < 1 || selection > pageSize || (currentStartIdx + selection - 1) >= reservationIds.length) {
-    var errItems = [];
-    var maxOnPage = Math.min(pageSize, reservationIds.length - currentStartIdx);
-    for (var ei = 0; ei < maxOnPage; ei++) {
-      errItems.push({ label: String(ei + 1), text: String(ei + 1) });
+  if (result.handled) {
+    if (result.action === 'cancel') {
+      clearUserState(userId);
+      sendLineReply(replyToken, 'キャンセルを中止しました。');
+    } else if (result.action === 'not_found') {
+      clearUserState(userId);
+      sendLineReply(replyToken, '予約が見つかりませんでした。最初からやり直してください。');
     }
-    errItems.push({ label: 'やめる', text: 'やめる' });
-    sendQuickReply(replyToken, '番号を選択してください（1〜' + maxOnPage + '）。', errItems);
-    return;
-  }
-
-  var selectedId = reservationIds[currentStartIdx + selection - 1];
-  var reservation = getReservationById(selectedId);
-
-  if (!reservation) {
-    clearUserState(userId);
-    sendLineReply(replyToken, '予約が見つかりませんでした。最初からやり直してください。');
     return;
   }
 
   // Check deadline
-  var cancelCheck = canCancelReservation(reservation);
+  var cancelCheck = canCancelReservation(result.reservation);
   if (!cancelCheck.canCancel) {
     clearUserState(userId);
-    sendLineReply(replyToken, MessageTemplates.getCancelDeadlineExceededMessage(reservation));
+    sendLineReply(replyToken, MessageTemplates.getCancelDeadlineExceededMessage(result.reservation));
     return;
   }
 
   setUserState(userId, USER_STATES.AWAITING_CANCEL_CONFIRM, {
-    selected_reservation_id: selectedId
+    selected_reservation_id: result.selectedId
   });
-  sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(reservation), [
+  sendQuickReply(replyToken, MessageTemplates.getCancelConfirmMessage(result.reservation), [
     { label: 'はい', text: 'はい' },
     { label: 'いいえ', text: 'いいえ' }
   ]);
@@ -238,6 +194,16 @@ function handleAwaitingCancelConfirm(text, replyToken, userId) {
 
   // Notify waitlist candidates about the vacancy (always, regardless of refund outcome)
   _notifyWaitlistVacancy(reservation);
+
+  // Calendar sync — mark cancelled
+  try { deleteCalendarEvent(reservationId); } catch (calErr) {
+    appendLogRow('WARN', '[Calendar] Cancel sync failed: ' + calErr.message);
+  }
+
+  // Audit log
+  try {
+    appendAuditLog('CANCEL', reservationId, { status: reservation.status, date: reservation.reserved_date }, { status: RESERVATION_STATUS.CANCELLED, refunded: refunded });
+  } catch (e) { /* non-critical */ }
 
   clearUserState(userId);
   if (refundFailed) {

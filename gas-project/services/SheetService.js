@@ -12,6 +12,10 @@ var _reservationsByLineUserIdMap = null;
 var _reservationsByDateMap = null;
 var _spreadsheetCache = null;
 
+// CacheService key and TTL for cross-execution caching
+var _CACHE_KEY = 'reservation_cache_v2';
+var _CACHE_TTL_SECONDS = 300; // 5 minutes
+
 /**
  * Get cached Spreadsheet instance
  */
@@ -54,12 +58,29 @@ function _buildReservationObj(row, i) {
 }
 
 /**
- * Load all reservations into cache with indexed Maps
- * Called lazily on first search access; stays valid for the GAS execution lifetime
+ * Load all reservations into cache with indexed Maps.
+ * Uses CacheService as L1 cache to avoid Sheets reads on repeated invocations.
  */
 function _ensureReservationCache() {
   if (_reservationCache !== null) return;
 
+  // Try CacheService first (shared across executions for 5 min)
+  try {
+    var scriptCache = CacheService.getScriptCache();
+    var cached = scriptCache.get(_CACHE_KEY);
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      _reservationCache = parsed.cache;
+      _reservationByIdMap = parsed.byId;
+      _reservationsByLineUserIdMap = parsed.byLineId;
+      _reservationsByDateMap = parsed.byDate;
+      return;
+    }
+  } catch (e) {
+    appendLogRow('WARN', 'CacheService read skipped: ' + e.message);
+  }
+
+  // Cache miss — load from Sheets
   var sheet = getReservationsSheet();
   var data = sheet.getDataRange().getValues();
 
@@ -72,33 +93,51 @@ function _ensureReservationCache() {
     var obj = _buildReservationObj(data[i], i);
     _reservationCache.push(obj);
 
-    // Index by ID
     _reservationByIdMap[obj.id] = obj;
 
-    // Index by LINE user ID (array per user)
     var lineKey = String(data[i][4]);
     if (!_reservationsByLineUserIdMap[lineKey]) {
       _reservationsByLineUserIdMap[lineKey] = [];
     }
     _reservationsByLineUserIdMap[lineKey].push(obj);
 
-    // Index by date (array per date)
     var dateKey = obj.reserved_date;
     if (!_reservationsByDateMap[dateKey]) {
       _reservationsByDateMap[dateKey] = [];
     }
     _reservationsByDateMap[dateKey].push(obj);
   }
+
+  // Save to CacheService (respect 100KB limit)
+  try {
+    var toCache = JSON.stringify({
+      cache: _reservationCache,
+      byId: _reservationByIdMap,
+      byLineId: _reservationsByLineUserIdMap,
+      byDate: _reservationsByDateMap
+    });
+    if (toCache.length < 90000) {
+      var scriptCache2 = CacheService.getScriptCache();
+      scriptCache2.put(_CACHE_KEY, toCache, _CACHE_TTL_SECONDS);
+    }
+  } catch (e) {
+    appendLogRow('WARN', 'CacheService write skipped: ' + e.message);
+  }
 }
 
 /**
- * Invalidate cache (call after create/update/delete)
+ * Invalidate cache (call after create/update/delete).
+ * Clears both per-execution and CacheService caches.
  */
 function _invalidateReservationCache() {
   _reservationCache = null;
   _reservationByIdMap = null;
   _reservationsByLineUserIdMap = null;
   _reservationsByDateMap = null;
+
+  try {
+    CacheService.getScriptCache().remove(_CACHE_KEY);
+  } catch (e) { /* noop */ }
 }
 
 /**

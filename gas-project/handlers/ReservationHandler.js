@@ -339,7 +339,6 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     for (var di = 0; di < lockedExisting.length; di++) {
       var er = lockedExisting[di];
       if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
-        lock.releaseLock();
         clearUserState(userId);
         sendLinePushQuickReply(userId, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
           { label: '予約する', text: '予約する' },
@@ -352,7 +351,6 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     var bookedSlotsFinal = getBookedSlotsForDate(tempData.reserved_date);
     var bookedCountFinal = bookedSlotsFinal[tempData.reserved_start] || 0;
     if (bookedCountFinal >= getMaxConcurrentBookings()) {
-      lock.releaseLock();
       clearUserState(userId);
       sendLinePushQuickReply(userId, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
         { label: '予約する', text: '予約する' },
@@ -367,7 +365,11 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     }
 
     var result = createReservation(tempData);
-    lock.releaseLock();
+
+    // Post-creation hooks (calendar sync, audit log)
+    try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
+      appendLogRow('WARN', 'Post-create hook error: ' + hookErr.message);
+    }
 
     var paymentLink = null;
     try {
@@ -409,14 +411,41 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
       ]);
     }
   } catch (e) {
-    try { lock.releaseLock(); } catch (le) { /* already released */ }
     appendLogRow('ERROR', 'createReservationAndGoToPayment lock error: ' + e.message);
     clearUserState(userId);
     sendLinePushQuickReply(userId, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
       { label: '予約する', text: '予約する' },
       { label: 'お問い合わせ', text: 'お問い合わせ' }
     ]);
+  } finally {
+    try { lock.releaseLock(); } catch (le) { /* already released */ }
   }
+}
+
+/**
+ * Hook: called after reservation creation succeeds.
+ * Triggers calendar sync and audit log.
+ */
+function _onReservationCreated(reservationId, tempData) {
+  var reservation = getReservationById(reservationId);
+  if (!reservation) return;
+
+  // Calendar sync
+  try {
+    createCalendarEvent(reservation);
+  } catch (e) {
+    appendLogRow('WARN', '[Calendar] Post-create sync failed: ' + e.message);
+  }
+
+  // Audit log
+  try {
+    appendAuditLog('CREATE', reservationId, null, {
+      patient_name: reservation.patient_name,
+      date: reservation.reserved_date,
+      time: reservation.reserved_start,
+      menu: reservation.menu_type
+    });
+  } catch (e) { /* non-critical */ }
 }
 
 /**
