@@ -155,22 +155,87 @@ function handleSameDayCancellation(reservationId, reason) {
 
 /**
  * Check waitlist responses for resale
+ *
+ * Triggered 10min after handleSameDayCancellation.
+ * Finds notified-but-unclaimed reservations and notifies next waitlist candidate.
  */
 function checkWaitlistResponses() {
-  // TODO: Implement waitlist response verification logic.
-  // Current behavior: logs reservations that were notified but not yet claimed.
-  // Future: check if notified user has created a reservation within timeout,
-  // and if not, notify the next waitlist candidate.
+  var TIMEOUT_HOURS = 2;
+  var now = new Date();
+  var threshold = new Date(now.getTime() - TIMEOUT_HOURS * 60 * 60 * 1000);
+
+  var timedOut = [];
+
   _ensureReservationCache();
   for (var i = 0; i < _reservationCache.length; i++) {
     var r = _reservationCache[i];
 
-    if (r.resale_notified !== 'Y' || r.resale_success === 'Y') {
+    if (r.resale_notified !== 'Y' || r.resale_success === 'Y' || r.status !== RESERVATION_STATUS.CANCELLED) {
       continue;
     }
 
-    appendLogRow('INFO', 'Waitlist response check needed for: ' + r.id);
+    // Only process reservations cancelled within the timeout window
+    var cancelTime = r.updated_at ? new Date(r.updated_at) : null;
+    if (!cancelTime || cancelTime < threshold) {
+      continue;
+    }
+
+    // Check if a new reservation was created for the same slot (someone claimed it)
+    var slotClaimed = false;
+    for (var j = 0; j < _reservationCache.length; j++) {
+      var other = _reservationCache[j];
+      if (other.id !== r.id &&
+          other.reserved_date === r.reserved_date &&
+          other.reserved_start === r.reserved_start &&
+          other.status === RESERVATION_STATUS.CONFIRMED) {
+        slotClaimed = true;
+        break;
+      }
+    }
+
+    if (!slotClaimed) {
+      timedOut.push(r);
+    }
   }
+
+  // Notify next candidate for each unclaimed vacancy
+  for (var k = 0; k < timedOut.length; k++) {
+    var reservation = timedOut[k];
+    var appointmentDateTime = reservation.reserved_date + 'T' + reservation.reserved_start;
+    var candidates = findWaitlistCandidate(appointmentDateTime);
+
+    if (candidates.length > 0) {
+      var candidate = candidates[0];
+      var vacancyMsg = MessageTemplates.getResaleNotificationMessage(
+        reservation.reserved_date,
+        reservation.reserved_start + '-' + (reservation.reserved_end || ''),
+        reservation.menu_type
+      );
+
+      if (vacancyMsg && vacancyMsg.quickReplies) {
+        sendLinePushQuickReply(candidate.line_display_name, vacancyMsg.text, vacancyMsg.quickReplies);
+      } else {
+        sendLinePush(candidate.line_display_name, vacancyMsg.text || vacancyMsg || '');
+      }
+
+      // Update last_notified_at for the candidate
+      var sheet = getWaitlistSheet();
+      var waitlistData = sheet.getDataRange().getValues();
+      for (var w = 1; w < waitlistData.length; w++) {
+        if (waitlistData[w][0] == candidate.id) {
+          sheet.getRange(w + 1, 6).setValue(new Date());
+          break;
+        }
+      }
+
+      appendLogRow('INFO', 'Waitlist: notified next candidate ' + candidate.id + ' for slot ' + reservation.reserved_date + ' ' + reservation.reserved_start);
+    } else {
+      appendLogRow('INFO', 'Waitlist: no candidates for unclaimed slot ' + reservation.reserved_date + ' ' + reservation.reserved_start);
+    }
+  }
+
+  appendLogRow('INFO', 'checkWaitlistResponses completed: ' + timedOut.length + ' unclaimed slot(s) processed');
+  return timedOut.length;
 }
 
 /**

@@ -136,7 +136,13 @@ function setupTriggers() {
     .everyMinutes(30)
     .create();
 
-  Logger.log('Created ' + (3 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
+  // Trigger 7: Post-visit follow-up (every 60 minutes)
+  ScriptApp.newTrigger('sendPostVisitFollowUps')
+    .timeBased()
+    .everyMinutes(60)
+    .create();
+
+  Logger.log('Created ' + (4 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
 }
 
 /**

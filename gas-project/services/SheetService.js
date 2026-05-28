@@ -53,13 +53,14 @@ function _buildReservationObj(row, i) {
     average_unit_price: row[19],
     notes: row[20],
     payment_intent_id: row[21] || '',
+    follow_up_sent: row[22] || 'N',
     row_number: i + 1
   };
 }
 
 /**
  * Load all reservations into cache with indexed Maps.
- * Uses CacheService as L1 cache to avoid Sheets reads on repeated invocations.
+ * Firestore-first: uses Firestore when configured, falls back to Sheets.
  */
 function _ensureReservationCache() {
   if (_reservationCache !== null) return;
@@ -80,7 +81,63 @@ function _ensureReservationCache() {
     appendLogRow('WARN', 'CacheService read skipped: ' + e.message);
   }
 
-  // Cache miss — load from Sheets
+  // Firestore path
+  if (isFirebaseConfigured()) {
+    try {
+      _ensureReservationCacheFromFirestore();
+      return;
+    } catch (e) {
+      appendLogRow('WARN', 'Firestore cache load failed, falling back to Sheets: ' + e.message);
+    }
+  }
+
+  // Sheet fallback
+  _ensureReservationCacheFromSheet();
+}
+
+function _ensureReservationCacheFromFirestore() {
+  var docs = fsGetCollection('reservations');
+
+  _reservationCache = [];
+  _reservationByIdMap = {};
+  _reservationsByLineUserIdMap = {};
+  _reservationsByDateMap = {};
+
+  for (var i = 0; i < docs.length; i++) {
+    var obj = docs[i];
+    if (!obj.id) continue;
+
+    _reservationCache.push(obj);
+    _reservationByIdMap[obj.id] = obj;
+
+    var lineKey = String(obj.line_display_name || '');
+    if (!_reservationsByLineUserIdMap[lineKey]) {
+      _reservationsByLineUserIdMap[lineKey] = [];
+    }
+    _reservationsByLineUserIdMap[lineKey].push(obj);
+
+    var dateKey = obj.reserved_date || '';
+    if (!_reservationsByDateMap[dateKey]) {
+      _reservationsByDateMap[dateKey] = [];
+    }
+    _reservationsByDateMap[dateKey].push(obj);
+  }
+
+  // Save to CacheService
+  try {
+    var toCache = JSON.stringify({
+      cache: _reservationCache,
+      byId: _reservationByIdMap,
+      byLineId: _reservationsByLineUserIdMap,
+      byDate: _reservationsByDateMap
+    });
+    if (toCache.length < 90000) {
+      CacheService.getScriptCache().put(_CACHE_KEY, toCache, _CACHE_TTL_SECONDS);
+    }
+  } catch (e) { /* noop */ }
+}
+
+function _ensureReservationCacheFromSheet() {
   var sheet = getReservationsSheet();
   var data = sheet.getDataRange().getValues();
 
@@ -241,6 +298,9 @@ function createSheetWithHeaders(ss, sheetName, headers) {
  * Generate unique reservation ID
  */
 function generateReservationId() {
+  if (isFirebaseConfigured()) {
+    return 'R' + Utilities.getUuid().replace(/-/g, '').substring(0, 8).toUpperCase();
+  }
   var sheet = getReservationsSheet();
   var lastRow = sheet.getLastRow();
 
@@ -259,48 +319,79 @@ function generateReservationId() {
  * Create new reservation
  */
 function createReservation(reservationData) {
-  var sheet = getReservationsSheet();
   var reservationId = generateReservationId();
   var now = new Date();
 
-  var row = [
-    reservationId,
-    now,
-    reservationData.patient_name || '',
-    reservationData.phone || '',
-    reservationData.line_display_name || '',
-    reservationData.visit_type || 'First',
-    reservationData.menu_type || '',
-    reservationData.reserved_date || '',
-    reservationData.reserved_start || '',
-    reservationData.reserved_end || '',
-    reservationData.status || RESERVATION_STATUS.PENDING,
-    reservationData.deposit_required || 'N',
-    getDepositAmount(),
-    reservationData.deposit_status || DEPOSIT_STATUS.UNPAID,
-    'N',
-    '',
-    '',
-    'N',
-    'N',
-    getAverageUnitPrice(),
-    reservationData.notes || ''
-  ];
+  var reservation = {
+    id: reservationId,
+    created_at: now.toISOString(),
+    patient_name: reservationData.patient_name || '',
+    phone: reservationData.phone || '',
+    line_display_name: reservationData.line_display_name || '',
+    visit_type: reservationData.visit_type || 'First',
+    menu_type: reservationData.menu_type || '',
+    reserved_date: reservationData.reserved_date || '',
+    reserved_start: reservationData.reserved_start || '',
+    reserved_end: reservationData.reserved_end || '',
+    status: reservationData.status || RESERVATION_STATUS.PENDING,
+    deposit_required: reservationData.deposit_required || 'N',
+    deposit_amount: getDepositAmount(),
+    deposit_status: reservationData.deposit_status || DEPOSIT_STATUS.UNPAID,
+    reminder_sent: 'N',
+    reminder_response: '',
+    cancel_time: '',
+    resale_notified: 'N',
+    resale_success: 'N',
+    average_unit_price: getAverageUnitPrice(),
+    notes: reservationData.notes || '',
+    payment_intent_id: '',
+    follow_up_sent: 'N'
+  };
 
-  sheet.appendRow(row);
+  if (isFirebaseConfigured()) {
+    fsSet('reservations', reservationId, reservation);
+  } else {
+    var row = [
+      reservationId, now,
+      reservation.patient_name, reservation.phone, reservation.line_display_name,
+      reservation.visit_type, reservation.menu_type,
+      reservation.reserved_date, reservation.reserved_start, reservation.reserved_end,
+      reservation.status, reservation.deposit_required, reservation.deposit_amount,
+      reservation.deposit_status, reservation.reminder_sent, reservation.reminder_response,
+      reservation.cancel_time, reservation.resale_notified, reservation.resale_success,
+      reservation.average_unit_price, reservation.notes, '', 'N'
+    ];
+    var sheet = getReservationsSheet();
+    sheet.appendRow(row);
+  }
+
   _invalidateReservationCache();
   appendLogRow('INFO', 'Created reservation: ' + reservationId);
 
-  return {
-    id: reservationId,
-    row_number: sheet.getLastRow()
-  };
+  return { id: reservationId, row_number: 0 };
 }
 
 /**
- * Update reservation by ID — batch writes all fields in a single setValues call
+ * Update reservation by ID — batch writes all fields
  */
 function updateReservation(reservationId, updates) {
+  if (isFirebaseConfigured()) {
+    var doc = fsGet('reservations', reservationId);
+    if (!doc || !doc.id) {
+      throw new Error('Reservation not found: ' + reservationId);
+    }
+    // Convert Date objects to ISO strings for Firestore
+    var cleaned = {};
+    for (var key in updates) {
+      cleaned[key] = updates[key] instanceof Date ? updates[key].toISOString() : updates[key];
+    }
+    fsUpdate('reservations', reservationId, cleaned);
+    appendLogRow('INFO', 'Updated reservation (FS): ' + reservationId);
+    _invalidateReservationCache();
+    return;
+  }
+
+  // Sheet fallback
   _ensureReservationCache();
   var cached = _reservationByIdMap[reservationId];
   if (!cached) {
@@ -310,7 +401,6 @@ function updateReservation(reservationId, updates) {
   var rowIndex = cached.row_number;
   var sheet = getReservationsSheet();
 
-  // Batch: collect all updates into a single range write
   var minCol = Infinity;
   var maxCol = 0;
   var colValues = {};
@@ -334,7 +424,7 @@ function updateReservation(reservationId, updates) {
     sheet.getRange(rowIndex, minCol, 1, width).setValues([row]);
   }
 
-  appendLogRow('INFO', 'Updated reservation: ' + reservationId);
+  appendLogRow('INFO', 'Updated reservation (Sheet): ' + reservationId);
   _invalidateReservationCache();
 }
 

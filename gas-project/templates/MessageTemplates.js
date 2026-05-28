@@ -323,5 +323,16 @@ var MessageTemplates = {
         {label: t('treatment_auto.contact', loc), text: t('treatment_auto.contact', loc)}
       ]
     };
+  },
+
+  getPostVisitFollowUpMessage: function(locale) {
+    var loc = locale || 'ja';
+    return {
+      text: t('followup.title', loc) + '\n\n' + t('followup.next_booking', loc),
+      quickReplies: [
+        {label: t('welcome.reserve', loc), text: t('welcome.reserve', loc)},
+        {label: t('followup.contact', loc), text: 'お問い合わせ'}
+      ]
+    };
   }
 };

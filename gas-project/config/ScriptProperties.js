@@ -47,7 +47,15 @@ var PROPERTY_KEYS = {
 
   // Stripe redirect URLs
   STRIPE_SUCCESS_URL: 'STRIPE_SUCCESS_URL',
-  STRIPE_CANCEL_URL: 'STRIPE_CANCEL_URL'
+  STRIPE_CANCEL_URL: 'STRIPE_CANCEL_URL',
+
+  // Firebase / Firestore
+  FIREBASE_PROJECT_ID: 'FIREBASE_PROJECT_ID',
+  FIREBASE_CLIENT_EMAIL: 'FIREBASE_CLIENT_EMAIL',
+  FIREBASE_PRIVATE_KEY: 'FIREBASE_PRIVATE_KEY',
+
+  // Follow-up settings
+  FOLLOW_UP_HOURS_AFTER: 'FOLLOW_UP_HOURS_AFTER'
 };
 
 /**
@@ -234,6 +242,41 @@ function getStripeCancelUrl() {
 }
 
 /**
+ * Get Firebase project ID
+ */
+function getFirebaseProjectId() {
+  return getProperty(PROPERTY_KEYS.FIREBASE_PROJECT_ID, '');
+}
+
+/**
+ * Get Firebase client email
+ */
+function getFirebaseClientEmail() {
+  return getProperty(PROPERTY_KEYS.FIREBASE_CLIENT_EMAIL, '');
+}
+
+/**
+ * Get Firebase private key
+ */
+function getFirebasePrivateKey() {
+  return getProperty(PROPERTY_KEYS.FIREBASE_PRIVATE_KEY, '');
+}
+
+/**
+ * Check if Firebase is configured
+ */
+function isFirebaseConfigured() {
+  return !!(getFirebaseProjectId() && getFirebaseClientEmail() && getFirebasePrivateKey());
+}
+
+/**
+ * Get follow-up hours after visit (default: 24)
+ */
+function getFollowUpHoursAfter() {
+  return parseInt(getProperty(PROPERTY_KEYS.FOLLOW_UP_HOURS_AFTER, '24'));
+}
+
+/**
  * Initialize default properties if not set
  */
 function initializeDefaultProperties() {
@@ -249,7 +292,8 @@ function initializeDefaultProperties() {
     MAX_CONCURRENT_BOOKINGS: '2',
     MAX_RESERVATIONS_PER_USER: '3',
     BUSINESS_START_TIME: '09:00',
-    BUSINESS_END_TIME: '18:00'
+    BUSINESS_END_TIME: '18:00',
+    FOLLOW_UP_HOURS_AFTER: '24'
   };
 
   var properties = PropertiesService.getScriptProperties();

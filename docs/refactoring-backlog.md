@@ -1,9 +1,21 @@
 # reserve-optimizer リファクタリングバックログ
 
-> 最終更新: 2026-05-10
+> 最終更新: 2026-05-28
 > 前提: 216ファイル評価のコードレビュー結果に基づく
 > 基準: P0 = 影響大/工数小、P1 = 影響大/工数中、P2 = 影響中/工数中
 > 環境制約: GAS（clasp、ESモジュール不可、var/functionベース）
+
+## v3レビュー対応（2026-05-28）
+
+- [x] **v3-P0: APIエンドポイント無認証修正** — `handlers/WebhookRouter.js`
+  - 問題: `_dispatchApiRequest` が Bearer認証なしでAPI呼び出しを受け付けていた
+  - 修正: `WEB_API_KEY` スクリプトプロパティによるトークン認証を追加
+  - `api_token` フィールドでWorkerから送信、不一致時は401返却
+
+- [x] **v3-P1: checkWaitlistResponses TODOスタブ実装** — `services/ReminderService.js`
+  - 問題: 同日キャンセル後の10分トリガーで起動するが、中身がログ出力のみ
+  - 修正: タイムアウト判定→同一スロット予約確認→次候補通知→last_notified_at更新の完全実装
+  - タイムアウト: 2時間（cancelから2h経過で未予約スロットを次候補に通知）
 
 ## 優先度P0（すぐやる）
 

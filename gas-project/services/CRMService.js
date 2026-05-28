@@ -2,7 +2,7 @@
  * CRM Service - Customer Relationship Management (minimal)
  *
  * Manages customer tags, post-visit followup, and external CRM webhook.
- * Sheet: customers (customer_id = phone)
+ * Firestore-first with Sheet fallback.
  */
 
 // Per-execution cache
@@ -17,6 +17,33 @@ function _ensureCustomerCache() {
   _customerCache = [];
   _customerByIdMap = {};
 
+  if (isFirebaseConfigured()) {
+    try {
+      var docs = fsGetCollection('customers');
+      for (var i = 0; i < docs.length; i++) {
+        var doc = docs[i];
+        if (!doc.customer_id) continue;
+        var customer = {
+          customer_id: doc.customer_id,
+          phone: doc.phone || doc.customer_id,
+          line_user_id: doc.line_user_id || '',
+          name: doc.name || '',
+          visit_count: parseInt(doc.visit_count) || 0,
+          no_show_count: parseInt(doc.no_show_count) || 0,
+          last_visit: doc.last_visit || '',
+          tags: doc.tags || 'new',
+          notes: doc.notes || ''
+        };
+        _customerCache.push(customer);
+        _customerByIdMap[customer.customer_id] = customer;
+      }
+      return;
+    } catch (e) {
+      appendLogRow('WARN', 'Firestore customer load failed, falling back to Sheet: ' + e.message);
+    }
+  }
+
+  // Sheet fallback
   var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.CUSTOMERS);
   if (!sheet) return;
@@ -60,10 +87,6 @@ function _buildCustomer(row) {
 
 /**
  * Get or create customer by phone number
- * @param {string} phone
- * @param {string} [name]
- * @param {string} [lineUserId]
- * @returns {object} customer
  */
 function getOrCreateCustomer(phone, name, lineUserId) {
   _ensureCustomerCache();
@@ -77,7 +100,6 @@ function getOrCreateCustomer(phone, name, lineUserId) {
     return existing;
   }
 
-  // Create new customer
   var customer = {
     customer_id: phone,
     phone: phone,
@@ -105,7 +127,6 @@ function getCustomerByPhone(phone) {
 
 /**
  * Increment visit count and update tags
- * Called when reservation status changes to Visited
  */
 function incrementVisitCount(phone) {
   var customer = getOrCreateCustomer(phone);
@@ -126,7 +147,6 @@ function incrementVisitCount(phone) {
 
 /**
  * Increment no-show count and update tags
- * Called when reservation status changes to NoShow
  */
 function incrementNoShowCount(phone) {
   var customer = getOrCreateCustomer(phone);
@@ -182,7 +202,6 @@ function getCustomerTagLabels(tags, locale) {
 
 /**
  * Send post-visit followup message
- * Called from ReminderService when a Visited reservation is detected
  */
 function sendFollowupMessage(lineUserId, locale) {
   if (!lineUserId || lineUserId === 'WEB') return;
@@ -198,11 +217,8 @@ function sendFollowupMessage(lineUserId, locale) {
 
 /**
  * Check for recently visited reservations and send followups
- * Called from ReminderService periodic check
- * @param {number} [minutesAgo=60] - How far back to look for Visited status
  */
 function processFollowups(minutesAgo) {
-  var cutoff = new Date(Date.now() - (minutesAgo || 60) * 60000);
   var sent = 0;
 
   try {
@@ -218,17 +234,14 @@ function processFollowups(minutesAgo) {
     if (r.status !== RESERVATION_STATUS.VISITED) continue;
     if (r.notes && r.notes.indexOf('followup_sent') >= 0) continue;
 
-    // Check if recently visited (compare date strings as approximation)
     var reservedDate = r.reserved_date;
     if (!reservedDate) continue;
     var today = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy/MM/dd');
     if (reservedDate !== today) continue;
 
-    // Send followup
     var loc = getUserLocale(r.line_display_name);
     sendFollowupMessage(r.line_display_name, loc);
 
-    // Mark as sent in notes
     var newNotes = (r.notes || '') + ',followup_sent';
     updateReservation(r.id, { notes: newNotes });
     sent++;
@@ -242,7 +255,6 @@ function processFollowups(minutesAgo) {
 
 /**
  * Fire external CRM webhook (fire-and-forget)
- * Only fires if CRM_WEBHOOK_URL is configured in ScriptProperties
  */
 function _fireCrmWebhook(eventType, data) {
   var webhookUrl = getProperty('CRM_WEBHOOK_URL');
@@ -268,9 +280,13 @@ function _fireCrmWebhook(eventType, data) {
 }
 
 /**
- * Append customer row to sheet
+ * Append customer row (Firestore or Sheet)
  */
 function _appendCustomerRow(customer) {
+  if (isFirebaseConfigured()) {
+    fsSet('customers', customer.customer_id, customer);
+    return;
+  }
   var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.CUSTOMERS);
   if (!sheet) {
@@ -282,14 +298,25 @@ function _appendCustomerRow(customer) {
     customer.name, customer.visit_count, customer.no_show_count,
     customer.last_visit, customer.tags, customer.notes
   ]);
-  _customerCache = null;
-  _customerByIdMap = null;
 }
 
 /**
- * Update customer row in sheet
+ * Update customer row (Firestore or Sheet)
  */
 function _updateCustomerRow(customer) {
+  if (isFirebaseConfigured()) {
+    fsUpdate('customers', customer.customer_id, {
+      phone: customer.phone,
+      line_user_id: customer.line_user_id,
+      name: customer.name,
+      visit_count: customer.visit_count,
+      no_show_count: customer.no_show_count,
+      last_visit: customer.last_visit,
+      tags: customer.tags,
+      notes: customer.notes
+    });
+    return;
+  }
   var ss = _getCachedSpreadsheet();
   var sheet = ss.getSheetByName(SHEET_NAMES.CUSTOMERS);
   if (!sheet) return;

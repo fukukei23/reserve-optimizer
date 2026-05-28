@@ -445,5 +445,19 @@ var MESSAGES = {
   'treatment_auto.no_time': {
     ja: '現在施術中です。\n終わり次第ご連絡いたします。\n\n予約をご希望の場合は「予約する」からどうぞ。',
     en: 'We are currently in treatment.\nWe will contact you when finished.\n\nTo book, select "Book an appointment".'
+  },
+
+  // --- Post-Visit Follow-up ---
+  'followup.title': {
+    ja: '本日はご来院いただき、ありがとうございました！\nお身体の調子はいかがですか？',
+    en: 'Thank you for visiting us today!\nHow are you feeling?'
+  },
+  'followup.next_booking': {
+    ja: '次回のご予約は「予約する」からいつでもどうぞ。',
+    en: 'Book your next visit anytime from "Book".'
+  },
+  'followup.contact': {
+    ja: 'お問い合わせ',
+    en: 'Contact us'
   }
 };

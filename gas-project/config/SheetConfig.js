@@ -36,7 +36,8 @@ var RESERVATIONS_COLUMNS = {
   RESALE_SUCCESS: 19,
   AVERAGE_UNIT_PRICE: 20,
   NOTES: 21,
-  PAYMENT_INTENT_ID: 22
+  PAYMENT_INTENT_ID: 22,
+  FOLLOW_UP_SENT: 23
 };
 
 // Reservations sheet headers
@@ -45,7 +46,8 @@ var RESERVATIONS_HEADERS = [
   'visit_type', 'menu_type', 'reserved_date', 'reserved_start', 'reserved_end',
   'status', 'deposit_required', 'deposit_amount', 'deposit_status',
   'reminder_sent', 'reminder_response', 'cancel_time', 'resale_notified',
-  'resale_success', 'average_unit_price', 'notes', 'payment_intent_id'
+  'resale_success', 'average_unit_price', 'notes', 'payment_intent_id',
+  'follow_up_sent'
 ];
 
 // Waitlist sheet column indices (1-based)

@@ -7,6 +7,7 @@ export interface Env {
   LINE_CHANNEL_SECRET: string;
   STRIPE_WEBHOOK_SECRET: string;
   GAS_WEBAPP_URL: string;
+  WEB_API_KEY: string;
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";
@@ -225,10 +226,14 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
   console.log("[GAS] Source:", source);
   console.log("[GAS] Body length:", body.length);
 
-  // body を URL エンコードしてクエリパラメータに含める
-  const encodedBody = encodeURIComponent(body);
+  // Trim unnecessary fields to keep URL under ~2000 chars
+  const slimBody = slimForGAS(body, source);
+  const encodedBody = encodeURIComponent(slimBody);
   const gasUrl = `${env.GAS_WEBAPP_URL}?x-verified=true&x-source=${source}&x-body=${encodedBody}`;
   console.log("[GAS] Full URL length:", gasUrl.length);
+  if (gasUrl.length > 2000) {
+    console.warn("[GAS] URL exceeds 2000 chars:", gasUrl.length);
+  }
 
   let response = await fetch(gasUrl, {
     method: "GET",
@@ -262,6 +267,34 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
     status: response.status,
     headers: response.headers,
   });
+}
+
+/**
+ * Strip unnecessary fields from webhook body to keep URL under ~2000 chars.
+ * LINE: remove timestamp, webhookEventId, deliveryContext, mode from events
+ * Stripe: remove pending_webhooks, request, livemode from top-level
+ */
+function slimForGAS(body: string, source: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    if (source === "line" && parsed.events) {
+      parsed.events = parsed.events.map((e: any) => ({
+        type: e.type,
+        replyToken: e.replyToken,
+        source: e.source,
+        message: e.message,
+        postback: e.postback,
+      }));
+      parsed.destination = undefined;
+    } else if (source === "stripe") {
+      delete parsed.pending_webhooks;
+      delete parsed.request;
+      delete parsed.livemode;
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return body;
+  }
 }
 
 /**
@@ -311,7 +344,7 @@ async function handleApiAvailability(request: Request, env: Env): Promise<Respon
   }
 
   return forwardToGAS(
-    JSON.stringify({ action: "get_availability", date: body.date }),
+    JSON.stringify({ action: "get_availability", date: body.date, api_token: env.WEB_API_KEY }),
     env,
     "api"
   );
@@ -357,6 +390,7 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
       date: body.date,
       time: body.time,
       treatment: body.treatment,
+      api_token: env.WEB_API_KEY,
     }),
     env,
     "api"

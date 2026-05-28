@@ -154,6 +154,7 @@ global.getUserPrefs = function() { return { language: 'ja', reminder_timing: '08
 global.getReminderHoursBefore = function() { return 24; };
 global.getNoShowDepositAmount = function() { return 3000; };
 global.getNoShowThreshold = function() { return 3; };
+global.isFirebaseConfigured = function() { return false; };
 
 global.RESERVATION_STATUS = { PENDING: 'Pending', CONFIRMED: 'Confirmed', CANCELLED: 'Cancelled', NO_SHOW: 'NoShow', VISITED: 'Visited' };
 global.DEPOSIT_STATUS = { UNPAID: 'Unpaid', PAID: 'Paid', REFUNDED: 'Refunded' };

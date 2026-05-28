@@ -373,104 +373,123 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
   // Send processing indicator (replyToken is one-time use, so push for results after this)
   sendLineReply(replyToken, '予約を作成中です...');
 
-  // Final conflict check with LockService (race condition guard)
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000); // Wait up to 10 seconds for the lock
-  try {
-    // Re-check booked slots under lock
-    _invalidateReservationCache();
-
-    // Duplicate check under lock (prevents race condition)
-    var lockedExisting = getReservationsByLineUserId(userId);
-    for (var di = 0; di < lockedExisting.length; di++) {
-      var er = lockedExisting[di];
-      if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
-        clearUserState(userId);
-        sendLinePushQuickReply(userId, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
-          { label: '予約する', text: '予約する' },
-          { label: 'やめる', text: 'やめる' }
-        ]);
-        return;
-      }
-    }
-
-    var bookedSlotsFinal = getBookedSlotsForDate(tempData.reserved_date);
-    var bookedCountFinal = bookedSlotsFinal[tempData.reserved_start] || 0;
-    if (bookedCountFinal >= getMaxConcurrentBookings()) {
+  // Duplicate check before acquiring lock
+  var lockedExisting = getReservationsByLineUserId(userId);
+  for (var di = 0; di < lockedExisting.length; di++) {
+    var er = lockedExisting[di];
+    if (er.reserved_date === tempData.reserved_date && er.reserved_start === tempData.reserved_start) {
       clearUserState(userId);
-      sendLinePushQuickReply(userId, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
+      sendLinePushQuickReply(userId, '同じ日時に既に予約があります。\n\n' + er.reserved_date + ' ' + er.reserved_start + ' - ' + (er.reserved_end || '') + '\n\n別の日時を選択してください。', [
         { label: '予約する', text: '予約する' },
         { label: 'やめる', text: 'やめる' }
       ]);
       return;
     }
+  }
 
-    var profile = getLineProfile(userId);
-    if (profile) {
-      tempData.line_display_name = profile.userId;
-    }
+  var profile = getLineProfile(userId);
+  if (profile) {
+    tempData.line_display_name = profile.userId;
+  }
 
-    // Embed staff info in notes for staff-specific booking lookup
-    if (tempData.staff_id) {
-      tempData.notes = (tempData.notes || '') + 'staff:' + tempData.staff_id;
-    }
+  // Embed staff info in notes for staff-specific booking lookup
+  if (tempData.staff_id) {
+    tempData.notes = (tempData.notes || '') + 'staff:' + tempData.staff_id;
+  }
 
-    var result = createReservation(tempData);
+  // Create reservation with lock (shared function)
+  var lockResult = _createReservationWithLock(tempData);
 
-    // Post-creation hooks (calendar sync, audit log)
-    try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
-      appendLogRow('WARN', 'Post-create hook error: ' + hookErr.message);
-    }
-
-    var paymentLink = null;
-    try {
-      paymentLink = createPaymentLink(
-        result.id,
-        tempData.patient_name,
-        getDepositAmount()
-      );
-    } catch (e) {
-      appendLogRow('ERROR', 'createPaymentLink error: ' + e.message);
-    }
-
-    if (paymentLink) {
-      setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
-        reservation_id: result.id,
-        payment_link: paymentLink
-      });
-      var message = MessageTemplates.getDepositRequestMessage(
-        result.id,
-        tempData.reserved_date,
-        tempData.reserved_start,
-        tempData.menu_type,
-        paymentLink,
-        getUserLocale(userId)
-      );
-      sendLinePushQuickReply(userId, message, [
-        { label: '支払完了', text: '支払完了' },
+  if (!lockResult.ok) {
+    clearUserState(userId);
+    if (lockResult.reason === 'SLOT_FULL') {
+      sendLinePushQuickReply(userId, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
+        { label: '予約する', text: '予約する' },
         { label: 'やめる', text: 'やめる' }
       ]);
     } else {
-      // Keep state so user can retry from handleAwaitingPayment
-      setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
-        reservation_id: result.id,
-        payment_link: null
-      });
-      sendLinePushQuickReply(userId, '決済リンクの作成に失敗しました。下のボタンで再試行するか、管理者にお問い合わせください。', [
-        { label: '再試行', text: '再試行' },
-        { label: 'お問い合わせ', text: 'お問い合わせ' },
-        { label: 'やめる', text: 'やめる' }
+      sendLinePushQuickReply(userId, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
+        { label: '予約する', text: '予約する' },
+        { label: 'お問い合わせ', text: 'お問い合わせ' }
       ]);
     }
+    return;
+  }
+
+  var result = lockResult.reservation;
+
+  // Post-creation hooks (calendar sync, audit log)
+  try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
+    appendLogRow('WARN', 'Post-create hook error: ' + hookErr.message);
+  }
+
+  var paymentLink = null;
+  try {
+    paymentLink = createPaymentLink(
+      result.id,
+      tempData.patient_name,
+      getDepositAmount()
+    );
   } catch (e) {
-    appendLogRow('ERROR', 'createReservationAndGoToPayment lock error: ' + e.message);
-    clearUserState(userId);
-    sendLinePushQuickReply(userId, '予約の作成中にエラーが発生しました。\n\n時間をおいて再度お試しいただくか、管理者にお問い合わせください。', [
-      { label: '予約する', text: '予約する' },
-      { label: 'お問い合わせ', text: 'お問い合わせ' }
+    appendLogRow('ERROR', 'createPaymentLink error: ' + e.message);
+  }
+
+  if (paymentLink) {
+    setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
+      reservation_id: result.id,
+      payment_link: paymentLink
+    });
+    var message = MessageTemplates.getDepositRequestMessage(
+      result.id,
+      tempData.reserved_date,
+      tempData.reserved_start,
+      tempData.menu_type,
+      paymentLink,
+      getUserLocale(userId)
+    );
+    sendLinePushQuickReply(userId, message, [
+      { label: '支払完了', text: '支払完了' },
+      { label: 'やめる', text: 'やめる' }
     ]);
+  } else {
+    setUserState(userId, USER_STATES.AWAITING_PAYMENT, {
+      reservation_id: result.id,
+      payment_link: null
+    });
+    sendLinePushQuickReply(userId, '決済リンクの作成に失敗しました。下のボタンで再試行するか、管理者にお問い合わせください。', [
+      { label: '再試行', text: '再試行' },
+      { label: 'お問い合わせ', text: 'お問い合わせ' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+  }
+}
+
+/**
+ * Create reservation with LockService race condition guard.
+ * Shared by LINE Bot flow and Web API flow.
+ *
+ * @param {Object} tempData - Reservation fields (patient_name, phone, reserved_date, etc.)
+ * @returns {Object} { ok: true, reservation: {...} } or { ok: false, reason: 'SLOT_FULL'|'DUPLICATE'|error_msg }
+ */
+function _createReservationWithLock(tempData) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    _invalidateReservationCache();
+
+    var bookedSlots = getBookedSlotsForDate(tempData.reserved_date);
+    var bookedCount = bookedSlots[tempData.reserved_start] || 0;
+    if (bookedCount >= getMaxConcurrentBookings()) {
+      return { ok: false, reason: 'SLOT_FULL' };
+    }
+
+    var result = createReservation(tempData);
+    return { ok: true, reservation: result };
+  } catch (e) {
+    appendLogRow('ERROR', '_createReservationWithLock: ' + e.message);
+    return { ok: false, reason: e.message };
   } finally {
-    try { lock.releaseLock(); } catch (le) { /* already released */ }
+    try { lock.releaseLock(); } catch (le) { /* noop */ }
   }
 }
 
