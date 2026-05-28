@@ -48,7 +48,8 @@ function createAllSheets() {
   var sheetNames = [
     SHEET_NAMES.RESERVATIONS,
     SHEET_NAMES.WAITLIST,
-    SHEET_NAMES.WEEKLY_SUMMARY
+    SHEET_NAMES.WEEKLY_SUMMARY,
+    SHEET_NAMES.TICKETS
   ];
 
   for (var i = 0; i < sheetNames.length; i++) {
@@ -64,6 +65,9 @@ function createAllSheets() {
           break;
         case SHEET_NAMES.WEEKLY_SUMMARY:
           sheet = createSheetWithHeaders(ss, SHEET_NAMES.WEEKLY_SUMMARY, WEEKLY_SUMMARY_HEADERS);
+          break;
+        case SHEET_NAMES.TICKETS:
+          sheet = createSheetWithHeaders(ss, SHEET_NAMES.TICKETS, TICKETS_HEADERS);
           break;
       }
       Logger.log('Created sheet: ' + sheetNames[i]);
@@ -142,7 +146,14 @@ function setupTriggers() {
     .everyMinutes(60)
     .create();
 
-  Logger.log('Created ' + (4 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
+  // Trigger 8: Check expired tickets (daily at 9am)
+  ScriptApp.newTrigger('checkExpiredTickets')
+    .timeBased()
+    .everyDays(1)
+    .atHour(9)
+    .create();
+
+  Logger.log('Created ' + (5 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
 }
 
 /**

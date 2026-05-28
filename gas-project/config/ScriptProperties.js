@@ -55,7 +55,12 @@ var PROPERTY_KEYS = {
   FIREBASE_PRIVATE_KEY: 'FIREBASE_PRIVATE_KEY',
 
   // Follow-up settings
-  FOLLOW_UP_HOURS_AFTER: 'FOLLOW_UP_HOURS_AFTER'
+  FOLLOW_UP_HOURS_AFTER: 'FOLLOW_UP_HOURS_AFTER',
+
+  // Ticket package settings
+  TICKET_EXPIRY_DAYS: 'TICKET_EXPIRY_DAYS',
+  TICKET_5_PRICE: 'TICKET_5_PRICE',
+  TICKET_10_PRICE: 'TICKET_10_PRICE'
 };
 
 /**
@@ -293,7 +298,10 @@ function initializeDefaultProperties() {
     MAX_RESERVATIONS_PER_USER: '3',
     BUSINESS_START_TIME: '09:00',
     BUSINESS_END_TIME: '18:00',
-    FOLLOW_UP_HOURS_AFTER: '24'
+    FOLLOW_UP_HOURS_AFTER: '24',
+    TICKET_EXPIRY_DAYS: '180',
+    TICKET_5_PRICE: '25000',
+    TICKET_10_PRICE: '45000'
   };
 
   var properties = PropertiesService.getScriptProperties();

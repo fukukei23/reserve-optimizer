@@ -423,6 +423,28 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     appendLogRow('WARN', 'Post-create hook error: ' + hookErr.message);
   }
 
+  // Check for active ticket — skip deposit if available
+  var activeTicket = getActiveTicketByUser(userId);
+  if (activeTicket) {
+    updateReservation(result.id, {
+      status: RESERVATION_STATUS.CONFIRMED,
+      deposit_status: DEPOSIT_STATUS.APPLIED,
+      used_ticket: activeTicket.ticket_id
+    });
+    deductSession(activeTicket.ticket_id);
+
+    var ticketConfirmMsg = '回数券で予約が確定しました！\n\n' +
+      '残り回数: ' + getSessionCountForUser(userId) + '回\n\n' +
+      result.id + '\n' +
+      tempData.reserved_date + ' ' + tempData.reserved_start;
+    clearUserState(userId);
+    sendLinePushQuickReply(userId, ticketConfirmMsg, [
+      { label: '予約する', text: '予約する' },
+      { label: 'メニューに戻る', text: 'メニュー' }
+    ]);
+    return;
+  }
+
   var paymentLink = null;
   try {
     paymentLink = createPaymentLink(

@@ -193,6 +193,19 @@ function handleMessage(message, replyToken, userId) {
     }
   }
 
+  // Handle ticket purchase (TICKET_BUY:5 or TICKET_BUY:10)
+  if (text.indexOf('TICKET_BUY:') === 0) {
+    var ticketPkg = text.substring('TICKET_BUY:'.length);
+    handleTicketPurchase(replyToken, userId, ticketPkg);
+    return;
+  }
+
+  // Handle ticket balance check
+  if (text === 'TICKET_BALANCE') {
+    handleTicketBalance(replyToken, userId);
+    return;
+  }
+
   // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
   if (text === '営業時間・アクセス') {
     sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage(_locale));
@@ -295,6 +308,9 @@ function handleMessage(message, replyToken, userId) {
     case USER_STATES.AWAITING_WAITLIST_TIME:
       handleAwaitingWaitlistTime(text, replyToken, userId);
       break;
+    case USER_STATES.AWAITING_TICKET_SELECT:
+      handleAwaitingTicketSelect(text, replyToken, userId);
+      break;
     default:
       sendLineReply(replyToken, t('router.can_help', _locale));
   }
@@ -378,6 +394,7 @@ var _KEYWORD_MAP = {
   '変更したい': 'change', 'キャンセルしたい': 'change',
   '当日空き枠通知を受け取る': 'waitlist', '空き枠通知': 'waitlist',
   'キャンセル待ち': 'waitlist', '空き通知': 'waitlist', 'ウェイティング': 'waitlist',
+  '回数券': 'ticket', 'パック': 'ticket', 'パッケージ': 'ticket',
   '営業時間・アクセス': 'hours', '営業時間': 'hours', 'アクセス': 'hours',
   '住所': 'hours', 'どこ': 'hours', '場所': 'hours', '何時': 'hours', '時間': 'hours',
   'お問い合わせ': 'contact', 'お問合せ': 'contact',
@@ -388,6 +405,7 @@ var _KEYWORD_MAP = {
   'change': 'change', 'cancel': 'change',
   'modify': 'change', 'reschedule': 'change',
   'waitlist': 'waitlist', 'notify': 'waitlist', 'alert': 'waitlist',
+  'ticket': 'ticket', 'package': 'ticket', 'pack': 'ticket',
   'hours': 'hours', 'location': 'hours', 'address': 'hours',
   'when': 'hours', 'where': 'hours',
   'contact': 'contact', 'phone': 'contact', 'call': 'contact'
@@ -431,6 +449,8 @@ function handleIdleState(text, replyToken, userId) {
     handleChangeFlow(replyToken, userId);
   } else if (action === 'waitlist') {
     handleWaitlistFlow(replyToken, userId);
+  } else if (action === 'ticket') {
+    handleTicketFlow(replyToken, userId);
   } else if (action === 'hours') {
     sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage(_locale));
   } else if (action === 'contact') {
@@ -523,5 +543,83 @@ function handleFollow(userId, replyToken) {
  */
 function handleUnfollow(userId) {
   appendLogRow('INFO', 'User unfollowed: ' + userId);
+  clearUserState(userId);
+}
+
+// --- Ticket flow handlers ---
+
+/**
+ * Start ticket purchase flow
+ */
+function handleTicketFlow(replyToken, userId) {
+  var _locale = getUserLocale(userId);
+  var msgData = MessageTemplates.getTicketSelectMessage(_locale);
+  sendQuickReply(replyToken, msgData.text, msgData.quickReplies);
+}
+
+/**
+ * Handle awaiting ticket package selection
+ */
+function handleAwaitingTicketSelect(text, replyToken, userId) {
+  if (text === 'TICKET_BALANCE') {
+    handleTicketBalance(replyToken, userId);
+    return;
+  }
+  if (text === 'やめる') {
+    clearUserState(userId);
+    sendLineReply(replyToken, t('router.cancelled', getUserLocale(userId)));
+    return;
+  }
+  // Redirect to purchase handler
+  if (text.indexOf('TICKET_BUY:') === 0) {
+    var pkg = text.substring('TICKET_BUY:'.length);
+    handleTicketPurchase(replyToken, userId, pkg);
+    return;
+  }
+  // Unknown input — show menu again
+  handleTicketFlow(replyToken, userId);
+}
+
+/**
+ * Handle ticket package purchase
+ */
+function handleTicketPurchase(replyToken, userId, packageType) {
+  var _locale = getUserLocale(userId);
+  var pkg = TICKET_PACKAGES[packageType];
+  if (!pkg) {
+    handleTicketFlow(replyToken, userId);
+    return;
+  }
+
+  sendLineReply(replyToken, t('ticket.creating', _locale));
+
+  var paymentLink = createTicketPaymentLink(packageType, userId);
+  if (paymentLink) {
+    var message = MessageTemplates.getTicketPurchaseLinkMessage(paymentLink, _locale);
+    sendLinePushQuickReply(userId, message, [
+      { label: '支払完了', text: '支払完了' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+  } else {
+    sendLinePushQuickReply(userId, t('ticket.link_failed', _locale), [
+      { label: '回数券', text: '回数券' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+  }
+  clearUserState(userId);
+}
+
+/**
+ * Handle ticket balance check
+ */
+function handleTicketBalance(replyToken, userId) {
+  var _locale = getUserLocale(userId);
+  var ticket = getActiveTicketByUser(userId);
+  var message = MessageTemplates.getTicketBalanceMessage(ticket, _locale);
+  sendQuickReply(replyToken, message, [
+    { label: t('welcome.reserve', _locale), text: t('welcome.reserve', _locale) },
+    { label: '回数券', text: '回数券' },
+    { label: 'やめる', text: 'やめる' }
+  ]);
   clearUserState(userId);
 }

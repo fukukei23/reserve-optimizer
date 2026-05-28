@@ -334,5 +334,40 @@ var MessageTemplates = {
         {label: t('followup.contact', loc), text: 'お問い合わせ'}
       ]
     };
+  },
+
+  getTicketSelectMessage: function(locale) {
+    var loc = locale || 'ja';
+    return {
+      text: t('ticket.select_package', loc),
+      quickReplies: [
+        {label: t('ticket.package_5', loc), text: 'TICKET_BUY:5'},
+        {label: t('ticket.package_10', loc), text: 'TICKET_BUY:10'},
+        {label: t('ticket.check_balance', loc), text: 'TICKET_BALANCE'},
+        {label: 'やめる', text: 'やめる'}
+      ]
+    };
+  },
+
+  getTicketPurchaseLinkMessage: function(paymentLink, locale) {
+    var loc = locale || 'ja';
+    return t('ticket.purchase_link', loc) + paymentLink;
+  },
+
+  getTicketConfirmedMessage: function(ticketId, packageType, sessions, expiry, locale) {
+    var loc = locale || 'ja';
+    var pkg = TICKET_PACKAGES[packageType];
+    var label = pkg ? pkg.label : packageType;
+    return tf('ticket.confirmed', null, loc) +
+      'ID: ' + ticketId + '\n' +
+      label + ' (' + sessions + '回)\n' +
+      '有効期限: ' + expiry + '\n\n' +
+      t('welcome.reserve', loc) + 'からご予約いただけます。';
+  },
+
+  getTicketBalanceMessage: function(ticket, locale) {
+    var loc = locale || 'ja';
+    if (!ticket) return t('ticket.no_active', loc);
+    return t('ticket.balance_title', loc) + getTicketStatusMessage(ticket.ticket_id, loc);
   }
 };

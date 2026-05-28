@@ -133,7 +133,17 @@ function handleRefund(charge) {
  * @param {object} session - Stripe checkout session object
  */
 function handleCheckoutSessionCompleted(session) {
-  var reservationId = session.metadata ? session.metadata.reservation_id : null;
+  var metadata = session.metadata || {};
+  var type = metadata.type || 'deposit';
+
+  // Ticket purchase
+  if (type === 'ticket') {
+    handleTicketCheckoutCompleted(session, metadata);
+    return;
+  }
+
+  // Reservation deposit (default)
+  var reservationId = metadata.reservation_id;
 
   if (!reservationId) {
     appendLogRow('WARN', '[handleCheckoutSessionCompleted] No reservation_id in session metadata');
@@ -174,4 +184,36 @@ function notifyReservationAdmin(subject, reservation) {
   if (adminUserId) {
     sendLinePush(adminUserId, adminMessage);
   }
+}
+
+/**
+ * Handle ticket purchase checkout completion
+ */
+function handleTicketCheckoutCompleted(session, metadata) {
+  var lineUserId = metadata.line_user_id;
+  var packageType = metadata.package_type;
+
+  if (!lineUserId || !packageType) {
+    appendLogRow('ERROR', '[handleTicketCheckoutCompleted] Missing metadata: line_user_id=' + lineUserId + ' package_type=' + packageType);
+    return;
+  }
+
+  var ticket = createTicket({
+    line_user_id: lineUserId,
+    package_type: packageType,
+    stripe_session_id: session.id || '',
+    stripe_payment_intent: session.payment_intent || '',
+    notes: 'Purchased via Stripe'
+  });
+
+  var locale = 'ja';
+  var confirmMsg = MessageTemplates.getTicketConfirmedMessage(
+    ticket.ticket_id, packageType, ticket.total_sessions, ticket.expiry_date, locale
+  );
+  sendLinePushQuickReply(lineUserId, confirmMsg, [
+    { label: t('welcome.reserve', locale), text: t('welcome.reserve', locale) },
+    { label: '回数券', text: '回数券' }
+  ]);
+
+  appendLogRow('INFO', '[handleTicketCheckoutCompleted] Ticket created: ' + ticket.ticket_id + ' for user: ' + lineUserId);
 }

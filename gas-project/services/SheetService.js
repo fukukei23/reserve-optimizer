@@ -54,6 +54,7 @@ function _buildReservationObj(row, i) {
     notes: row[20],
     payment_intent_id: row[21] || '',
     follow_up_sent: row[22] || 'N',
+    used_ticket: row[23] || '',
     row_number: i + 1
   };
 }
@@ -261,6 +262,18 @@ function getWeeklySummarySheet() {
 }
 
 /**
+ * Get tickets sheet
+ */
+function getTicketsSheet() {
+  var ss = _getCachedSpreadsheet();
+  var sheet = ss.getSheetByName(SHEET_NAMES.TICKETS);
+  if (!sheet) {
+    sheet = createSheetWithHeaders(ss, SHEET_NAMES.TICKETS, TICKETS_HEADERS);
+  }
+  return sheet;
+}
+
+/**
  * Get log sheet (creates with headers if missing)
  */
 function getLogSheet() {
@@ -345,7 +358,8 @@ function createReservation(reservationData) {
     average_unit_price: getAverageUnitPrice(),
     notes: reservationData.notes || '',
     payment_intent_id: '',
-    follow_up_sent: 'N'
+    follow_up_sent: 'N',
+    used_ticket: ''
   };
 
   if (isFirebaseConfigured()) {
@@ -359,7 +373,7 @@ function createReservation(reservationData) {
       reservation.status, reservation.deposit_required, reservation.deposit_amount,
       reservation.deposit_status, reservation.reminder_sent, reservation.reminder_response,
       reservation.cancel_time, reservation.resale_notified, reservation.resale_success,
-      reservation.average_unit_price, reservation.notes, '', 'N'
+      reservation.average_unit_price, reservation.notes, '', 'N', ''
     ];
     var sheet = getReservationsSheet();
     sheet.appendRow(row);

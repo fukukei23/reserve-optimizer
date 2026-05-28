@@ -459,5 +459,55 @@ var MESSAGES = {
   'followup.contact': {
     ja: 'お問い合わせ',
     en: 'Contact us'
+  },
+
+  // --- Ticket Packages ---
+  'ticket.select_package': {
+    ja: '回数券をご購入いただけます。\n\n回数券をご利用の場合、予約時のデポジットが不要になります。',
+    en: 'Session packages are available.\n\nWith a package, no deposit is required for bookings.'
+  },
+  'ticket.package_5': {
+    ja: '5回券（25,000円）',
+    en: '5-session pack (25,000 yen)'
+  },
+  'ticket.package_10': {
+    ja: '10回券（45,000円）',
+    en: '10-session pack (45,000 yen)'
+  },
+  'ticket.check_balance': {
+    ja: '残回数確認',
+    en: 'Check balance'
+  },
+  'ticket.creating': {
+    ja: '決済リンクを作成中です...',
+    en: 'Creating payment link...'
+  },
+  'ticket.purchase_link': {
+    ja: '以下のリンクからお支払いください。\n決済完了後、自動的に回数券が有効になります。\n\n',
+    en: 'Please pay from the link below.\nYour package will be activated automatically after payment.\n\n'
+  },
+  'ticket.link_failed': {
+    ja: '決済リンクの作成に失敗しました。時間をおいて再度お試しください。',
+    en: 'Failed to create payment link. Please try again later.'
+  },
+  'ticket.confirmed': {
+    ja: '回数券の購入が完了しました！\n\n',
+    en: 'Package purchase confirmed!\n\n'
+  },
+  'ticket.not_found': {
+    ja: '回数券が見つかりません。',
+    en: 'No package found.'
+  },
+  'ticket.status_detail': {
+    ja: '【回数券情報】\nID: {id}\n種類: {package}\n残り: {remaining}/{total}回\n有効期限: {expiry}\n状態: {status}',
+    en: '[Package Info]\nID: {id}\nType: {package}\nRemaining: {remaining}/{total} sessions\nExpiry: {expiry}\nStatus: {status}'
+  },
+  'ticket.balance_title': {
+    ja: '【回数券残高】\n',
+    en: '[Package Balance]\n'
+  },
+  'ticket.no_active': {
+    ja: '現在アクティブな回数券はありません。\n「回数券」からご購入いただけます。',
+    en: 'No active package.\nPurchase one from "Session Pack".'
   }
 };

@@ -185,3 +185,46 @@ function getCheckoutSession(sessionId) {
   return result.data;
 }
 
+/**
+ * Create payment link for ticket package purchase
+ * @param {string} packageType - '5' or '10'
+ * @param {string} lineUserId - LINE user ID
+ * @returns {string|null} Checkout session URL or null on failure
+ */
+function createTicketPaymentLink(packageType, lineUserId) {
+  var price = getTicketPrice(packageType);
+  var pkg = TICKET_PACKAGES[packageType];
+  if (!pkg || !price) return null;
+
+  var linkData = {
+    line_items: [{
+      price_data: {
+        currency: 'jpy',
+        product_data: {
+          name: '回数券 ' + pkg.label + ' (' + pkg.sessions + '回)',
+          description: '有効期限: ' + getTicketExpiryDays() + '日間'
+        },
+        unit_amount: String(price)
+      },
+      quantity: 1
+    }],
+    mode: 'payment',
+    success_url: getStripeSuccessUrl(),
+    cancel_url: getStripeCancelUrl(),
+    metadata: {
+      type: 'ticket',
+      package_type: packageType,
+      line_user_id: lineUserId
+    }
+  };
+
+  var result = _callStripeApi('post', '/checkout/sessions', linkData);
+  if (!result.success) {
+    appendLogRow('ERROR', '[createTicketPaymentLink] Failed: ' + result.error);
+    return null;
+  }
+
+  appendLogRow('INFO', '[createTicketPaymentLink] Created for ' + lineUserId + ' package=' + packageType);
+  return result.data.url;
+}
+

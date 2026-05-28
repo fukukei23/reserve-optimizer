@@ -10,6 +10,7 @@ var SHEET_NAMES = {
   WAITLIST: 'waitlist',
   WEEKLY_SUMMARY: 'weekly_summary',
   CUSTOMERS: 'customers',
+  TICKETS: 'tickets',
   LOG: 'ログ'
 };
 
@@ -37,7 +38,8 @@ var RESERVATIONS_COLUMNS = {
   AVERAGE_UNIT_PRICE: 20,
   NOTES: 21,
   PAYMENT_INTENT_ID: 22,
-  FOLLOW_UP_SENT: 23
+  FOLLOW_UP_SENT: 23,
+  USED_TICKET: 24
 };
 
 // Reservations sheet headers
@@ -47,7 +49,7 @@ var RESERVATIONS_HEADERS = [
   'status', 'deposit_required', 'deposit_amount', 'deposit_status',
   'reminder_sent', 'reminder_response', 'cancel_time', 'resale_notified',
   'resale_success', 'average_unit_price', 'notes', 'payment_intent_id',
-  'follow_up_sent'
+  'follow_up_sent', 'used_ticket'
 ];
 
 // Waitlist sheet column indices (1-based)
@@ -103,6 +105,13 @@ var WEEKLY_SUMMARY_HEADERS = [
 
 // Log sheet headers (timestamp, level, message)
 var LOG_HEADERS = ['timestamp', 'level', 'message'];
+
+// Tickets sheet headers
+var TICKETS_HEADERS = [
+  'ticket_id', 'created_at', 'line_user_id', 'package_type',
+  'total_sessions', 'remaining_sessions', 'expiry_date',
+  'status', 'stripe_session_id', 'stripe_payment_intent', 'notes'
+];
 
 // Reservation status values
 var RESERVATION_STATUS = {
