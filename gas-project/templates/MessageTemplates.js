@@ -307,5 +307,21 @@ var MessageTemplates = {
       _label('deposit.time', loc) + ' ' + _fmtTimeRange(reservation.reserved_start, reservation.reserved_end) + '\n' +
       _label('deposit.treatment', loc) + ' ' + reservation.menu_type + '\n\n' +
       tf('change.we_look_forward', null, loc);
+  },
+
+  getTreatmentAutoResponseMessage: function(estimatedEndTime, locale) {
+    var loc = locale || 'ja';
+    var text = t('treatment_auto.header', loc) + '\n';
+    if (estimatedEndTime) {
+      text += tf('treatment_auto.estimated_end', {endTime: estimatedEndTime}, loc) + '\n';
+    }
+    text += t('treatment_auto.will_contact', loc);
+    return {
+      text: text,
+      quickReplies: [
+        {label: t('treatment_auto.reserve_link', loc), text: t('welcome.reserve', loc)},
+        {label: t('treatment_auto.contact', loc), text: t('treatment_auto.contact', loc)}
+      ]
+    };
   }
 };

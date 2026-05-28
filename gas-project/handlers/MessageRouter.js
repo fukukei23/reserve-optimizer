@@ -153,6 +153,15 @@ function handleMessage(message, replyToken, userId) {
 
   logLineMessage({userId: userId}, text);
 
+  // Auto-response during treatment (only for IDLE users — don't interrupt active conversations)
+  if (userState.state === USER_STATES.IDLE) {
+    var treatmentStatus = isCurrentlyInTreatment();
+    if (treatmentStatus.inTreatment) {
+      sendTreatmentAutoResponse(replyToken, _locale, treatmentStatus.estimatedEndTime);
+      return;
+    }
+  }
+
   // Handle "人間に問い合わせる" regardless of state (so it is not validated as name/phone/date/time)
   if (text === '人間に問い合わせる') {
     sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));

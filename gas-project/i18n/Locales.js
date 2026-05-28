@@ -419,5 +419,31 @@ var MESSAGES = {
   'crm.tag.new': { ja: '新規', en: 'new' },
   'crm.tag.regular': { ja: '常連', en: 'regular' },
   'crm.tag.vip': { ja: 'VIP', en: 'VIP' },
-  'crm.tag.no_show_warn': { ja: '要注意', en: 'no-show warning' }
+  'crm.tag.no_show_warn': { ja: '要注意', en: 'no-show warning' },
+
+  // --- Treatment Auto-Response ---
+  'treatment_auto.header': {
+    ja: '現在施術中です。',
+    en: 'We are currently in treatment.'
+  },
+  'treatment_auto.estimated_end': {
+    ja: '終了予定時刻: {endTime}',
+    en: 'Estimated end time: {endTime}'
+  },
+  'treatment_auto.will_contact': {
+    ja: '終わり次第ご連絡いたします。',
+    en: 'We will contact you when finished.'
+  },
+  'treatment_auto.reserve_link': {
+    ja: '予約はこちらから',
+    en: 'Book an appointment'
+  },
+  'treatment_auto.contact': {
+    ja: 'お問い合わせ',
+    en: 'Contact us'
+  },
+  'treatment_auto.no_time': {
+    ja: '現在施術中です。\n終わり次第ご連絡いたします。\n\n予約をご希望の場合は「予約する」からどうぞ。',
+    en: 'We are currently in treatment.\nWe will contact you when finished.\n\nTo book, select "Book an appointment".'
+  }
 };
