@@ -12,10 +12,15 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ## スクリーンショット
 
+### Web予約フロー（操作デモGIF）
+
 <p align="center">
   <img src="docs/screenshots/demo-flow.gif" width="300" alt="予約フローデモ">
-  <br><b>Web予約フロー（6ステップ）</b>
 </p>
+
+> 患者がブラウザでアクセスするWeb予約画面の全流れ。施術選択 → 日付 → 空き時間枠 → 氏名・電話番号 → 内容確認 → 予約完了まで6ステップ。LINEアプリ内ブラウザでも同じUIが動作します。Cloudflare Worker経由でGASに送信され、Googleスプレッドシートに自動記録されます。
+
+### 各ステップの詳細
 
 <table>
   <tr>
@@ -26,7 +31,12 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
   <tr>
     <td><img src="docs/screenshots/01-treatment.png" width="180" alt="Treatment"></td>
     <td><img src="docs/screenshots/02-date.png" width="180" alt="Date"></td>
-    <td><img src="docs/screenshots/03-time-slots.png" width="180" alt="Time Slots"></td>
+    <td><img src="docs/screenshots/03-time-slots.png" width="180" alt="Slots"></td>
+  </tr>
+  <tr>
+    <td>初診・再診（30分/60分）から選択。ボタン1タップで次のステップに進む——フリー入力を排除し誤操作を防止</td>
+    <td>当日から90日先まで選択可能。カレンダーUIで直感的に日付を指定</td>
+    <td>GASがスプレッドシートの既存予約と照合し、空き枠のみ表示。満枠はグレーアウトして選択不可</td>
   </tr>
   <tr>
     <td align="center"><b>お客様情報</b></td>
@@ -34,9 +44,14 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
     <td align="center"><b>予約完了</b></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/04-customer-info.png" width="180" alt="Customer Info"></td>
+    <td><img src="docs/screenshots/04-customer-info.png" width="180" alt="Info"></td>
     <td><img src="docs/screenshots/05-confirm.png" width="180" alt="Confirm"></td>
-    <td><img src="docs/screenshots/06-complete.png" width="180" alt="Complete"></td>
+    <td><img src="docs/screenshots/06-complete.png" width="180" alt="Done"></td>
+  </tr>
+  <tr>
+    <td>氏名と電話番号（10-11桁）を入力。バリデーションで不正な入力をリアルタイム検知</td>
+    <td>入力内容を一覧表示して最終確認。「予約する」ボタンでStripe Checkoutに遷移しデポジット（1,000円）を決済</td>
+    <td>予約IDを発行。後ほどLINEから予約確認・キャンセル・お支払いが可能</td>
   </tr>
 </table>
 
