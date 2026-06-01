@@ -10,6 +10,33 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ---
 
+## スクリーンショット
+
+<table>
+  <tr>
+    <td align="center"><b>施術選択</b></td>
+    <td align="center"><b>日付選択</b></td>
+    <td align="center"><b>時間枠選択</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/01-treatment.png" width="180" alt="Treatment"></td>
+    <td><img src="docs/screenshots/02-date.png" width="180" alt="Date"></td>
+    <td><img src="docs/screenshots/03-time-slots.png" width="180" alt="Time Slots"></td>
+  </tr>
+  <tr>
+    <td align="center"><b>お客様情報</b></td>
+    <td align="center"><b>予約確認</b></td>
+    <td align="center"><b>予約完了</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/04-customer-info.png" width="180" alt="Customer Info"></td>
+    <td><img src="docs/screenshots/05-confirm.png" width="180" alt="Confirm"></td>
+    <td><img src="docs/screenshots/06-complete.png" width="180" alt="Complete"></td>
+  </tr>
+</table>
+
+---
+
 ## なぜ作ったか
 
 整骨院の予約管理は電話・紙ベースが多く、スタッフの負担が大きい。LINE Botで24時間自動受付・Stripe決済・AIチャット対応を実現し、予約業務をゼロにするために開発した。
