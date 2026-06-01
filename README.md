@@ -12,6 +12,11 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ## スクリーンショット
 
+<p align="center">
+  <img src="docs/screenshots/demo-flow.gif" width="300" alt="予約フローデモ">
+  <br><b>Web予約フロー（6ステップ）</b>
+</p>
+
 <table>
   <tr>
     <td align="center"><b>施術選択</b></td>
