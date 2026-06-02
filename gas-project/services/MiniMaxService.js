@@ -126,7 +126,9 @@ function callAIAPI(userMessage) {
     if (json.content && json.content.length > 0) {
       for (var i = 0; i < json.content.length; i++) {
         if (json.content[i].type === 'text') {
-          return json.content[i].text.trim();
+          var aiText = json.content[i].text.trim();
+          appendLogRow('AI_CHAT', '[GLM] Q: ' + userMessage.substring(0, 200) + ' | A: ' + aiText.substring(0, 200));
+          return aiText;
         }
       }
     }
