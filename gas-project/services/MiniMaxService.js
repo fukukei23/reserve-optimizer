@@ -9,7 +9,7 @@
  */
 
 var GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-var GLM_MODEL = 'glm-4-flash';
+var GLM_MODEL = 'glm-4.7';
 
 /**
  * System prompt for clinic-only topic restriction + context injection
