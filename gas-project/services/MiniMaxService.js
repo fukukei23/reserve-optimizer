@@ -1,15 +1,16 @@
 /**
- * AI Chat Service - GLM (ZhipuAI) Integration
+ * AI Chat Service - GLM (Z.AI) Integration
  *
- * Routes unrecognized user input to GLM-4-flash for clinic-related Q&A.
+ * Routes unrecognized user input to GLM-4.7 for clinic-related Q&A.
+ * Uses Z.AI's Anthropic-compatible Messages API.
  * Guardrails: system prompt restricts to clinic topics, scope detection
  * rejects off-topic input before API call.
  *
  * Previously used MiniMax — switched to GLM for more accurate Japanese output.
  */
 
-var GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-var GLM_MODEL = 'glm-4.7';
+var GLM_API_URL = 'https://api.z.ai/api/anthropic/v1/messages';
+var GLM_MODEL = 'GLM-4.7';
 
 /**
  * System prompt for clinic-only topic restriction + context injection
@@ -18,7 +19,6 @@ function getAISystemPrompt() {
   var hours = getBusinessHours() || 'お問い合わせください';
   var address = getBusinessAddress() || 'お問い合わせください';
   var phone = getContactPhone() || '';
-  var leadTime = getBookingLeadTimeMinutes();
   var cancelDeadline = getCancellationDeadlineHours();
 
   var prompt = 'あなたは整骨院の受付アシスタントです。' +
@@ -77,7 +77,7 @@ function isClinicRelatedInput(text) {
 }
 
 /**
- * Call GLM API and get response
+ * Call GLM API (Z.AI Anthropic-compatible) and get response
  * @param {string} userMessage - User's text input
  * @returns {string|null} AI response text, or null on failure
  */
@@ -92,19 +92,19 @@ function callAIAPI(userMessage) {
 
   var payload = {
     model: GLM_MODEL,
+    max_tokens: 300,
+    system: systemPrompt,
     messages: [
-      { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage }
-    ],
-    temperature: 0.7,
-    max_tokens: 300
+    ]
   };
 
   var options = {
     method: 'post',
     contentType: 'application/json',
     headers: {
-      'Authorization': 'Bearer ' + apiKey
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
     },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
@@ -122,8 +122,13 @@ function callAIAPI(userMessage) {
 
     var json = JSON.parse(responseBody);
 
-    if (json.choices && json.choices.length > 0 && json.choices[0].message) {
-      return json.choices[0].message.content.trim();
+    // Anthropic Messages format: content[].text
+    if (json.content && json.content.length > 0) {
+      for (var i = 0; i < json.content.length; i++) {
+        if (json.content[i].type === 'text') {
+          return json.content[i].text.trim();
+        }
+      }
     }
 
     appendLogRow('ERROR', '[AIService] Unexpected response format: ' + responseBody.substring(0, 200));
