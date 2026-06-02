@@ -38,6 +38,9 @@ var PROPERTY_KEYS = {
   // MiniMax LLM settings
   MINIMAX_API_KEY: 'MINIMAX_API_KEY',
 
+  // GLM (ZhipuAI) LLM settings
+  GLM_API_KEY: 'GLM_API_KEY',
+
   // Booking management settings
   BOOKING_LEAD_TIME_MINUTES: 'BOOKING_LEAD_TIME_MINUTES',   // minimum advance booking time (default: 60)
   MAX_CONCURRENT_BOOKINGS: 'MAX_CONCURRENT_BOOKINGS',       // simultaneous slots per time (default: 1)

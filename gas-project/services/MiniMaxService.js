@@ -1,18 +1,20 @@
 /**
- * MiniMax LLM Service - AI Chat Integration
+ * AI Chat Service - GLM (ZhipuAI) Integration
  *
- * Routes unrecognized user input to MiniMax M2.7 for clinic-related Q&A.
+ * Routes unrecognized user input to GLM-4-flash for clinic-related Q&A.
  * Guardrails: system prompt restricts to clinic topics, scope detection
  * rejects off-topic input before API call.
+ *
+ * Previously used MiniMax — switched to GLM for more accurate Japanese output.
  */
 
-var MINIMAX_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
-var MINIMAX_MODEL = 'M2.7';
+var GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+var GLM_MODEL = 'glm-4-flash';
 
 /**
  * System prompt for clinic-only topic restriction + context injection
  */
-function getMiniMaxSystemPrompt() {
+function getAISystemPrompt() {
   var hours = getBusinessHours() || 'お問い合わせください';
   var address = getBusinessAddress() || 'お問い合わせください';
   var phone = getContactPhone() || '';
@@ -75,21 +77,21 @@ function isClinicRelatedInput(text) {
 }
 
 /**
- * Call MiniMax API and get response
+ * Call GLM API and get response
  * @param {string} userMessage - User's text input
  * @returns {string|null} AI response text, or null on failure
  */
-function callMiniMaxAPI(userMessage) {
-  var apiKey = getProperty('MINIMAX_API_KEY');
+function callAIAPI(userMessage) {
+  var apiKey = getProperty('GLM_API_KEY');
   if (!apiKey) {
-    appendLogRow('ERROR', '[MiniMaxService] API key not set');
+    appendLogRow('ERROR', '[AIService] GLM API key not set');
     return null;
   }
 
-  var systemPrompt = getMiniMaxSystemPrompt();
+  var systemPrompt = getAISystemPrompt();
 
   var payload = {
-    model: MINIMAX_MODEL,
+    model: GLM_MODEL,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage }
@@ -109,12 +111,12 @@ function callMiniMaxAPI(userMessage) {
   };
 
   try {
-    var response = UrlFetchApp.fetch(MINIMAX_API_URL, options);
+    var response = UrlFetchApp.fetch(GLM_API_URL, options);
     var responseCode = response.getResponseCode();
     var responseBody = response.getContentText();
 
     if (responseCode !== 200) {
-      appendLogRow('ERROR', '[MiniMaxService] API error: ' + responseCode + ' ' + responseBody.substring(0, 200));
+      appendLogRow('ERROR', '[AIService] GLM API error: ' + responseCode + ' ' + responseBody.substring(0, 200));
       return null;
     }
 
@@ -124,14 +126,10 @@ function callMiniMaxAPI(userMessage) {
       return json.choices[0].message.content.trim();
     }
 
-    if (json.reply) {
-      return json.reply.trim();
-    }
-
-    appendLogRow('ERROR', '[MiniMaxService] Unexpected response format: ' + responseBody.substring(0, 200));
+    appendLogRow('ERROR', '[AIService] Unexpected response format: ' + responseBody.substring(0, 200));
     return null;
   } catch (e) {
-    appendLogRow('ERROR', '[MiniMaxService] Exception: ' + e.message);
+    appendLogRow('ERROR', '[AIService] Exception: ' + e.message);
     return null;
   }
 }
@@ -141,7 +139,7 @@ function callMiniMaxAPI(userMessage) {
  * Returns true if LLM handled the message, false if it should fall through
  */
 function handleLLMQuery(replyToken, text) {
-  var aiResponse = callMiniMaxAPI(text);
+  var aiResponse = callAIAPI(text);
 
   if (aiResponse) {
     sendQuickReply(replyToken, aiResponse, [
