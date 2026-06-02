@@ -2,7 +2,7 @@
 
 A LINE reservation management bot for orthopedic clinics, built with GAS + Cloudflare Worker + Stripe. Features a conversational state machine for booking, QuickReply UI, deposit-based payments, and AI-powered Q&A.
 
-整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Workerによる予約・決済の統合システム。
+整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AIによる予約・決済・AIチャットの統合システム。
 
 [![JavaScript](https://img.shields.io/badge/lang-JavaScript%20%2B%20TypeScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Cloudflare Workers](https://img.shields.io/badge/runtime-Cloudflare%20Workers-orange)](https://workers.cloudflare.com/)
@@ -59,7 +59,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ## なぜ作ったか
 
-整骨院の予約管理は電話・紙ベースが多く、スタッフの負担が大きい。LINE Botで24時間自動受付・Stripe決済対応を実現し、予約業務をゼロにするために開発した。
+整骨院の予約管理は電話・紙ベースが多く、スタッフの負担が大きい。LINE Botで24時間自動受付・Stripe決済・AIチャット対応を実現し、予約業務をゼロにするために開発した。
 
 ---
 
@@ -70,7 +70,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 - **Stripe Checkout内蔵**: 予約時にデポジット（1,000円）を事前決済。SaaSで事前決済に対応する製品は少数
 - **多言語対応（i18n）**: 外国人観光客も母語で予約可能。既存サービスは日本語のみがほとんど
 - **キャンセル待ち自動再販**: 予約キャンセル時にウェイティングリストから自動繰り上げ。既存サービスにほぼない機能
-- **AIチャット（実装済み・未接続）**: `MiniMaxService.js`で整骨院トピック限定Q&Aを定義済み。システムプロンプト・スコープ検出・ガードレールを実装済み。メッセージルーターへの統合は今後の対応
+- **AIチャット搭載**: MiniMax M2.7で整骨院トピック限定Q&Aを自動応答。フリー入力にAIが回答（`MINIMAX_API_KEY`設定時）
 - **セキュリティ**: Cloudflare WorkerでLINE/Stripe双方のHMAC-SHA256署名検証を実施。Webhookのなりすましを防止
 - **完全カスタマイズ**: オープンソースのため、施術メニュー・予約枠・決済フローを自由に変更可能。SaaSのテンプレート制約なし
 
@@ -87,7 +87,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 | バックエンド | Google Apps Script (GAS) | 全.jsファイルがグローバル名前空間を共有 |
 | データストア | Google Spreadsheets | 予約・ユーザー・ログ・ウェイティングリスト |
 | 決済 | Stripe Checkout | デポジット制 1,000円 |
-| AIチャット | MiniMax M2.7（実装済み・ルーター未接続） | 整骨院トピック限定Q&A |
+| AIチャット | MiniMax M2.7 | 整骨院トピック限定Q&A |
 
 ### アーキテクチャ図
 
@@ -223,7 +223,7 @@ reserve-optimizer/
 - **QuickReply UI**: 選択式UIでフリー入力を最小限に抑制
 - **Stripe Checkout決済**: デポジット 1,000円（前日キャンセルまで無料返金）
 - **リマインダー & ウェイティングリスト**: 前日リマインダー + キャンセル時の自動通知
-- **AIチャット**: MiniMax M2.7による整骨院トピック限定Q&A（サービス層は実装済み、ルーター統合は今後対応）
+- **AIチャット**: MiniMax M2.7による整骨院トピック限定Q&A
 - **管理ダッシュボード**: Google Spreadsheetsベースの予約・KPI管理
 
 ---
