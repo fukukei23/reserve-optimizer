@@ -7,17 +7,28 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/run-all.js",
+    "test:phase5": "node tests/e2e-phase5-auto-response.test.js && node tests/e2e-phase5-followup.test.js && node tests/e2e-phase5-ticket.test.js",
+    "test:unit": "for f in tests/unit-*.test.js; do node $f; done",
+    "test:e2e": "for f in tests/e2e-*.test.js; do node $f; done"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fukukei23/reserve-optimizer.git"
   },
-  "keywords": ["gas", "line-bot", "stripe", "reservation"],
+  "keywords": [
+    "gas",
+    "line-bot",
+    "stripe",
+    "reservation"
+  ],
   "author": "fukukei23",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/fukukei23/reserve-optimizer/issues"
   },
-  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme"
+  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  }
 }

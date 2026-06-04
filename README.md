@@ -12,6 +12,35 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ## スクリーンショット
 
+### CLI デモ（GIF）
+
+<table>
+  <tr>
+    <td align="center"><b>Web予約フロー</b></td>
+    <td align="center"><b>Stripe決済</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/demo/gifs/01_webbooking.gif" width="200" alt="Booking CLI"></td>
+    <td><img src="docs/demo/gifs/02_stripe.gif" width="200" alt="Stripe CLI"></td>
+  </tr>
+  <tr>
+    <td>LINE Bot→Web予約の全流れ</td>
+    <td>デポジット決済（¥1,000）</td>
+  </tr>
+  <tr>
+    <td align="center"><b>AIチャットBot</b></td>
+    <td align="center"><b>多言語対応</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/demo/gifs/03_ai_chat.gif" width="200" alt="AI Chat CLI"></td>
+    <td><img src="docs/demo/gifs/04_i18n.gif" width="200" alt="i18n CLI"></td>
+  </tr>
+  <tr>
+    <td>MiniMax M2.7でAI Q&A自動応答</td>
+    <td>6言語対応で外国人観光客も予約可能</td>
+  </tr>
+</table>
+
 ### Web予約フロー（操作デモGIF）
 
 <p align="center">

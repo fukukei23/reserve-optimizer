@@ -462,6 +462,10 @@ var MESSAGES = {
   },
 
   // --- Ticket Packages ---
+  'ticket.menu_label': {
+    ja: '回数券',
+    en: 'Packages'
+  },
   'ticket.select_package': {
     ja: '回数券をご購入いただけます。\n\n回数券をご利用の場合、予約時のデポジットが不要になります。',
     en: 'Session packages are available.\n\nWith a package, no deposit is required for bookings.'

@@ -143,7 +143,7 @@ function setupTriggers() {
   // Trigger 7: Post-visit follow-up (every 60 minutes)
   ScriptApp.newTrigger('sendPostVisitFollowUps')
     .timeBased()
-    .everyMinutes(60)
+    .everyHours(1)
     .create();
 
   // Trigger 8: Check expired tickets (daily at 9am)

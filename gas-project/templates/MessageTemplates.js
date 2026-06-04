@@ -28,7 +28,8 @@ var MessageTemplates = {
         {label: t('welcome.reserve', locale), text: t('welcome.reserve', locale)},
         {label: t('welcome.view', locale), text: t('welcome.view', locale)},
         {label: t('welcome.change', locale), text: t('welcome.change', locale)},
-        {label: t('welcome.waitlist', locale), text: t('welcome.waitlist', locale)}
+        {label: t('welcome.waitlist', locale), text: t('welcome.waitlist', locale)},
+        {label: t('ticket.menu_label', locale), text: '回数券'}
       ]
     };
   },
