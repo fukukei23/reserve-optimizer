@@ -60,13 +60,13 @@ Cloudflare Worker + GAS + Stripe
 
 $ node gas-project/run-cli.js status
 
-📅 今日の予約
+[DATE] 今日の予約
 ━━━━━━━━━━━━━━━━━━
 09:00 田辺様（初診60分）
 10:30 田中様（再診30分）
 14:00 鈴木様（初診60分）
 
-🔄 予約フロー
+[AUTO] 予約フロー
 ━━━━━━━━━━━━━━━━━━
 ① 顧客: LINEで「予約」と送信
 ② Bot:  Button Messageで返信
@@ -88,24 +88,24 @@ $ node gas-project/run-cli.js status
 
 $ node gas-project/run-cli.js payment --create
 
-💳 決済セッション作成
+[PAY] 決済セッション作成
 ━━━━━━━━━━━━━━━━━━
  amount:  ¥1,000 (デポジット)
  currency: JPY
  customer:田中 太郎
 
-🔗 Checkout URL生成
+[LINK] Checkout URL生成
 ━━━━━━━━━━━━━━━━━━
  https://checkout.stripe.com/...
  payment_id: pi_3abc123xyz
 
 ⏳ 顧客決済待機中...
-✅ 決済完了通知受信
+[OK] 決済完了通知受信
    payment_id: pi_3abc123xyz
    amount: ¥1,000
    status: succeeded
 
-📊 月次サマリー
+[STAT] 月次サマリー
 ━━━━━━━━━━━━━━━━━━
  今月: 45件 ¥45,000
  前月: 38件 ¥38,000
@@ -123,12 +123,12 @@ $ node gas-project/run-cli.js payment --create
 
 $ node gas-project/run-cli.js chat --message "予約変更したい"
 
-🤖 AI回答生成中...
+[AI] AI回答生成中...
 ━━━━━━━━━━━━━━━━━━
 Model: MiniMax M2.7
 Temperature: 0.7
 
-💬 回答:
+[CHAT] 回答:
 ━━━━━━━━━━━━━━━━━━
 予約変更をご希望ですね。
 以下の方法でお手続きできます:
@@ -137,10 +137,10 @@ Temperature: 0.7
 2. 予約IDと新しい日時を入力
 
 お困りのことがあれば
-もう一度ご質問ください 😊
+もう一度ご質問ください :)
 
-⏱️ 処理時間: 1.2秒
-💰 コスト: ¥0.08"""
+[TIME] 処理時間: 1.2秒
+[COST] コスト: ¥0.08"""
     },
     {
         "id": 4,
@@ -154,7 +154,7 @@ Temperature: 0.7
 
 $ node gas-project/run-cli.js i18n --list
 
-🌍 対応言語
+[GLOBE] 対応言語
 ━━━━━━━━━━━━━━━━━━
 ja: 日本語 (デフォルト)
 en: English
@@ -163,7 +163,7 @@ zh-TW: 中文（繁体）
 ko: 한국어
 th: ภาษาไทย
 
-🌐 外国人観光客対応
+[WEB] 外国人観光客対応
 ━━━━━━━━━━━━━━━━━━
 対応国: 45カ国
 前年比: +23%
@@ -172,7 +172,7 @@ th: ภาษาไทย
 "I'd like to book a 60min
  treatment for tomorrow 10am"
 
-✅ 多言語Bot自動返信"""
+[OK] 多言語Bot自動返信"""
     },
 ]
 
@@ -240,13 +240,13 @@ def cast_to_png_frames(cast_path: Path, png_dir: Path, fps: int, duration: float
                             color = PROMPT_COLOR
                         elif line_text.startswith("===") or line_text.startswith("━━"):
                             color = HEADER_COLOR
-                        elif line_text.startswith("✅") or line_text.startswith("+"):
+                        elif line_text.startswith("[OK]") or line_text.startswith("+"):
                             color = GREEN
-                        elif line_text.startswith("⚠️") or line_text.startswith("❌"):
+                        elif line_text.startswith("[WARN]") or line_text.startswith("[FAIL]"):
                             color = RED
-                        elif line_text.startswith("🤖") or line_text.startswith("💬"):
+                        elif line_text.startswith("[AI]") or line_text.startswith("[CHAT]"):
                             color = BLUE
-                        elif line_text.startswith("💳") or line_text.startswith("💰"):
+                        elif line_text.startswith("[PAY]") or line_text.startswith("[COST]"):
                             color = YELLOW
                         else:
                             color = TEXT_COLOR
@@ -259,9 +259,9 @@ def cast_to_png_frames(cast_path: Path, png_dir: Path, fps: int, duration: float
         png_files.append(frame_path)
 
         if (i + 1) % 50 == 0:
-            print(f"   📊 {i + 1}/{total_frames} フレーム")
+            print(f"   [STAT] {i + 1}/{total_frames} フレーム")
 
-    print(f"   ✅ PNG生成完了: {len(png_files)} フレーム")
+    print(f"   [OK] PNG生成完了: {len(png_files)} フレーム")
     return png_files
 
 
@@ -284,7 +284,7 @@ def png_to_gif(png_files: list, gif_path: Path, fps: int) -> bool:
             "-vf", f"fps={fps},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
             "-loop", "0", str(gif_path)
         ], check=True, capture_output=True)
-        print(f"   ✅ GIF生成: {gif_path.name} ({gif_path.stat().st_size // 1024}KB)")
+        print(f"   [OK] GIF生成: {gif_path.name} ({gif_path.stat().st_size // 1024}KB)")
         return True
     except subprocess.CalledProcessError:
         return False
@@ -312,7 +312,7 @@ def png_to_mp4(png_files: list, mp4_path: Path, fps: int) -> bool:
             "-c:v", "libx264", "-preset", "fast", "-crf", "23",
             str(mp4_path)
         ], check=True, capture_output=True)
-        print(f"   ✅ MP4生成: {mp4_path.name} ({mp4_path.stat().st_size // 1024}KB)")
+        print(f"   [OK] MP4生成: {mp4_path.name} ({mp4_path.stat().st_size // 1024}KB)")
         return True
     except subprocess.CalledProcessError:
         return False
@@ -335,7 +335,7 @@ def generate_sample_cast(scene: dict) -> Path:
 
         f.write(json.dumps([round(timestamp, 4), "o", "$ "]) + "\n")
 
-    print(f"   ✅ Cast生成: {cast_path.name}")
+    print(f"   [OK] Cast生成: {cast_path.name}")
     return cast_path
 
 
@@ -374,7 +374,7 @@ def main():
     ensure_dirs()
 
     if args.list:
-        print("\n📋 シーン一覧:")
+        print("\n[LIST] シーン一覧:")
         for s in SCENES:
             print(f"  {s['id']}. {s['title']} ({s['duration']}秒)")
         return
@@ -388,11 +388,11 @@ def main():
             result = process_scene(scene, generate=True)
             results.append(result)
         except Exception as e:
-            print(f"\n❌ エラー: {e}")
+            print(f"\n[FAIL] エラー: {e}")
             continue
 
     success = sum(1 for r in results if r["success"])
-    print(f"\n✅ 成功: {success}/{len(results)} シーン")
+    print(f"\n[OK] 成功: {success}/{len(results)} シーン")
 
 
 if __name__ == "__main__":
