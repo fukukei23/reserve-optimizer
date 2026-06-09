@@ -28,12 +28,12 @@ reserve-optimizer はLINE Bot + Stripe + Cloudflare Workers + Google Apps Script
 |----|------|--------|------|-----------|-----------|
 | T01 | LINE Webhook署名偽装 | Spoofing | 虚偽予約・なりすまし | HMAC-SHA256検証あり、タイミングセーフ比較 | **対応済** |
 | T02 | Stripe Webhook署名偽装 | Spoofing | 虚偽決済完了通知 | 署名検証 + タイムスタンプ検証（5分以内）+ 冪等性 | **対応済** |
-| T03 | GAS Web Appエンドポイントの未認証アクセス | Elevation | 全機能の不正実行 | Bearer token（autopilotのみ）、一般エンドポイントに認証なし | **未対応** |
+| T03 | GAS Web Appエンドポイントの未認証アクセス | Elevation | 全機能の不正実行 | Worker→GAS間: x-gas-auth認証トークン検証 | **対応済** |
 | T04 | 管理者権限のハードコード | Elevation | 管理者なりすまし | LINEユーザーIDで判定、固定値 | **低リスク** |
 | T05 | 顧客PIIのGoogle Sheets平文保存 | Information Disclosure | 個人情報漏洩 | 暗号化なし、Googleアクセス権限依存 | **一部対応** |
 | T06 | Stripe決済情報の不正取得 | Information Disclosure | カード情報漏洩 | StripeがPCI DSS準拠、自システムにはカード情報非保持 | **対応済** |
-| T07 | リプレイ攻撃（Webhook再送） | Repudiation | 重複処理 | Stripe: CacheServiceで冪等性確保（20分TTL）、LINE: 未対応 | **一部対応** |
-| T08 | LINEメッセージの入力検証なし | Tampering | 意図しない処理実行 | サニタイズなし | **未対応** |
+| T07 | リプレイ攻撃（Webhook再送） | Repudiation | 重複処理 | Stripe/LINE双方: CacheServiceで冪等性確保（20分TTL） | **対応済** |
+| T08 | LINEメッセージの入力検証なし | Tampering | 意図しない処理実行 | 文字数制限（1000文字）+ 制御文字サニタイズ | **対応済** |
 | T09 | Webhookエンドポイントのレート制限なし | Denial of Service | サービス停止 | Cloudflare Workers（エッジ側で一部緩和） | **低リスク** |
 
 ## 決定
@@ -68,9 +68,9 @@ reserve-optimizer はLINE Bot + Stripe + Cloudflare Workers + Google Apps Script
 
 ### 残タスク
 
-- [ ] GAS Web Appエンドポイントに認証追加（T03）
-- [ ] LINEメッセージ入力バリデーション（T08）
-- [ ] LINEイベント冪等性チェック（T07）
+- [x] GAS Web Appエンドポイントに認証追加（T03）
+- [x] LINEメッセージ入力バリデーション（T08）
+- [x] LINEイベント冪等性チェック（T07）
 
 ## 参考
 

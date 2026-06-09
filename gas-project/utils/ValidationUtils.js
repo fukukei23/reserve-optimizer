@@ -198,13 +198,36 @@ function sanitizeInput(input) {
     return '';
   }
 
+  // Remove control characters (null byte, C0/C1 controls) except newline/tab
+  var sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
   // Remove HTML tags
-  var sanitized = input.replace(/<[^>]*>/g, '');
+  sanitized = sanitized.replace(/<[^>]*>/g, '');
 
   // Remove potentially dangerous characters
   sanitized = sanitized.replace(/[<>]/g, '');
 
   return sanitized.trim();
+}
+
+/**
+ * Maximum allowed length for LINE text messages (T08)
+ */
+var MAX_MESSAGE_LENGTH = 1000;
+
+/**
+ * Validate LINE message length
+ * @param {string} text - message text
+ * @returns {{ valid: boolean, errorMessage: string|null }}
+ */
+function validateMessageLength(text) {
+  if (!text || typeof text !== 'string') {
+    return { valid: true, errorMessage: null };
+  }
+  if (text.length > MAX_MESSAGE_LENGTH) {
+    return { valid: false, errorMessage: 'メッセージが長すぎます（' + MAX_MESSAGE_LENGTH + '文字以内で入力してください）。' };
+  }
+  return { valid: true, errorMessage: null };
 }
 
 /**

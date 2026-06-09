@@ -39,6 +39,16 @@ function doGet(e) {
   var body = e.parameter['x-body'] || '';
 
   if (verified === 'true' && body) {
+    // Verify Worker authentication token (T03)
+    var gasAuthToken = PropertiesService.getScriptProperties().getProperty('GAS_AUTH_TOKEN');
+    var workerAuth = e.parameter['x-gas-auth'] || '';
+    if (!gasAuthToken || workerAuth !== gasAuthToken) {
+      appendLogRow('ERROR', 'Worker request rejected: invalid or missing x-gas-auth');
+      return ContentService.createTextOutput(
+        JSON.stringify({ status: 'error', message: 'Unauthorized' })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
     body = decodeURIComponent(body);
     appendLogRow('DEBUG', 'doGet: source=' + source + ' body=' + body.substring(0, 300));
 

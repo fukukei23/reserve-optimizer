@@ -7,6 +7,7 @@ export interface Env {
   LINE_CHANNEL_SECRET: string;
   STRIPE_WEBHOOK_SECRET: string;
   GAS_WEBAPP_URL: string;
+  GAS_AUTH_TOKEN: string;
   WEB_API_KEY: string;
 }
 
@@ -229,7 +230,7 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
   // Trim unnecessary fields to keep URL under ~2000 chars
   const slimBody = slimForGAS(body, source);
   const encodedBody = encodeURIComponent(slimBody);
-  const gasUrl = `${env.GAS_WEBAPP_URL}?x-verified=true&x-source=${source}&x-body=${encodedBody}`;
+  const gasUrl = `${env.GAS_WEBAPP_URL}?x-verified=true&x-source=${source}&x-body=${encodedBody}&x-gas-auth=${encodeURIComponent(env.GAS_AUTH_TOKEN)}`;
   console.log("[GAS] Full URL length:", gasUrl.length);
   if (gasUrl.length > 2000) {
     console.warn("[GAS] URL exceeds 2000 chars:", gasUrl.length);
@@ -249,7 +250,7 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
     if (location) {
       // Location URL にパラメータを追加
       const separator = location.includes("?") ? "&" : "?";
-      const redirectUrl = `${location}${separator}x-verified=true&x-source=${source}&x-body=${encodedBody}`;
+      const redirectUrl = `${location}${separator}x-verified=true&x-source=${source}&x-body=${encodedBody}&x-gas-auth=${encodeURIComponent(env.GAS_AUTH_TOKEN)}`;
       console.log("[GAS] Redirect URL length:", redirectUrl.length);
 
       response = await fetch(redirectUrl, {
@@ -279,6 +280,7 @@ function slimForGAS(body: string, source: string): string {
     const parsed = JSON.parse(body);
     if (source === "line" && parsed.events) {
       parsed.events = parsed.events.map((e: any) => ({
+        webhookEventId: e.webhookEventId,
         type: e.type,
         replyToken: e.replyToken,
         source: e.source,

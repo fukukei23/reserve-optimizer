@@ -148,6 +148,18 @@ function handleMessage(message, replyToken, userId) {
   }
 
   var text = message.text.trim();
+
+  // Input validation: message length + sanitization (T08)
+  var lengthCheck = validateMessageLength(text);
+  if (!lengthCheck.valid) {
+    sendLineReply(replyToken, lengthCheck.errorMessage);
+    return;
+  }
+  text = sanitizeInput(text);
+  if (!text) {
+    return;
+  }
+
   var userState = getUserState(userId);
   var _locale = getUserLocale(userId);
 

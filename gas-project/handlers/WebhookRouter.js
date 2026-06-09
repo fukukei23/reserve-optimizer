@@ -15,6 +15,14 @@ function routeWebhook(e) {
   var source = e.parameter['x-source'] || '';
 
   if (verified === 'true') {
+    // Verify Worker authentication token (T03)
+    var gasAuthToken = PropertiesService.getScriptProperties().getProperty('GAS_AUTH_TOKEN');
+    var workerAuth = e.parameter['x-gas-auth'] || '';
+    if (!gasAuthToken || workerAuth !== gasAuthToken) {
+      appendLogRow('ERROR', 'POST: Worker request rejected: invalid or missing x-gas-auth');
+      return _jsonResponse('error', 'Unauthorized');
+    }
+
     if (source === 'line') {
       return _dispatchLineWebhook(body);
     } else if (source === 'stripe') {
@@ -99,6 +107,18 @@ function _dispatchLineWebhook(body) {
   appendLogRow('INFO', 'LINE webhook: processing ' + events.length + ' events');
 
   for (var i = 0; i < events.length; i++) {
+    // Idempotency check: skip already-processed LINE events (20min TTL via CacheService)
+    var lineEventId = events[i].webhookEventId;
+    if (lineEventId) {
+      var lineProcessedKey = 'line_evt_' + lineEventId;
+      var lineCache = CacheService.getScriptCache();
+      if (lineCache.get(lineProcessedKey)) {
+        appendLogRow('INFO', '[LINE] Duplicate event skipped: ' + lineEventId);
+        continue;
+      }
+      lineCache.put(lineProcessedKey, new Date().toISOString(), 1200); // 20 minutes TTL
+    }
+
     try {
       handleLineEvent(events[i]);
     } catch (eventError) {
