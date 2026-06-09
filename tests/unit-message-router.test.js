@@ -239,6 +239,10 @@ global.SHEET_NAMES = {
   RESERVATIONS: 'reservations', WAITLIST: 'waitlist',
   WEEKLY_SUMMARY: 'weekly_summary', TICKETS: 'tickets', LOG: 'log'
 };
+global.TIMEZONE = 'Asia/Tokyo';
+global.MAX_BOOKING_DAYS_AHEAD = 90;
+global.CLOSED_DAYS = []; // No closed days in tests
+global.VISIT_TYPE = { FIRST: 'first', REPEAT: 'repeat' };
 
 // MessageTemplates stub
 global.MessageTemplates = {
@@ -302,6 +306,9 @@ global.cleanupExpiredStates = function () {
   _trackers.cleanupExpiredStatesCalled = true;
   _origCleanupExpiredStates();
 };
+
+// Load ValidationUtils (provides validateMessageLength, sanitizeInput, etc.)
+new vm.Script(fs.readFileSync(path.join(gasDir, 'utils', 'ValidationUtils.js'), 'utf8'), { filename: 'ValidationUtils.js' }).runInThisContext();
 
 // Load MessageRouter
 new vm.Script(fs.readFileSync(path.join(gasDir, 'handlers', 'MessageRouter.js'), 'utf8'), { filename: 'MessageRouter.js' }).runInThisContext();
