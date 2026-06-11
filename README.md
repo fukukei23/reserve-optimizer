@@ -2,7 +2,7 @@
 
 A LINE reservation management bot for orthopedic clinics, built with GAS + Cloudflare Worker + Stripe. Features a conversational state machine for booking, QuickReply UI, deposit-based payments, and AI-powered Q&A.
 
-整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AIによる予約・決済・AIチャットの統合システム。
+整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + GLM AIによる予約・決済・AIチャットの統合システム。
 
 [![JavaScript](https://img.shields.io/badge/lang-JavaScript%20%2B%20TypeScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Cloudflare Workers](https://img.shields.io/badge/runtime-Cloudflare%20Workers-orange)](https://workers.cloudflare.com/)
@@ -36,7 +36,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
     <td><img src="docs/demo/gifs/04_i18n.gif" width="200" alt="i18n CLI"></td>
   </tr>
   <tr>
-    <td>MiniMax M2.7でAI Q&A自動応答</td>
+    <td>GLM-4.7でAI Q&A自動応答</td>
     <td>6言語対応で外国人観光客も予約可能</td>
   </tr>
 </table>
@@ -99,7 +99,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 - **Stripe Checkout内蔵**: 予約時にデポジット（1,000円）を事前決済。SaaSで事前決済に対応する製品は少数
 - **多言語対応（i18n）**: 外国人観光客も母語で予約可能。既存サービスは日本語のみがほとんど
 - **キャンセル待ち自動再販**: 予約キャンセル時にウェイティングリストから自動繰り上げ。既存サービスにほぼない機能
-- **AIチャット搭載**: MiniMax M2.7で整骨院トピック限定Q&Aを自動応答。フリー入力にAIが回答（`MINIMAX_API_KEY`設定時）
+- **AIチャット搭載**: GLM-4.7（Z.AI）で整骨院トピック限定Q&Aを自動応答。フリー入力にAIが回答（`GLM_API_KEY`設定時）
 - **セキュリティ**: Cloudflare WorkerでLINE/Stripe双方のHMAC-SHA256署名検証を実施。Webhookのなりすましを防止
 - **完全カスタマイズ**: オープンソースのため、施術メニュー・予約枠・決済フローを自由に変更可能。SaaSのテンプレート制約なし
 
@@ -116,7 +116,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 | バックエンド | Google Apps Script (GAS) | 全.jsファイルがグローバル名前空間を共有 |
 | データストア | Google Spreadsheets | 予約・ユーザー・ログ・ウェイティングリスト |
 | 決済 | Stripe Checkout | デポジット制 1,000円 |
-| AIチャット | MiniMax M2.7 | 整骨院トピック限定Q&A |
+| AIチャット | GLM-4.7（Z.AI） | 整骨院トピック限定Q&A |
 
 ### アーキテクチャ図
 
@@ -222,7 +222,7 @@ reserve-optimizer/
 │   │   ├── LineService.js         # LINE API (reply/push/profile/richmenu)
 │   │   ├── SheetService.js        # スプレッドシートCRUD
 │   │   ├── StripeService.js       # Stripe Checkout/返金
-│   │   ├── MiniMaxService.js      # MiniMax LLM統合
+│   │   ├── MiniMaxService.js      # GLM AI統合（ファイル名は旧名を維持）
 │   │   └── ReminderService.js     # リマインダー送信
 │   ├── models/
 │   │   ├── Reservation.js         # 予約モデル
@@ -252,7 +252,7 @@ reserve-optimizer/
 - **QuickReply UI**: 選択式UIでフリー入力を最小限に抑制
 - **Stripe Checkout決済**: デポジット 1,000円（前日キャンセルまで無料返金）
 - **リマインダー & ウェイティングリスト**: 前日リマインダー + キャンセル時の自動通知
-- **AIチャット**: MiniMax M2.7による整骨院トピック限定Q&A
+- **AIチャット**: GLM-4.7（Z.AI）による整骨院トピック限定Q&A
 - **管理ダッシュボード**: Google Spreadsheetsベースの予約・KPI管理
 
 ---
@@ -291,7 +291,7 @@ GASエディタのプロジェクトのプロパティに以下を設定：
 | `STRIPE_API_KEY` | Stripe APIキー |
 | `STRIPE_WEBHOOK_SECRET` | Stripe Webhook署名 |
 | `SPREADSHEET_ID` | データストア |
-| `MINIMAX_API_KEY` | MiniMax APIキー |
+| `GLM_API_KEY` | GLM APIキー（Z.AI） |
 
 ### 外部サービス Webhook URL
 
