@@ -5,8 +5,6 @@
  * Uses Z.AI's Anthropic-compatible Messages API.
  * Guardrails: system prompt restricts to clinic topics, scope detection
  * rejects off-topic input before API call.
- *
- * Previously used MiniMax — switched to GLM for more accurate Japanese output.
  */
 
 var GLM_API_URL = 'https://api.z.ai/api/anthropic/v1/messages';

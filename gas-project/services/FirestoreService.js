@@ -65,13 +65,15 @@ function _getFsAccessToken() {
  * @returns {object|null} plain JS object or null if not found
  */
 function fsGet(collection, docId) {
-  var url = _fsDocUrl(collection, docId);
-  var resp = _fsFetch(url, 'get');
-
-  if (resp.getResponseCode() === 404) return null;
-  _fsCheck(resp);
-
-  return _fromDoc(JSON.parse(resp.getContentText()));
+  try {
+    var url = _fsDocUrl(collection, docId);
+    var resp = _fsFetch(url, 'get');
+    if (resp.getResponseCode() === 404) return null;
+    _fsCheck(resp);
+    return _fromDoc(JSON.parse(resp.getContentText()));
+  } catch (e) {
+    throw new Error('fsGet(' + collection + '/' + docId + ') failed: ' + e.message);
+  }
 }
 
 /**
@@ -81,10 +83,14 @@ function fsGet(collection, docId) {
  * @param {object} data - plain JS object
  */
 function fsSet(collection, docId, data) {
-  var url = _fsDocUrl(collection, docId);
-  var resp = _fsFetch(url, 'patch', { fields: _toFields(data) });
-  _fsCheck(resp);
-  return _fromDoc(JSON.parse(resp.getContentText()));
+  try {
+    var url = _fsDocUrl(collection, docId);
+    var resp = _fsFetch(url, 'patch', { fields: _toFields(data) });
+    _fsCheck(resp);
+    return _fromDoc(JSON.parse(resp.getContentText()));
+  } catch (e) {
+    throw new Error('fsSet(' + collection + '/' + docId + ') failed: ' + e.message);
+  }
 }
 
 /**
@@ -94,11 +100,15 @@ function fsSet(collection, docId, data) {
  * @param {object} data - fields to update
  */
 function fsUpdate(collection, docId, data) {
-  var url = _fsDocUrl(collection, docId) + '?updateMask.fieldPaths=' +
-    Object.keys(data).map(encodeURIComponent).join('&updateMask.fieldPaths=');
-  var resp = _fsFetch(url, 'patch', { fields: _toFields(data) });
-  _fsCheck(resp);
-  return _fromDoc(JSON.parse(resp.getContentText()));
+  try {
+    var url = _fsDocUrl(collection, docId) + '?updateMask.fieldPaths=' +
+      Object.keys(data).map(encodeURIComponent).join('&updateMask.fieldPaths=');
+    var resp = _fsFetch(url, 'patch', { fields: _toFields(data) });
+    _fsCheck(resp);
+    return _fromDoc(JSON.parse(resp.getContentText()));
+  } catch (e) {
+    throw new Error('fsUpdate(' + collection + '/' + docId + ') failed: ' + e.message);
+  }
 }
 
 /**
@@ -107,10 +117,14 @@ function fsUpdate(collection, docId, data) {
  * @param {string} docId
  */
 function fsDelete(collection, docId) {
-  var url = _fsDocUrl(collection, docId);
-  var resp = _fsFetch(url, 'delete');
-  if (resp.getResponseCode() !== 200 && resp.getResponseCode() !== 204) {
-    throw new Error('Firestore delete failed: ' + resp.getContentText());
+  try {
+    var url = _fsDocUrl(collection, docId);
+    var resp = _fsFetch(url, 'delete');
+    if (resp.getResponseCode() !== 200 && resp.getResponseCode() !== 204) {
+      throw new Error('HTTP ' + resp.getResponseCode() + ': ' + resp.getContentText());
+    }
+  } catch (e) {
+    throw new Error('fsDelete(' + collection + '/' + docId + ') failed: ' + e.message);
   }
 }
 
@@ -121,13 +135,16 @@ function fsDelete(collection, docId) {
  * @returns {string} generated document ID
  */
 function fsAdd(collection, data) {
-  var url = _fsCollectionUrl(collection);
-  var resp = _fsFetch(url, 'post', { fields: _toFields(data) });
-  _fsCheck(resp);
-  var doc = JSON.parse(resp.getContentText());
-  // Extract ID from document name: projects/.../documents/{collection}/{id}
-  var parts = doc.name.split('/');
-  return parts[parts.length - 1];
+  try {
+    var url = _fsCollectionUrl(collection);
+    var resp = _fsFetch(url, 'post', { fields: _toFields(data) });
+    _fsCheck(resp);
+    var doc = JSON.parse(resp.getContentText());
+    var parts = doc.name.split('/');
+    return parts[parts.length - 1];
+  } catch (e) {
+    throw new Error('fsAdd(' + collection + ') failed: ' + e.message);
+  }
 }
 
 /**
@@ -136,19 +153,23 @@ function fsAdd(collection, data) {
  * @returns {Array<object>} array of plain JS objects (each has _id field)
  */
 function fsGetCollection(collection) {
-  var url = _fsCollectionUrl(collection);
-  var resp = _fsFetch(url, 'get');
-  _fsCheck(resp);
+  try {
+    var url = _fsCollectionUrl(collection);
+    var resp = _fsFetch(url, 'get');
+    _fsCheck(resp);
 
-  var result = JSON.parse(resp.getContentText());
-  if (!result.documents) return [];
+    var result = JSON.parse(resp.getContentText());
+    if (!result.documents) return [];
 
-  return result.documents.map(function(doc) {
-    var obj = _fromDoc(doc);
-    var parts = doc.name.split('/');
-    obj._id = parts[parts.length - 1];
-    return obj;
-  });
+    return result.documents.map(function(doc) {
+      var obj = _fromDoc(doc);
+      var parts = doc.name.split('/');
+      obj._id = parts[parts.length - 1];
+      return obj;
+    });
+  } catch (e) {
+    throw new Error('fsGetCollection(' + collection + ') failed: ' + e.message);
+  }
 }
 
 /**
@@ -160,6 +181,7 @@ function fsGetCollection(collection) {
  * @returns {Array<object>}
  */
 function fsQuery(collection, field, op, value) {
+  try {
   var structuredQuery = {
     from: [{ collectionId: collection }],
     where: {
@@ -189,6 +211,9 @@ function fsQuery(collection, field, op, value) {
     }
   }
   return docs;
+  } catch (e) {
+    throw new Error('fsQuery(' + collection + ', ' + field + ') failed: ' + e.message);
+  }
 }
 
 // ─── Internal helpers ───

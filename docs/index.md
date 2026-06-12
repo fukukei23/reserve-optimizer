@@ -56,7 +56,7 @@ nav_order: 1
 
 - **LINE予約フロー**: 会話型ウィザード（予約・変更・キャンセル）
 - **Stripe Checkout決済**: デポジット 1,000円（前日キャンセルまで無料返金）
-- **AIチャット**: MiniMax M2.7 による|Q&A自動応答
+- **AIチャット**: GLM-4.7 (Z.AI) による Q&A自動応答
 - **セキュリティ**: Cloudflare Worker でLINE/Stripe双方のHMAC署名検証
 - **多言語対応**: 外国人 관광객も母語で予約可能
 
@@ -69,7 +69,7 @@ nav_order: 1
 | バックエンド | Google Apps Script | 会話ステートマシン |
 | データストア | Google Spreadsheets | 予約・ユーザー管理 |
 | 決済 | Stripe Checkout | デポジット制 1,000円 |
-| AI | MiniMax M2.7 | コラー|Q&A |
+| AI | GLM-4.7 (Z.AI) | Q&A自動応答 |
 
 ---
 

@@ -23,7 +23,7 @@
 - LINE Botを通じた予約・変更・キャンセル機能
 - キャンセル枠の自動埋め（ウェイティングリスト機能）＝「最適化」のコア
 - ノーショー対策（Stripe連携によるデポジット決済）
-- AIチャット対応（MiniMax LLMによるフリーテキスト応答・自然言語予約）
+- AIチャット対応（GLM-4.7によるフリーテキスト応答・自然言語予約）
 
 ### やらないこと・後回し
 - 専用ネイティブアプリの開発（LINE内で完結させるため）
@@ -37,7 +37,7 @@
 - **フロントエンド**: LINE Bot (Messaging API)
 - **バックエンド**: Cloudflare Workers + Google Apps Script (GAS)
 - **DB**: Google Sheets
-- **AI**: MiniMax LLM
+- **AI**: GLM-4.7 (Z.AI)
 - **決済**: Stripe
 
 **技術方針**
@@ -71,7 +71,7 @@
 
 ### Phase 1: MVP作成・初期導入（現状〜）
 - GAS + Sheets構成での開発完結
-- LINE Bot予約（CRUD）、Stripeデポジット、MiniMax AI連携
+- LINE Bot予約（CRUD）、Stripeデポジット、GLM AI連携
 - キャンセル枠自動埋め機能（コアバリュー）の実装
 - 自院または知人の院での実際の運用・フィードバック収集
 
