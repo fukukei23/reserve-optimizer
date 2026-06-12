@@ -67,7 +67,11 @@ var PROPERTY_KEYS = {
 
   // Feature flags (opt-in)
   FEATURE_STAFF_SELECT: 'FEATURE_STAFF_SELECT',
-  FEATURE_COUPON: 'FEATURE_COUPON'
+  FEATURE_COUPON: 'FEATURE_COUPON',
+  FEATURE_REVIEW_REQUEST: 'FEATURE_REVIEW_REQUEST',
+
+  // Review settings
+  GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL'
 };
 
 /**
@@ -302,6 +306,21 @@ function isFeatureStaffSelectEnabled() {
  */
 function isFeatureCouponEnabled() {
   return getProperty(PROPERTY_KEYS.FEATURE_COUPON, 'false') === 'true';
+}
+
+/**
+ * Check if review request feature is enabled.
+ * Set FEATURE_REVIEW_REQUEST=true in ScriptProperties to activate.
+ */
+function isFeatureReviewRequestEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_REVIEW_REQUEST, 'false') === 'true';
+}
+
+/**
+ * Get Google review URL (optional).
+ */
+function getGoogleReviewUrl() {
+  return getProperty(PROPERTY_KEYS.GOOGLE_REVIEW_URL, '');
 }
 
 /**

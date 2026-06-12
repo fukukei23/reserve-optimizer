@@ -37,12 +37,29 @@ function sendPostVisitFollowUps() {
     var diff = now.getTime() - followUpTime.getTime();
     if (diff < 0 || diff > 30 * 60 * 1000) continue;
 
-    // Send follow-up message
+    // Send follow-up message (review request takes priority when enabled)
     var locale = 'ja';
-    var msg = MessageTemplates.getPostVisitFollowUpMessage(locale);
 
     try {
-      sendLinePushQuickReply(r.line_display_name, msg.text, msg.quickReplies);
+      if (isFeatureReviewRequestEnabled()) {
+        var ratingReplies = [
+          {label: '★5', text: '★5'},
+          {label: '★4', text: '★4'},
+          {label: '★3', text: '★3'},
+          {label: '★2', text: '★2'},
+          {label: '★1', text: '★1'},
+          {label: 'やめる', text: 'やめる'}
+        ];
+        sendLinePushQuickReply(
+          r.line_display_name,
+          'この度はご来院いただき、ありがとうございました！\n満足度を教えていただけますか？',
+          ratingReplies
+        );
+        setUserState(r.line_display_name, USER_STATES.AWAITING_REVIEW_RATING, {reservation_id: r.id});
+      } else {
+        var msg = MessageTemplates.getPostVisitFollowUpMessage(locale);
+        sendLinePushQuickReply(r.line_display_name, msg.text, msg.quickReplies);
+      }
       updateReservation(r.id, { follow_up_sent: 'Y' });
       sentCount++;
       appendLogRow('INFO', 'Follow-up sent for reservation: ' + r.id);

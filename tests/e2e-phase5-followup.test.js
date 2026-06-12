@@ -156,6 +156,7 @@ global.getReservationById = function() { return null; };
 
 // Follow-up stubs
 global.getFollowUpHoursAfter = function() { return 24; };
+global.isFeatureReviewRequestEnabled = function() { return false; };
 global.sendLinePushQuickReply = function(userId, text, quickReplies) {
   _lastPushText = text;
   _lastPushQuickReply = quickReplies;

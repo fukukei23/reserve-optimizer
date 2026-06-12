@@ -1,9 +1,9 @@
-{"version": 2, "width": 80, "height": 24, "timestamp": 1780547310, "env": {"TERM": "xterm-256color"}}
+{"version": 2, "width": 80, "height": 24, "timestamp": 1780575266, "env": {"TERM": "xterm-256color"}}
 [0.0, "o", "=== i18n (\u591a\u8a00\u8a9e\u5bfe\u5fdc) ===\r\n"]
 [0.15, "o", "\r\n"]
 [0.3, "o", "$ node gas-project/run-cli.js i18n --list\r\n"]
 [0.45, "o", "\r\n"]
-[0.6, "o", "\ud83c\udf0d \u5bfe\u5fdc\u8a00\u8a9e\r\n"]
+[0.6, "o", "[GLOBE] \u5bfe\u5fdc\u8a00\u8a9e\r\n"]
 [0.75, "o", "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n"]
 [0.9, "o", "ja: \u65e5\u672c\u8a9e (\u30c7\u30d5\u30a9\u30eb\u30c8)\r\n"]
 [1.05, "o", "en: English\r\n"]
@@ -12,7 +12,7 @@
 [1.5, "o", "ko: \ud55c\uad6d\uc5b4\r\n"]
 [1.65, "o", "th: \u0e20\u0e32\u0e29\u0e32\u0e44\u0e17\u0e22\r\n"]
 [1.8, "o", "\r\n"]
-[1.95, "o", "\ud83c\udf10 \u5916\u56fd\u4eba\u89b3\u5149\u5ba2\u5bfe\u5fdc\r\n"]
+[1.95, "o", "[WEB] \u5916\u56fd\u4eba\u89b3\u5149\u5ba2\u5bfe\u5fdc\r\n"]
 [2.1, "o", "\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n"]
 [2.25, "o", "\u5bfe\u5fdc\u56fd: 45\u30ab\u56fd\r\n"]
 [2.4, "o", "\u524d\u5e74\u6bd4: +23%\r\n"]
@@ -21,5 +21,5 @@
 [2.85, "o", "\"I'd like to book a 60min\r\n"]
 [3.0, "o", " treatment for tomorrow 10am\"\r\n"]
 [3.15, "o", "\r\n"]
-[3.3, "o", "\u2705 \u591a\u8a00\u8a9eBot\u81ea\u52d5\u8fd4\u4fe1\r\n"]
+[3.3, "o", "[OK] \u591a\u8a00\u8a9eBot\u81ea\u52d5\u8fd4\u4fe1\r\n"]
 [3.45, "o", "$ "]
