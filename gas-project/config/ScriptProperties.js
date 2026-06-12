@@ -69,9 +69,13 @@ var PROPERTY_KEYS = {
   FEATURE_STAFF_SELECT: 'FEATURE_STAFF_SELECT',
   FEATURE_COUPON: 'FEATURE_COUPON',
   FEATURE_REVIEW_REQUEST: 'FEATURE_REVIEW_REQUEST',
+  FEATURE_INTAKE_FORM: 'FEATURE_INTAKE_FORM',
 
   // Review settings
-  GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL'
+  GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL',
+
+  // Worker base URL (for intake form link generation)
+  WORKER_BASE_URL: 'WORKER_BASE_URL'
 };
 
 /**
@@ -321,6 +325,21 @@ function isFeatureReviewRequestEnabled() {
  */
 function getGoogleReviewUrl() {
   return getProperty(PROPERTY_KEYS.GOOGLE_REVIEW_URL, '');
+}
+
+/**
+ * Check if intake form feature is enabled.
+ * Set FEATURE_INTAKE_FORM=true in ScriptProperties to activate.
+ */
+function isFeatureIntakeFormEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_INTAKE_FORM, 'false') === 'true';
+}
+
+/**
+ * Get Cloudflare Worker base URL (e.g. https://reserve-optimizer.xxx.workers.dev).
+ */
+function getWorkerBaseUrl() {
+  return getProperty(PROPERTY_KEYS.WORKER_BASE_URL, '');
 }
 
 /**

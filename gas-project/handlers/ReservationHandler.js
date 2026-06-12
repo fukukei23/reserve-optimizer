@@ -629,6 +629,21 @@ function _onReservationCreated(reservationId, tempData) {
       menu: reservation.menu_type
     });
   } catch (e) { /* non-critical */ }
+
+  // Intake form link (FEATURE_INTAKE_FORM)
+  if (isFeatureIntakeFormEnabled()) {
+    try {
+      var intakeUrl = getIntakeFormUrl(reservationId);
+      if (intakeUrl && reservation.line_display_name) {
+        sendLinePush(
+          reservation.line_display_name,
+          '📋 事前問診票のご記入をお願いします（任意）\n\n当日スムーズにご案内するため、よろしければご回答ください。\n' + intakeUrl
+        );
+      }
+    } catch (e) {
+      appendLogRow('WARN', '[Intake] Failed to send intake URL: ' + e.message);
+    }
+  }
 }
 
 /**

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>事前問診票</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#333;max-width:480px;margin:0 auto;padding:16px}
+h1{font-size:1.2rem;text-align:center;padding:16px 0;border-bottom:2px solid #06c755}
+.card{background:#fff;border-radius:12px;padding:20px;margin:16px 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.label{font-size:.85rem;font-weight:600;color:#555;margin-bottom:4px}
+.required{color:#d32f2f;margin-left:2px}
+textarea,input[type=text]{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:1rem;margin-bottom:16px;font-family:inherit;resize:vertical}
+textarea:focus,input[type=text]:focus{outline:none;border-color:#06c755}
+.radio-group{display:flex;gap:12px;margin-bottom:16px}
+.radio-group label{display:flex;align-items:center;gap:6px;font-size:.95rem;cursor:pointer}
+.btn-primary{display:block;width:100%;padding:14px;background:#06c755;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer}
+.btn-primary:hover{background:#05a84a}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.note{font-size:.8rem;color:#888;margin-top:8px}
+.error{color:#d32f2f;font-size:.9rem;margin:8px 0;display:none}
+.success{display:none;text-align:center;padding:32px 16px}
+.success .icon{font-size:3rem;margin-bottom:16px}
+.success h2{font-size:1.1rem;color:#06c755;margin-bottom:8px}
+.success p{font-size:.9rem;color:#666}
+</style>
+</head>
+<body>
+<h1>事前問診票</h1>
+
+<div id="formView">
+  <div class="card">
+    <p style="font-size:.9rem;color:#555;margin-bottom:8px">ご来院前にご記入いただくと、スムーズにご案内できます。</p>
+  </div>
+
+  <div class="card">
+    <div class="label">本日の主な症状・お悩み<span class="required">*</span></div>
+    <textarea id="chiefComplaint" rows="3" placeholder="例: 腰痛が3日前から続いている。動くと痛みが強い。"></textarea>
+
+    <div class="label">既往歴・持病</div>
+    <textarea id="medicalHistory" rows="2" placeholder="例: 高血圧（薬服用中）、なければ「特になし」"></textarea>
+
+    <div class="label">アレルギー</div>
+    <input type="text" id="allergies" placeholder="例: 金属アレルギー、なければ「特になし」">
+
+    <div class="label">妊娠の可能性</div>
+    <div class="radio-group">
+      <label><input type="radio" name="pregnancy" value="no" checked> なし</label>
+      <label><input type="radio" name="pregnancy" value="yes"> あり</label>
+      <label><input type="radio" name="pregnancy" value="unknown"> 不明</label>
+    </div>
+
+    <div class="label">その他・ご要望</div>
+    <textarea id="notes" rows="2" placeholder="例: 施術中に気をつけてほしいことなど"></textarea>
+
+    <div id="errMsg" class="error">主な症状・お悩みを入力してください。</div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitForm()">送信する</button>
+    <p class="note">※ 入力内容はご担当スタッフのみ確認します</p>
+  </div>
+</div>
+
+<div class="success" id="successView">
+  <div class="icon">✅</div>
+  <h2>問診票を受け付けました</h2>
+  <p>ご記入ありがとうございます。<br>当日スタッフがご確認のうえ対応いたします。</p>
+</div>
+
+<script>
+var reservationId = location.pathname.split('/').pop() || '';
+
+function submitForm() {
+  var complaint = document.getElementById('chiefComplaint').value.trim();
+  var errMsg = document.getElementById('errMsg');
+  if (!complaint) {
+    errMsg.style.display = 'block';
+    return;
+  }
+  errMsg.style.display = 'none';
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  var pregnancy = document.querySelector('input[name=pregnancy]:checked');
+  var payload = {
+    reservation_id: reservationId,
+    chief_complaint: complaint,
+    medical_history: document.getElementById('medicalHistory').value.trim(),
+    allergies: document.getElementById('allergies').value.trim(),
+    pregnancy: pregnancy ? pregnancy.value : 'no',
+    notes: document.getElementById('notes').value.trim()
+  };
+
+  fetch('/api/intake', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  })
+  .then(function() {
+    document.getElementById('formView').style.display = 'none';
+    document.getElementById('successView').style.display = 'block';
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = '送信する';
+    errMsg.textContent = '送信に失敗しました。もう一度お試しください。';
+    errMsg.style.display = 'block';
+  });
+}
+</script>
+</body>
+</html>

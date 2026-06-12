@@ -13,6 +13,7 @@ export interface Env {
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";
+import INTAKE_FORM_HTML from "./intake-form.html";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -70,6 +71,18 @@ export default {
     // API: create reservation
     if (url.pathname === "/api/reserve" && request.method === "POST") {
       return handleApiReserve(request, env);
+    }
+
+    // Intake form page: /intake/:reservationId
+    if (url.pathname.startsWith("/intake/") && request.method === "GET") {
+      return new Response(INTAKE_FORM_HTML, {
+        headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
+
+    // API: save intake form
+    if (url.pathname === "/api/intake" && (request.method === "POST" || request.method === "OPTIONS")) {
+      return handleApiIntake(request, env);
     }
 
     return new Response("Not Found", { status: 404 });
@@ -330,6 +343,52 @@ async function handleApiAvailability(request: Request, env: Env): Promise<Respon
 
   return forwardToGAS(
     JSON.stringify({ action: "get_availability", date: body.date, api_token: env.WEB_API_KEY }),
+    env,
+    "api"
+  );
+}
+
+/**
+ * API: 問診票保存
+ * POST /api/intake  { reservation_id, chief_complaint, medical_history, allergies, pregnancy, notes }
+ */
+async function handleApiIntake(request: Request, env: Env): Promise<Response> {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
+  }
+
+  let body: {
+    reservation_id?: string;
+    chief_complaint?: string;
+    medical_history?: string;
+    allergies?: string;
+    pregnancy?: string;
+    notes?: string;
+  };
+  try {
+    body = await request.json() as typeof body;
+  } catch {
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
+  }
+
+  if (!body.reservation_id) {
+    return corsResponse(JSON.stringify({ error: "reservation_id is required" }), env.ALLOWED_ORIGIN, 400);
+  }
+  if (!body.chief_complaint || !body.chief_complaint.trim()) {
+    return corsResponse(JSON.stringify({ error: "chief_complaint is required" }), env.ALLOWED_ORIGIN, 400);
+  }
+
+  return forwardToGAS(
+    JSON.stringify({
+      action: "save_intake_form",
+      reservation_id: body.reservation_id,
+      chief_complaint: body.chief_complaint.trim(),
+      medical_history: (body.medical_history || "").trim(),
+      allergies: (body.allergies || "").trim(),
+      pregnancy: body.pregnancy || "no",
+      notes: (body.notes || "").trim(),
+      api_token: env.WEB_API_KEY,
+    }),
     env,
     "api"
   );

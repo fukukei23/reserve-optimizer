@@ -368,6 +368,8 @@ function _dispatchApiRequest(body) {
       return _handleGetAvailability(data);
     case 'create_reservation':
       return _handleCreateReservationApi(data);
+    case 'save_intake_form':
+      return _handleSaveIntakeForm(data);
     default:
       return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
   }
@@ -482,6 +484,34 @@ function _handleCreateReservationApi(data) {
     end_time: endTime,
     menu_type: data.treatment
   });
+}
+
+/**
+ * POST /api/intake — save intake form data
+ */
+function _handleSaveIntakeForm(data) {
+  if (!isFeatureIntakeFormEnabled()) {
+    return _apiResponse({ error: 'Feature not enabled' }, 403);
+  }
+  if (!data.reservation_id) {
+    return _apiResponse({ error: 'reservation_id is required' }, 400);
+  }
+  if (!data.chief_complaint || !String(data.chief_complaint).trim()) {
+    return _apiResponse({ error: 'chief_complaint is required' }, 400);
+  }
+
+  var result = saveIntakeForm(data.reservation_id, {
+    chief_complaint: data.chief_complaint,
+    medical_history: data.medical_history || '',
+    allergies:       data.allergies || '',
+    pregnancy:       data.pregnancy || 'no',
+    notes:           data.notes || ''
+  });
+
+  if (!result.ok) {
+    return _apiResponse({ error: result.error }, 400);
+  }
+  return _apiResponse({ ok: true }, 200);
 }
 
 /**
