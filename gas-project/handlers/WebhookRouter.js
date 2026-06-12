@@ -376,6 +376,10 @@ function _dispatchApiRequest(body) {
       return _handleMarkVisited(data);
     case 'broadcast_segment':
       return _handleBroadcastSegment(data);
+    case 'create_subscription':
+      return _handleCreateSubscription(data);
+    case 'cancel_subscription':
+      return _handleCancelSubscription(data);
     default:
       return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
   }
@@ -603,6 +607,34 @@ function _handleBroadcastSegment(data) {
     return _apiResponse({ error: result.error }, 400);
   }
   return _apiResponse({ ok: true, sent: result.sent, skipped: result.skipped, total: result.total }, 200);
+}
+
+function _handleCreateSubscription(data) {
+  if (!isFeatureSubscriptionEnabled()) {
+    return _apiResponse({ error: 'Feature not enabled' }, 403);
+  }
+  if (!data.line_user_id) {
+    return _apiResponse({ error: 'line_user_id is required' }, 400);
+  }
+  var result = createSubscriptionCheckout(data.line_user_id, data.patient_name || '');
+  if (!result.ok) {
+    return _apiResponse({ error: result.error }, 400);
+  }
+  return _apiResponse({ ok: true, url: result.url }, 200);
+}
+
+function _handleCancelSubscription(data) {
+  if (!isFeatureSubscriptionEnabled()) {
+    return _apiResponse({ error: 'Feature not enabled' }, 403);
+  }
+  if (!data.stripe_subscription_id) {
+    return _apiResponse({ error: 'stripe_subscription_id is required' }, 400);
+  }
+  var result = cancelSubscription(data.stripe_subscription_id);
+  if (!result.ok) {
+    return _apiResponse({ error: result.error }, 400);
+  }
+  return _apiResponse({ ok: true }, 200);
 }
 
 function _apiResponse(data, statusCode) {

@@ -351,6 +351,14 @@ function handleCommand(command, replyToken, userId) {
         sendLineReply(replyToken, 'カルテ機能は現在無効です。');
       }
       break;
+    case '/subscription':
+      if (isFeatureSubscriptionEnabled()) {
+        var subText = getSubscriptionSummaryText(userId);
+        sendLineReply(replyToken, subText);
+      } else {
+        sendLineReply(replyToken, 'サブスクリプション機能は現在無効です。');
+      }
+      break;
     case '/broadcast':
       if (isAdmin && isFeatureSegmentBroadcastEnabled()) {
         // 書式: /broadcast <segment_type>[:<param>] <メッセージ>

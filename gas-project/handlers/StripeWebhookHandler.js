@@ -27,6 +27,19 @@ function handleStripeWebhook(event) {
     case 'checkout.session.completed':
       handleCheckoutSessionCompleted(eventData);
       break;
+    case 'customer.subscription.created':
+    case 'customer.subscription.updated':
+      handleSubscriptionCreatedOrUpdated(eventData);
+      break;
+    case 'customer.subscription.deleted':
+      handleSubscriptionDeleted(eventData);
+      break;
+    case 'invoice.payment_succeeded':
+      handleInvoicePaymentSucceeded(eventData);
+      break;
+    case 'invoice.payment_failed':
+      handleInvoicePaymentFailed(eventData);
+      break;
     default:
       appendLogRow('WARN', 'Unhandled Stripe event type: ' + eventType);
   }
@@ -142,6 +155,12 @@ function handleCheckoutSessionCompleted(session) {
     return;
   }
 
+  // Subscription purchase
+  if (type === 'subscription') {
+    handleSubscriptionCheckoutCompleted(session, metadata);
+    return;
+  }
+
   // Reservation deposit (default)
   var reservationId = metadata.reservation_id;
 
@@ -216,4 +235,114 @@ function handleTicketCheckoutCompleted(session, metadata) {
   ]);
 
   appendLogRow('INFO', '[handleTicketCheckoutCompleted] Ticket created: ' + ticket.ticket_id + ' for user: ' + lineUserId);
+}
+
+/**
+ * Handle subscription checkout completion
+ * checkout.session.completed with metadata.type === 'subscription'
+ */
+function handleSubscriptionCheckoutCompleted(session, metadata) {
+  var lineUserId = metadata.line_user_id;
+  var stripeSubId = session.subscription;
+  var stripeCustomerId = session.customer;
+
+  if (!lineUserId || !stripeSubId) {
+    appendLogRow('WARN', '[Subscription] Missing metadata in checkout session');
+    return;
+  }
+
+  saveSubscription({
+    line_user_id:           lineUserId,
+    stripe_customer_id:     stripeCustomerId || '',
+    stripe_subscription_id: stripeSubId,
+    status:                 SUBSCRIPTION_STATUS.ACTIVE,
+    plan_name:              getSubscriptionPlanName(),
+    started_at:             Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd')
+  });
+
+  sendLinePush(lineUserId,
+    '✅ ' + getSubscriptionPlanName() + 'へのご加入ありがとうございます！\n毎月自動更新されます。確認は「/subscription」でいつでもご確認いただけます。'
+  );
+  appendLogRow('INFO', '[Subscription] Checkout completed for: ' + lineUserId);
+}
+
+/**
+ * Handle customer.subscription.created / updated
+ */
+function handleSubscriptionCreatedOrUpdated(subscription) {
+  var stripeSubId = subscription.id;
+  var nowStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+
+  var nextBillingAt = subscription.current_period_end
+    ? Utilities.formatDate(new Date(subscription.current_period_end * 1000), 'Asia/Tokyo', 'yyyy/MM/dd')
+    : '';
+
+  updateSubscriptionStatus(stripeSubId, subscription.status || SUBSCRIPTION_STATUS.ACTIVE, {
+    next_billing_at: nextBillingAt
+  });
+  appendLogRow('INFO', '[Subscription] Created/Updated: ' + stripeSubId + ' status=' + subscription.status);
+}
+
+/**
+ * Handle customer.subscription.deleted
+ */
+function handleSubscriptionDeleted(subscription) {
+  var stripeSubId = subscription.id;
+  var nowStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+
+  var result = updateSubscriptionStatus(stripeSubId, SUBSCRIPTION_STATUS.CANCELED, { canceled_at: nowStr });
+
+  // LINEユーザーIDをシートから取得して通知
+  if (result.found) {
+    var sub = null;
+    try {
+      // SubscriptionService の getSubscriptionByLineUserId を使えないため直接検索しない
+      // Stripe metadataからline_user_idを取得（subscription objectのmetadata）
+      var lineUserId = subscription.metadata ? subscription.metadata.line_user_id : null;
+      if (lineUserId) {
+        sendLinePush(lineUserId,
+          'ℹ️ ' + getSubscriptionPlanName() + 'が解約されました。ご利用ありがとうございました。'
+        );
+      }
+    } catch (e) {
+      appendLogRow('WARN', '[Subscription] Could not send cancellation notice: ' + e.message);
+    }
+  }
+  appendLogRow('INFO', '[Subscription] Deleted: ' + stripeSubId);
+}
+
+/**
+ * Handle invoice.payment_succeeded — update next billing date
+ */
+function handleInvoicePaymentSucceeded(invoice) {
+  var stripeSubId = invoice.subscription;
+  if (!stripeSubId) return;
+
+  var nextBillingAt = invoice.period_end
+    ? Utilities.formatDate(new Date(invoice.period_end * 1000), 'Asia/Tokyo', 'yyyy/MM/dd')
+    : '';
+
+  updateSubscriptionStatus(stripeSubId, SUBSCRIPTION_STATUS.ACTIVE, { next_billing_at: nextBillingAt });
+  appendLogRow('INFO', '[Subscription] Invoice paid: ' + stripeSubId);
+}
+
+/**
+ * Handle invoice.payment_failed — notify patient
+ */
+function handleInvoicePaymentFailed(invoice) {
+  var stripeSubId = invoice.subscription;
+  if (!stripeSubId) return;
+
+  updateSubscriptionStatus(stripeSubId, SUBSCRIPTION_STATUS.PAST_DUE, {});
+
+  var lineUserId = invoice.customer_email
+    ? null // emailからlineUserIdは逆引き不可
+    : (invoice.metadata ? invoice.metadata.line_user_id : null);
+
+  if (lineUserId) {
+    sendLinePush(lineUserId,
+      '⚠️ サブスクリプションの決済が失敗しました。カード情報をご確認ください。'
+    );
+  }
+  appendLogRow('WARN', '[Subscription] Invoice payment failed: ' + stripeSubId);
 }

@@ -73,6 +73,11 @@ var PROPERTY_KEYS = {
   FEATURE_KARTE: 'FEATURE_KARTE',
   FEATURE_STAMP_CARD: 'FEATURE_STAMP_CARD',
   FEATURE_SEGMENT_BROADCAST: 'FEATURE_SEGMENT_BROADCAST',
+  FEATURE_SUBSCRIPTION: 'FEATURE_SUBSCRIPTION',
+
+  // Subscription settings (W3-2)
+  SUBSCRIPTION_PRICE_ID: 'SUBSCRIPTION_PRICE_ID',
+  SUBSCRIPTION_PLAN_NAME: 'SUBSCRIPTION_PLAN_NAME',
 
   // Stamp card settings (W3-1)
   STAMP_THRESHOLD: 'STAMP_THRESHOLD',
@@ -417,6 +422,29 @@ function getStampRewardMessage() {
  */
 function isFeatureSegmentBroadcastEnabled() {
   return getProperty(PROPERTY_KEYS.FEATURE_SEGMENT_BROADCAST, 'false') === 'true';
+}
+
+/**
+ * Check if subscription feature is enabled.
+ * Set FEATURE_SUBSCRIPTION=true in ScriptProperties to activate.
+ */
+function isFeatureSubscriptionEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_SUBSCRIPTION, 'false') === 'true';
+}
+
+/**
+ * Get Stripe Price ID for the subscription plan.
+ * Must be created in Stripe Dashboard beforehand.
+ */
+function getSubscriptionPriceId() {
+  return getProperty(PROPERTY_KEYS.SUBSCRIPTION_PRICE_ID, '');
+}
+
+/**
+ * Get display name for the subscription plan (default: 月額定額プラン).
+ */
+function getSubscriptionPlanName() {
+  return getProperty(PROPERTY_KEYS.SUBSCRIPTION_PLAN_NAME, '月額定額プラン');
 }
 
 /**
