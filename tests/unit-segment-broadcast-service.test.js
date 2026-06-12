@@ -290,6 +290,37 @@ test('getBroadcastPreview: 対象なしは count=0', function() {
   assertEqual(p.preview.length, 0);
 });
 
+// ─── エッジケース ───
+
+test('broadcastToSegment: messageが空白のみ → ok:false', function() {
+  resetMocks();
+  var r = broadcastToSegment('all', null, '   ');
+  assertEqual(r.ok, false);
+  assert(r.error, 'error exists');
+});
+
+test("getSegmentCustomers tag: 'vip2'タグは'vip'セグメントに含まれない", function() {
+  resetMocks();
+  _mockCustomers = [
+    makeCustomer({ line_user_id: 'U1', tags: 'vip2' }),
+    makeCustomer({ line_user_id: 'U2', tags: 'vip' })
+  ];
+  var result = getSegmentCustomers('tag', 'vip');
+  assertEqual(result.length, 1, 'vip2は除外');
+  assertEqual(result[0].line_user_id, 'U2');
+});
+
+test('getSegmentCustomers inactive: 当日来院の顧客は30日未満なので除外', function() {
+  resetMocks();
+  var today = new Date();
+  var ymd = today.getFullYear() + '/' +
+    ('0' + (today.getMonth() + 1)).slice(-2) + '/' +
+    ('0' + today.getDate()).slice(-2);
+  _mockCustomers = [makeCustomer({ line_user_id: 'U1', last_visit: ymd })];
+  var result = getSegmentCustomers('inactive', 30);
+  assertEqual(result.length, 0, '当日来院は除外される');
+});
+
 // ─── Report ───
 console.log('\n');
 console.log('SegmentBroadcast Tests:', _results.pass + _results.fail, 'total');

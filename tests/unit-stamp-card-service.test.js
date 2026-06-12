@@ -274,6 +274,37 @@ test('累積: 報酬到達後もtotal_stamps_earnedは引き継がれる', funct
   assertEqual(card.stamp_count, 1);
 });
 
+// ─── エッジケース ───
+
+test('getStampSummaryText: stamp_count=0のカードが存在する場合「あと」は表示されない', function() {
+  resetMocks();
+  _mockRows.push(['U001', 0, 10, 'R000', '2026/06/12', '2026/06/12']);
+  var text = getStampSummaryText('U001');
+  assert(text.indexOf('あと') < 0, '「あと」が含まれないこと: ' + text);
+});
+
+test('getStampSummaryText: threshold-1枚のとき「あと1枚で特典！」が表示される', function() {
+  resetMocks();
+  _mockRows.push(['U001', 9, 9, 'R000', '2026/06/12', '2026/06/12']);
+  var text = getStampSummaryText('U001');
+  assert(text.indexOf('あと1枚で特典！') >= 0, '「あと1枚で特典！」が含まれること: ' + text);
+});
+
+test('addStamp: 複数ユーザーが存在する場合、対象ユーザーのみ更新される', function() {
+  resetMocks();
+  _mockRows.push(['U001', 2, 2, 'R_PREV1', '2026/06/12', '2026/06/12']);
+  _mockRows.push(['U002', 5, 5, 'R_PREV2', '2026/06/12', '2026/06/12']);
+  addStamp('U001', 'R010');
+  var cardU002 = getStampCard('U002');
+  assertEqual(cardU002.stamp_count, 5, 'U002のstamp_countは変わらない');
+});
+
+test('addStamp: lineUserId=空文字 → ok:false', function() {
+  resetMocks();
+  var r = addStamp('', 'R001');
+  assertEqual(r.ok, false);
+});
+
 // ─── Report ───
 console.log('\n');
 console.log('StampCard Tests:', _results.pass + _results.fail, 'total');

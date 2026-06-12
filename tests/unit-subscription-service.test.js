@@ -265,6 +265,28 @@ test('getSubscriptionSummaryText: canceled → 解約済み表示', function() {
   assert(text.indexOf('解約済み') >= 0, text);
 });
 
+// ─── エッジケース ───
+
+test('getSubscriptionSummaryText: past_due → 支払い期限切れ表示', function() {
+  resetMocks();
+  _mockRows.push(makeSubRow({ line_user_id: 'U001', status: 'past_due' }));
+  var text = getSubscriptionSummaryText('U001');
+  assert(text.indexOf('支払い期限切れ') >= 0, text);
+});
+
+test('getSubscriptionSummaryText: incomplete → 未完了表示', function() {
+  resetMocks();
+  _mockRows.push(makeSubRow({ line_user_id: 'U001', status: 'incomplete' }));
+  var text = getSubscriptionSummaryText('U001');
+  assert(text.indexOf('未完了') >= 0, text);
+});
+
+test('getSubscriptionByLineUserId: 空文字 → null', function() {
+  resetMocks();
+  _mockRows.push(makeSubRow({ line_user_id: 'U001' }));
+  assertEqual(getSubscriptionByLineUserId(''), null);
+});
+
 // ─── Report ───
 console.log('\n');
 console.log('Subscription Tests:', _results.pass + _results.fail, 'total');
