@@ -80,13 +80,14 @@ global.formatTimeObj = function(d) {
   return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
 };
 
-// SheetService cache variables (StaffService references _reservationsByDateMap)
+// SheetService cache variables (StaffService references _reservationsByDateMap / _reservationsByLineUserIdMap)
 var _reservationCache = null;
 var _reservationByIdMap = null;
-var _reservationsByLineUserIdMap = null;
+var _reservationsByLineUserIdMap = {};
 var _reservationsByDateMap = {};
 global._reservationCache = _reservationCache;
 global._reservationsByDateMap = _reservationsByDateMap;
+global._reservationsByLineUserIdMap = _reservationsByLineUserIdMap;
 
 // Minimal SheetService functions needed by StaffService
 global._ensureReservationCache = function() {};
@@ -94,8 +95,17 @@ global._getCachedSpreadsheet = function() {
   return global.SpreadsheetApp.openById();
 };
 
+// ScriptProperties mock (overrideable per test)
+var _mockScriptProps = {};
+global.PropertiesService.getScriptProperties = function() {
+  return { getProperty: function(k) { return _mockScriptProps[k] || null; } };
+};
+
 // Load source
 var gasDir = path.join(__dirname, '..', 'gas-project');
+// ScriptProperties.js must load before StaffService.js (isFeatureStaffSelectEnabled)
+global.appendLogRow = global.appendLogRow || function() {};
+new vm.Script(fs.readFileSync(path.join(gasDir, 'config', 'ScriptProperties.js'), 'utf8'), { filename: 'ScriptProperties.js' }).runInThisContext();
 new vm.Script(fs.readFileSync(path.join(gasDir, 'services', 'StaffService.js'), 'utf8'), { filename: 'StaffService.js' }).runInThisContext();
 
 // ─── Test framework ───
@@ -200,6 +210,72 @@ assert('has active boolean', typeof s.active === 'boolean');
 assert('active is true', s.active === true);
 assert('has specialties array', Array.isArray(s.specialties));
 assertEqual('specialties count', s.specialties.length, 2);
+
+// ─── W1-1: getPreviousStaffIdByLineUserId ───
+
+section('getPreviousStaffIdByLineUserId: basic');
+_reservationsByLineUserIdMap['U001'] = [
+  { status: 'Confirmed', notes: 'staff:S001', reserved_date: '2026/05/01' },
+  { status: 'Confirmed', notes: 'staff:S002', reserved_date: '2026/06/01' }
+];
+_reservationsByLineUserIdMap['U002'] = [
+  { status: 'Confirmed', notes: '', reserved_date: '2026/06/01' }
+];
+_reservationsByLineUserIdMap['U003'] = [
+  { status: 'Cancelled', notes: 'staff:S001', reserved_date: '2026/06/01' }
+];
+assertEqual('last confirmed staff is S002', getPreviousStaffIdByLineUserId('U001'), 'S002');
+assert('returns null when notes has no staff', getPreviousStaffIdByLineUserId('U002') === null);
+assert('returns null when only cancelled', getPreviousStaffIdByLineUserId('U003') === null);
+assert('returns null for unknown user', getPreviousStaffIdByLineUserId('U999') === null);
+
+section('getPreviousStaffIdByLineUserId: edge cases');
+_reservationsByLineUserIdMap['U004'] = [];
+assert('returns null for empty history', getPreviousStaffIdByLineUserId('U004') === null);
+_reservationsByLineUserIdMap['U005'] = [
+  { status: 'Confirmed', notes: 'staff:S001 extra', reserved_date: '2026/06/01' }
+];
+assertEqual('parses staff id with trailing text', getPreviousStaffIdByLineUserId('U005'), 'S001');
+
+// ─── W1-1: buildStaffSelectionOptionsWithHistory ───
+
+section('buildStaffSelectionOptionsWithHistory: previous staff first');
+resetStaffCache();
+_reservationsByLineUserIdMap['U_HAS_HISTORY'] = [
+  { status: 'Confirmed', notes: 'staff:S001', reserved_date: '2026/06/01' }
+];
+var histOpts = buildStaffSelectionOptionsWithHistory('再診', 'U_HAS_HISTORY');
+assert('has at least 4 options (2 staff + 2 fixed)', histOpts.length >= 4);
+assertEqual('first option is previous staff S001', histOpts[0].text, 'Dr. Tanaka');
+assert('first option label contains 前回', histOpts[0].label.indexOf('前回') >= 0);
+assertEqual('second last is 指名しない', histOpts[histOpts.length - 2].text, '指名しない');
+assertEqual('last is やめる', histOpts[histOpts.length - 1].text, 'やめる');
+
+section('buildStaffSelectionOptionsWithHistory: no history');
+resetStaffCache();
+_reservationsByLineUserIdMap['U_NO_HISTORY'] = [];
+var noHistOpts = buildStaffSelectionOptionsWithHistory('再診', 'U_NO_HISTORY');
+assertEqual('same as buildStaffSelectionOptions length', noHistOpts.length, buildStaffSelectionOptions('再診').length);
+assertEqual('last is やめる', noHistOpts[noHistOpts.length - 1].text, 'やめる');
+
+section('buildStaffSelectionOptionsWithHistory: previous staff not in current options');
+resetStaffCache();
+_reservationsByLineUserIdMap['U_OLD_STAFF'] = [
+  { status: 'Confirmed', notes: 'staff:S999', reserved_date: '2026/06/01' }
+];
+var oldStaffOpts = buildStaffSelectionOptionsWithHistory('再診', 'U_OLD_STAFF');
+assertEqual('fallback: same length as base', oldStaffOpts.length, buildStaffSelectionOptions('再診').length);
+
+// ─── W1-1: isFeatureStaffSelectEnabled (requires ScriptProperties.js) ───
+
+section('isFeatureStaffSelectEnabled');
+_mockScriptProps = {};
+assert('disabled by default', isFeatureStaffSelectEnabled() === false);
+_mockScriptProps['FEATURE_STAFF_SELECT'] = 'true';
+assert('enabled when set to true', isFeatureStaffSelectEnabled() === true);
+_mockScriptProps['FEATURE_STAFF_SELECT'] = 'false';
+assert('disabled when set to false', isFeatureStaffSelectEnabled() === false);
+_mockScriptProps = {};
 
 // ─── Results ───
 console.log('\n========================================');

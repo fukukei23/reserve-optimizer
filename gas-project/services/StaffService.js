@@ -212,6 +212,54 @@ function buildStaffSelectionOptions(treatmentPrefix) {
   return items;
 }
 
+/**
+ * Get the previous staff ID from the user's last confirmed reservation.
+ * Staff is stored in notes as 'staff:STAFF_ID'.
+ * @param {string} lineUserId
+ * @returns {string|null}
+ */
+function getPreviousStaffIdByLineUserId(lineUserId) {
+  _ensureReservationCache();
+  var all = _reservationsByLineUserIdMap[lineUserId] || [];
+  for (var i = all.length - 1; i >= 0; i--) {
+    var r = all[i];
+    if (r.status !== RESERVATION_STATUS.CONFIRMED) continue;
+    if (!r.notes) continue;
+    var match = r.notes.match(/staff:(\S+)/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+/**
+ * Build staff QuickReply options, placing the user's previous staff first.
+ * Falls back to buildStaffSelectionOptions when no history exists.
+ * @param {string} treatmentPrefix - '初診' or '再診'
+ * @param {string} lineUserId
+ * @returns {Array<{label, text}>}
+ */
+function buildStaffSelectionOptionsWithHistory(treatmentPrefix, lineUserId) {
+  var items = buildStaffSelectionOptions(treatmentPrefix);
+  var prevStaffId = getPreviousStaffIdByLineUserId(lineUserId);
+  if (!prevStaffId) return items;
+
+  var prevStaff = getStaffById(prevStaffId);
+  if (!prevStaff || !prevStaff.active) return items;
+
+  // Remove the previous staff from wherever it appears in the list
+  var filtered = [];
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].text !== prevStaff.name) filtered.push(items[i]);
+  }
+
+  // Prepend as "前回と同じ ○○さん"
+  filtered.unshift({
+    label: '前回と同じ ' + prevStaff.name + 'さん',
+    text: prevStaff.name
+  });
+  return filtered;
+}
+
 // --- Cache ---
 
 function _ensureStaffCache() {

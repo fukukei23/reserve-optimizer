@@ -63,7 +63,10 @@ var PROPERTY_KEYS = {
   // Ticket package settings
   TICKET_EXPIRY_DAYS: 'TICKET_EXPIRY_DAYS',
   TICKET_5_PRICE: 'TICKET_5_PRICE',
-  TICKET_10_PRICE: 'TICKET_10_PRICE'
+  TICKET_10_PRICE: 'TICKET_10_PRICE',
+
+  // Feature flags (opt-in)
+  FEATURE_STAFF_SELECT: 'FEATURE_STAFF_SELECT'
 };
 
 /**
@@ -282,6 +285,14 @@ function isFirebaseConfigured() {
  */
 function getFollowUpHoursAfter() {
   return parseInt(getProperty(PROPERTY_KEYS.FOLLOW_UP_HOURS_AFTER, '24'));
+}
+
+/**
+ * Check if staff nomination feature is enabled.
+ * Set FEATURE_STAFF_SELECT=true in ScriptProperties to activate.
+ */
+function isFeatureStaffSelectEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_STAFF_SELECT, 'false') === 'true';
 }
 
 /**

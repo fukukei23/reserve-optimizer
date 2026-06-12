@@ -23,8 +23,11 @@ function startReservationFlow(replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
   var menuOptions = _buildTreatmentMenuOptions(isReturning);
-  var totalSteps = isReturning ? 3 : 4; // returning: 施術→日付→時間(3), new: 施術→日付→名前→電話(4)
+  // When staff select is enabled, +1 step (staff selection inserted after treatment)
+  var staffSelectOn = isFeatureStaffSelectEnabled();
+  var totalSteps = isReturning ? (staffSelectOn ? 4 : 3) : (staffSelectOn ? 5 : 4);
   tempData.total_steps = totalSteps;
+  tempData.staff_select_enabled = staffSelectOn;
   sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/' + totalSteps + '] 施術の種類を選択してください。', menuOptions);
 }
 
@@ -231,19 +234,23 @@ function handleAwaitingTreatment(text, replyToken, userId) {
   tempData.menu_type = text;
   tempData.visit_type = text.includes('初診') ? VISIT_TYPE.FIRST : VISIT_TYPE.REPEAT;
 
-  // Check if staff assignment is available for this treatment type
   var treatmentPrefix = text.includes('初診') ? '初診' : '再診';
-  var staffOptions = buildStaffSelectionOptions(treatmentPrefix);
-  // staffOptions always includes '指名しない' and 'やめる' (at least 3 items)
-  if (staffOptions.length > 2) {
-    setUserState(userId, USER_STATES.AWAITING_STAFF, tempData);
-    var staffStep = isReturning ? 2 : 2;
-    sendQuickReply(replyToken, '[Step ' + staffStep + '/' + tempData.total_steps + '] スタッフを選択してください。\n指名がない場合は「指名しない」を選んでください。', staffOptions);
-  } else {
-    // No staff data — skip staff selection, go directly to date
-    setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
-    sendDatePromptWithQuickReply(replyToken, userId);
+
+  // Staff selection step: only when feature flag is enabled and staff data exists
+  if (tempData.staff_select_enabled) {
+    var staffOptions = buildStaffSelectionOptionsWithHistory(treatmentPrefix, userId);
+    // staffOptions always has at least '指名しない' and 'やめる' (length >= 2)
+    // Show staff step only when at least one named staff is available
+    if (staffOptions.length > 2) {
+      setUserState(userId, USER_STATES.AWAITING_STAFF, tempData);
+      sendQuickReply(replyToken, '[Step 2/' + tempData.total_steps + '] スタッフを選択してください。\n指名がない場合は「指名しない」を選んでください。', staffOptions);
+      return;
+    }
   }
+
+  // Feature disabled or no staff data — skip to date
+  setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
+  sendDatePromptWithQuickReply(replyToken, userId);
 }
 
 /**

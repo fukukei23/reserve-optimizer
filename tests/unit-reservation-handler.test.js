@@ -304,6 +304,8 @@ global.appendAuditLog = function() {
 
 global.getStaffByName = function() { return _stubReturns.staffByName; };
 global.buildStaffSelectionOptions = function() { return _stubReturns.staffOptions; };
+global.buildStaffSelectionOptionsWithHistory = function() { return _stubReturns.staffOptions; };
+global.getPreviousStaffIdByLineUserId = function() { return null; };
 
 global.createReservation = function(data) { return _stubReturns.createReservationResult; };
 
@@ -341,6 +343,7 @@ function loadFile(relPath) {
   new vm.Script(code, { filename: path.basename(relPath) }).runInThisContext();
 }
 
+loadFile('config/ScriptProperties.js');
 loadFile('handlers/ReservationHandler.js');
 
 // ─── Test framework ───
@@ -689,9 +692,9 @@ section('handleAwaitingTreatment');
   assertEqual('invalid treatment: no state change', _trackers.setUserState.length, 0);
   assertIncludes('invalid treatment: asks again', _trackers.sendQuickReply[0].msg, '施術の種類');
 
-  // Valid treatment - with staff options (staffOptions.length > 2)
+  // Valid treatment - with staff options and feature flag enabled
   resetTrackers();
-  setupUserState('user2', 'AWAITING_TREATMENT', { is_returning: false, total_steps: 4 });
+  setupUserState('user2', 'AWAITING_TREATMENT', { is_returning: false, total_steps: 5, staff_select_enabled: true });
   _stubReturns.staffOptions = [
     { label: 'スタッフA', text: 'スタッフA' },
     { label: '指名しない', text: '指名しない' },
