@@ -138,6 +138,37 @@ function handleLineEvent(event) {
 }
 
 /**
+ * Declarative state dispatch table.
+ * Maps USER_STATES → handler function(text, replyToken, userId).
+ * Add new states here — no switch statement modification needed.
+ */
+var STATE_DISPATCH = null;
+
+function _getStateDispatch() {
+  if (STATE_DISPATCH) return STATE_DISPATCH;
+  STATE_DISPATCH = {};
+  STATE_DISPATCH[USER_STATES.IDLE]                   = handleIdleState;
+  STATE_DISPATCH[USER_STATES.AWAITING_NAME]          = handleAwaitingName;
+  STATE_DISPATCH[USER_STATES.AWAITING_PHONE]         = handleAwaitingPhone;
+  STATE_DISPATCH[USER_STATES.AWAITING_DATE]          = handleAwaitingDate;
+  STATE_DISPATCH[USER_STATES.AWAITING_TIME]          = handleAwaitingTime;
+  STATE_DISPATCH[USER_STATES.AWAITING_TREATMENT]     = handleAwaitingTreatment;
+  STATE_DISPATCH[USER_STATES.AWAITING_PAYMENT]       = handleAwaitingPayment;
+  STATE_DISPATCH[USER_STATES.AWAITING_STAFF]         = handleAwaitingStaff;
+  STATE_DISPATCH[USER_STATES.AWAITING_CANCEL_SELECT] = handleAwaitingCancelSelect;
+  STATE_DISPATCH[USER_STATES.AWAITING_CANCEL_CONFIRM]= handleAwaitingCancelConfirm;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_SELECT] = handleAwaitingChangeSelect;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_FIELD]  = handleAwaitingChangeField;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_DATE]   = handleAwaitingChangeDate;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_TIME]   = handleAwaitingChangeTime;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_TREATMENT] = handleAwaitingChangeTreatment;
+  STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_CONFIRM]= handleAwaitingChangeConfirm;
+  STATE_DISPATCH[USER_STATES.AWAITING_WAITLIST_TIME] = handleAwaitingWaitlistTime;
+  STATE_DISPATCH[USER_STATES.AWAITING_TICKET_SELECT] = handleAwaitingTicketSelect;
+  return STATE_DISPATCH;
+}
+
+/**
  * Handle message event
  */
 function handleMessage(message, replyToken, userId) {
@@ -174,158 +205,101 @@ function handleMessage(message, replyToken, userId) {
     }
   }
 
-  // Handle "人間に問い合わせる" regardless of state (so it is not validated as name/phone/date/time)
-  if (text === '人間に問い合わせる') {
-    sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));
-    clearUserState(userId);
+  // Global intercepts — handled before state dispatch
+  if (_handleGlobalInput(text, replyToken, userId, userState.state, _locale)) {
     return;
   }
 
-  // Handle "お問い合わせ" globally (rich menu action — same as "人間に問い合わせる")
-  if (text === 'お問い合わせ') {
+  // Route based on current state via dispatch table
+  var dispatch = _getStateDispatch();
+  var handler = dispatch[userState.state];
+  if (handler) {
+    handler(text, replyToken, userId);
+  } else {
+    sendLineReply(replyToken, t('router.can_help', _locale));
+  }
+}
+
+/**
+ * Handle inputs that intercept before state dispatch.
+ * Returns true if the input was consumed (reply already sent).
+ */
+function _handleGlobalInput(text, replyToken, userId, currentState, _locale) {
+  // Contact requests bypass all states
+  if (text === '人間に問い合わせる' || text === 'お問い合わせ') {
     sendLineReply(replyToken, MessageTemplates.getContactMessage(_locale));
     clearUserState(userId);
-    return;
+    return true;
   }
 
-  // Handle settings change responses (SET_REMINDER: prefix)
+  // Settings: reminder timing (SET_REMINDER:<time>)
   if (text.indexOf('SET_REMINDER:') === 0) {
     var timing = text.substring('SET_REMINDER:'.length);
     setUserPref(userId, 'reminder_timing', timing);
     sendLineReply(replyToken, t('router.reminder_changed', _locale) + timing + t('router.reminder_changed_suffix', _locale));
-    return;
+    return true;
   }
 
-  // Handle waitlist slot reservation (RESERVE_SLOT:date:time)
+  // Waitlist slot reservation (RESERVE_SLOT:<date>:<time>)
   if (text.indexOf('RESERVE_SLOT:') === 0) {
     var parts = text.substring('RESERVE_SLOT:'.length).split(':');
     if (parts.length >= 2) {
       handleWaitlistSlotReservation(replyToken, userId, parts[0], parts[1]);
-      return;
+      return true;
     }
   }
 
-  // Handle ticket purchase (TICKET_BUY:5 or TICKET_BUY:10)
+  // Ticket purchase (TICKET_BUY:<pkg>)
   if (text.indexOf('TICKET_BUY:') === 0) {
-    var ticketPkg = text.substring('TICKET_BUY:'.length);
-    handleTicketPurchase(replyToken, userId, ticketPkg);
-    return;
+    handleTicketPurchase(replyToken, userId, text.substring('TICKET_BUY:'.length));
+    return true;
   }
 
-  // Handle ticket balance check
+  // Ticket balance
   if (text === 'TICKET_BALANCE') {
     handleTicketBalance(replyToken, userId);
-    return;
+    return true;
   }
 
-  // Handle "営業時間・アクセス" globally (rich menu action — works in any state)
+  // Rich menu: business hours (works in any state)
   if (text === '営業時間・アクセス') {
     sendLineReply(replyToken, MessageTemplates.getBusinessHoursMessage(_locale));
     clearUserState(userId);
-    return;
+    return true;
   }
 
-  // Handle "やめる" globally across all non-IDLE states (with confirmation)
-  if (text === 'やめる' && userState.state !== USER_STATES.IDLE) {
-    clearUserState(userId);
-    sendLineReply(replyToken, t('router.cancelled', _locale));
-    return;
+  // Navigation: cancel / back / jump (non-IDLE only)
+  if (currentState !== USER_STATES.IDLE) {
+    if (text === 'やめる' || text === '本当にやめる') {
+      clearUserState(userId);
+      sendLineReply(replyToken, t('router.cancelled', _locale));
+      return true;
+    }
+    if (text === '戻る') {
+      clearUserState(userId);
+      var menuData = MessageTemplates.getWelcomeMessage(_locale);
+      sendQuickReply(replyToken, t('router.back_to_menu', _locale), menuData.quickReplies);
+      return true;
+    }
+    if (text === '予約する') {
+      clearUserState(userId);
+      startReservationFlow(replyToken, userId);
+      return true;
+    }
+    if (text === '予約変更・キャンセル') {
+      clearUserState(userId);
+      handleChangeFlow(replyToken, userId);
+      return true;
+    }
   }
 
-  // Handle "本当にやめる" — explicit cancel confirmation
-  if (text === '本当にやめる' && userState.state !== USER_STATES.IDLE) {
-    clearUserState(userId);
-    sendLineReply(replyToken, t('router.cancelled', _locale));
-    return;
-  }
-
-  // Handle "戻る" — go back to menu (clears state, returns to welcome)
-  if (text === '戻る' && userState.state !== USER_STATES.IDLE) {
-    clearUserState(userId);
-    var menuData = MessageTemplates.getWelcomeMessage(_locale);
-    sendQuickReply(replyToken, t('router.back_to_menu', _locale), menuData.quickReplies);
-    return;
-  }
-
-  // Handle "予約する" globally — reset current operation and start new reservation
-  if (text === '予約する' && userState.state !== USER_STATES.IDLE) {
-    clearUserState(userId);
-    startReservationFlow(replyToken, userId);
-    return;
-  }
-
-  // Handle "予約変更・キャンセル" globally — reset and start change/cancel flow
-  if (text === '予約変更・キャンセル' && userState.state !== USER_STATES.IDLE) {
-    clearUserState(userId);
-    handleChangeFlow(replyToken, userId);
-    return;
-  }
-
-  // Check for commands
-  if (text.startsWith('/')) {
+  // Admin / slash commands
+  if (text.charAt(0) === '/') {
     handleCommand(text, replyToken, userId);
-    return;
+    return true;
   }
 
-  // Route based on current state
-  switch (userState.state) {
-    case USER_STATES.IDLE:
-      handleIdleState(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_NAME:
-      handleAwaitingName(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_PHONE:
-      handleAwaitingPhone(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_DATE:
-      handleAwaitingDate(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_TIME:
-      handleAwaitingTime(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_TREATMENT:
-      handleAwaitingTreatment(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_PAYMENT:
-      handleAwaitingPayment(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_STAFF:
-      handleAwaitingStaff(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CANCEL_SELECT:
-      handleAwaitingCancelSelect(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CANCEL_CONFIRM:
-      handleAwaitingCancelConfirm(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_SELECT:
-      handleAwaitingChangeSelect(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_FIELD:
-      handleAwaitingChangeField(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_DATE:
-      handleAwaitingChangeDate(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_TIME:
-      handleAwaitingChangeTime(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_TREATMENT:
-      handleAwaitingChangeTreatment(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_CHANGE_CONFIRM:
-      handleAwaitingChangeConfirm(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_WAITLIST_TIME:
-      handleAwaitingWaitlistTime(text, replyToken, userId);
-      break;
-    case USER_STATES.AWAITING_TICKET_SELECT:
-      handleAwaitingTicketSelect(text, replyToken, userId);
-      break;
-    default:
-      sendLineReply(replyToken, t('router.can_help', _locale));
-  }
+  return false;
 }
 
 /**

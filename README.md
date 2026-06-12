@@ -4,6 +4,7 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 整骨院向けLINE予約管理Bot。GASバックエンド + LINE Messaging API + Google Spreadsheets + Stripe Checkout + Cloudflare Worker + MiniMax AIによる予約・決済・AIチャットの統合システム。
 
+[![Test](https://github.com/fukukei23/reserve-optimizer/actions/workflows/test.yml/badge.svg)](https://github.com/fukukei23/reserve-optimizer/actions/workflows/test.yml)
 [![JavaScript](https://img.shields.io/badge/lang-JavaScript%20%2B%20TypeScript-yellow)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Cloudflare Workers](https://img.shields.io/badge/runtime-Cloudflare%20Workers-orange)](https://workers.cloudflare.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)

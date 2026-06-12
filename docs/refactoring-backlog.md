@@ -53,10 +53,11 @@
   - ※GAS制約: グローバル関数として各ファイルのfunctionが自動的に見えるため、`var`/`function`ベースのまま分割可能
   - 推定工数: 4時間
 
-- [ ] **P1-2: スプレッドシート検索の最適化（リニアスキャン→Map化）** — `services/SheetService.js`
+- [x] **P1-2: スプレッドシート検索の最適化（リニアスキャン→Map化）** — `services/SheetService.js`
   - 問題: `getReservationsByLineUserId` 等が全行を `for` ループでリニアスキャン（O(n)）。予約件数増加時にパフォーマンス劣化
   - 修正方針: キャッシュ付きMap構造を導入。`SheetService` に `_reservationCache` を追加し、`loadAllReservations()` でMap構築後に各種検索関数がMap lookup（O(1)）を利用。GASの1実行内キャッシュ有効
   - 推定工数: 3時間
+  - ✅ 実装済み（`_reservationByIdMap` / `_reservationsByLineUserIdMap` / `_reservationsByDateMap` + CacheService 5分TTL）
 
 - [x] **P1-3: キーワードマッチングの最適化** — `handlers/MessageRouter.js`
   - 問題: `handleIdleState` で5種類のキーワード配列をリニアループでマッチング。各配列6〜8要素、最大40回のループ
