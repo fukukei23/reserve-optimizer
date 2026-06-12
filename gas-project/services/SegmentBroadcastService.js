@@ -80,7 +80,7 @@ function broadcastToSegment(segmentType, segmentParam, message) {
 
   var targets = getSegmentCustomers(segmentType, segmentParam);
   if (targets.length === 0) {
-    return { ok: false, error: '対象患者が見つかりません' };
+    return { ok: true, sent: 0, skipped: 0, total: 0, message: '対象患者が見つかりません' };
   }
 
   var sent = 0;

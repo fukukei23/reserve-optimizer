@@ -412,7 +412,7 @@ function getStampThreshold() {
 function getStampRewardMessage() {
   return getProperty(
     PROPERTY_KEYS.STAMP_REWARD_MESSAGE,
-    '🎉 スタンプが10枚貯まりました！\n次回ご来院時に特典をご利用ください。スタッフにお声がけください。'
+    'スタンプが貯まりました！🎉\n次回ご来院時に特典をご利用ください。スタッフにお声がけください。'
   );
 }
 

@@ -69,11 +69,18 @@ var _mockSheet = {
       }
     };
   },
-  getRange: function(row, col) {
+  getRange: function(row, col, numRows, numCols) {
     return {
       setValue: function(val) {
         if (!_mockRows[row - 1]) _mockRows[row - 1] = [];
         _mockRows[row - 1][col - 1] = val;
+      },
+      setValues: function(vals) {
+        if (!_mockRows[row - 1]) _mockRows[row - 1] = [];
+        var flatVals = vals[0];
+        for (var c = 0; c < flatVals.length; c++) {
+          _mockRows[row - 1][col - 1 + c] = flatVals[c];
+        }
       }
     };
   }

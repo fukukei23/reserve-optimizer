@@ -56,11 +56,7 @@ function addStamp(lineUserId, reservationId) {
       appendLogRow('INFO', '[Stamp] Reward triggered for: ' + lineUserId);
     }
 
-    sheet.getRange(rowIndex, 2).setValue(newCount);
-    sheet.getRange(rowIndex, 3).setValue(newTotal);
-    sheet.getRange(rowIndex, 4).setValue(reservationId);
-    sheet.getRange(rowIndex, 5).setValue(nowStr);
-    sheet.getRange(rowIndex, 6).setValue(nowStr);
+    sheet.getRange(rowIndex, 2, 1, 5).setValues([[newCount, newTotal, reservationId, nowStr, nowStr]]);
 
     return { ok: true, stampCount: newCount, rewarded: rewarded };
   } else {
@@ -104,7 +100,11 @@ function getStampSummaryText(lineUserId) {
   if (!card) {
     return '🎟 スタンプ: 0 / ' + threshold + '枚\n（累計: 0枚）';
   }
-  return '🎟 スタンプ: ' + card.stamp_count + ' / ' + threshold + '枚\n（累計: ' + card.total_stamps_earned + '枚）';
+  var text = '🎟 スタンプ: ' + card.stamp_count + ' / ' + threshold + '枚\n（累計: ' + card.total_stamps_earned + '枚）';
+  if (card.stamp_count > 0) {
+    text += '\nあと' + (threshold - card.stamp_count) + '枚で特典！';
+  }
+  return text;
 }
 
 // ─── private ───

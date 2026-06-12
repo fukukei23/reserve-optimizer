@@ -205,12 +205,13 @@ test('broadcastToSegment: messageなし → ok:false', function() {
   assert(r.error, 'error exists');
 });
 
-test('broadcastToSegment: 対象0件 → ok:false', function() {
+test('broadcastToSegment: 対象0件 → ok:true sent:0', function() {
   resetMocks();
   _mockCustomers = [];
   var r = broadcastToSegment('all', null, 'テストメッセージ');
-  assertEqual(r.ok, false);
-  assertEqual(r.error, '対象患者が見つかりません');
+  assertEqual(r.ok, true);
+  assertEqual(r.sent, 0);
+  assertEqual(r.total, 0);
 });
 
 test('broadcastToSegment: 正常送信 → ok:true, sent件数', function() {

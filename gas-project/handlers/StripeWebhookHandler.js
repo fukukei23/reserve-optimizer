@@ -264,6 +264,11 @@ function handleSubscriptionCheckoutCompleted(session, metadata) {
     '✅ ' + getSubscriptionPlanName() + 'へのご加入ありがとうございます！\n毎月自動更新されます。確認は「/subscription」でいつでもご確認いただけます。'
   );
   appendLogRow('INFO', '[Subscription] Checkout completed for: ' + lineUserId);
+
+  var adminId = getLineAdminUserId();
+  if (adminId) {
+    sendLinePush(adminId, '📋 サブスク加入: ' + lineUserId + '\nプラン: ' + getSubscriptionPlanName());
+  }
 }
 
 /**
@@ -271,7 +276,6 @@ function handleSubscriptionCheckoutCompleted(session, metadata) {
  */
 function handleSubscriptionCreatedOrUpdated(subscription) {
   var stripeSubId = subscription.id;
-  var nowStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
 
   var nextBillingAt = subscription.current_period_end
     ? Utilities.formatDate(new Date(subscription.current_period_end * 1000), 'Asia/Tokyo', 'yyyy/MM/dd')
@@ -292,12 +296,8 @@ function handleSubscriptionDeleted(subscription) {
 
   var result = updateSubscriptionStatus(stripeSubId, SUBSCRIPTION_STATUS.CANCELED, { canceled_at: nowStr });
 
-  // LINEユーザーIDをシートから取得して通知
   if (result.found) {
-    var sub = null;
     try {
-      // SubscriptionService の getSubscriptionByLineUserId を使えないため直接検索しない
-      // Stripe metadataからline_user_idを取得（subscription objectのmetadata）
       var lineUserId = subscription.metadata ? subscription.metadata.line_user_id : null;
       if (lineUserId) {
         sendLinePush(lineUserId,
@@ -306,6 +306,11 @@ function handleSubscriptionDeleted(subscription) {
       }
     } catch (e) {
       appendLogRow('WARN', '[Subscription] Could not send cancellation notice: ' + e.message);
+    }
+
+    var adminId = getLineAdminUserId();
+    if (adminId) {
+      sendLinePush(adminId, '📋 サブスク解約: ' + stripeSubId);
     }
   }
   appendLogRow('INFO', '[Subscription] Deleted: ' + stripeSubId);
