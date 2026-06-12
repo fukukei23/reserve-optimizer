@@ -71,6 +71,11 @@ var PROPERTY_KEYS = {
   FEATURE_REVIEW_REQUEST: 'FEATURE_REVIEW_REQUEST',
   FEATURE_INTAKE_FORM: 'FEATURE_INTAKE_FORM',
   FEATURE_KARTE: 'FEATURE_KARTE',
+  FEATURE_STAMP_CARD: 'FEATURE_STAMP_CARD',
+
+  // Stamp card settings (W3-1)
+  STAMP_THRESHOLD: 'STAMP_THRESHOLD',
+  STAMP_REWARD_MESSAGE: 'STAMP_REWARD_MESSAGE',
 
   // Review settings
   GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL',
@@ -378,6 +383,31 @@ function getSameDayCutoffHour() {
  */
 function getClinicMapUrl() {
   return getProperty(PROPERTY_KEYS.CLINIC_MAP_URL, '');
+}
+
+/**
+ * Check if stamp card feature is enabled.
+ * Set FEATURE_STAMP_CARD=true in ScriptProperties to activate.
+ */
+function isFeatureStampCardEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_STAMP_CARD, 'false') === 'true';
+}
+
+/**
+ * Get stamp threshold (number of stamps needed for reward, default: 10).
+ */
+function getStampThreshold() {
+  return parseInt(getProperty(PROPERTY_KEYS.STAMP_THRESHOLD, '10'));
+}
+
+/**
+ * Get stamp reward message sent to patient when threshold is reached.
+ */
+function getStampRewardMessage() {
+  return getProperty(
+    PROPERTY_KEYS.STAMP_REWARD_MESSAGE,
+    '🎉 スタンプが10枚貯まりました！\n次回ご来院時に特典をご利用ください。スタッフにお声がけください。'
+  );
 }
 
 /**

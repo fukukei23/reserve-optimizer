@@ -372,6 +372,8 @@ function _dispatchApiRequest(body) {
       return _handleSaveIntakeForm(data);
     case 'save_karte':
       return _handleSaveKarte(data);
+    case 'mark_visited':
+      return _handleMarkVisited(data);
     default:
       return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
   }
@@ -548,6 +550,34 @@ function _handleSaveKarte(data) {
     return _apiResponse({ error: result.error }, 400);
   }
   return _apiResponse({ ok: true, id: result.id }, 200);
+}
+
+function _handleMarkVisited(data) {
+  if (!data.reservation_id) {
+    return _apiResponse({ error: 'reservation_id is required' }, 400);
+  }
+
+  var reservation = getReservationById(data.reservation_id);
+  if (!reservation) {
+    return _apiResponse({ error: 'Reservation not found' }, 404);
+  }
+
+  updateReservation(data.reservation_id, { status: RESERVATION_STATUS.VISITED });
+
+  var stampResult = null;
+  if (isFeatureStampCardEnabled() && reservation.line_display_name) {
+    try {
+      stampResult = addStamp(reservation.line_display_name, data.reservation_id);
+    } catch (e) {
+      appendLogRow('WARN', '[Stamp] addStamp failed: ' + e.message);
+    }
+  }
+
+  return _apiResponse({
+    ok: true,
+    reservation_id: data.reservation_id,
+    stamp: stampResult
+  }, 200);
 }
 
 function _apiResponse(data, statusCode) {

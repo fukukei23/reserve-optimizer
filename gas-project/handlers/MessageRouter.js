@@ -351,6 +351,14 @@ function handleCommand(command, replyToken, userId) {
         sendLineReply(replyToken, 'カルテ機能は現在無効です。');
       }
       break;
+    case '/stamp':
+      if (isFeatureStampCardEnabled()) {
+        var stampText = getStampSummaryText(userId);
+        sendLineReply(replyToken, stampText);
+      } else {
+        sendLineReply(replyToken, 'スタンプカード機能は現在無効です。');
+      }
+      break;
     case '/help':
       var helpMsg = '【コマンド一覧】\n' +
         '/reserve - 予約開始\n' +
