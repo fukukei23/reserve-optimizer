@@ -374,6 +374,8 @@ function _dispatchApiRequest(body) {
       return _handleSaveKarte(data);
     case 'mark_visited':
       return _handleMarkVisited(data);
+    case 'broadcast_segment':
+      return _handleBroadcastSegment(data);
     default:
       return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
   }
@@ -578,6 +580,29 @@ function _handleMarkVisited(data) {
     reservation_id: data.reservation_id,
     stamp: stampResult
   }, 200);
+}
+
+function _handleBroadcastSegment(data) {
+  if (!isFeatureSegmentBroadcastEnabled()) {
+    return _apiResponse({ error: 'Feature not enabled' }, 403);
+  }
+  if (!data.segment_type) {
+    return _apiResponse({ error: 'segment_type is required' }, 400);
+  }
+  if (!data.message || !String(data.message).trim()) {
+    return _apiResponse({ error: 'message is required' }, 400);
+  }
+
+  if (data.preview_only) {
+    var preview = getBroadcastPreview(data.segment_type, data.segment_param || null);
+    return _apiResponse({ ok: true, preview: preview }, 200);
+  }
+
+  var result = broadcastToSegment(data.segment_type, data.segment_param || null, data.message);
+  if (!result.ok) {
+    return _apiResponse({ error: result.error }, 400);
+  }
+  return _apiResponse({ ok: true, sent: result.sent, skipped: result.skipped, total: result.total }, 200);
 }
 
 function _apiResponse(data, statusCode) {

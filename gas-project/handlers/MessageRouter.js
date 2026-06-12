@@ -351,6 +351,32 @@ function handleCommand(command, replyToken, userId) {
         sendLineReply(replyToken, 'カルテ機能は現在無効です。');
       }
       break;
+    case '/broadcast':
+      if (isAdmin && isFeatureSegmentBroadcastEnabled()) {
+        // 書式: /broadcast <segment_type>[:<param>] <メッセージ>
+        // 例: /broadcast inactive:30 お久しぶりです！
+        // 例: /broadcast tag:vip VIP限定キャンペーンのご案内
+        var broadcastArgs = text.replace('/broadcast', '').trim();
+        var spaceIdx = broadcastArgs.indexOf(' ');
+        if (spaceIdx < 0) {
+          sendLineReply(replyToken, '書式: /broadcast <セグメント> <メッセージ>\n例: /broadcast all 本日休診のお知らせ\n例: /broadcast inactive:30 お久しぶりです\n例: /broadcast tag:vip VIP限定のご案内');
+        } else {
+          var segSpec = broadcastArgs.slice(0, spaceIdx);
+          var broadcastMsg = broadcastArgs.slice(spaceIdx + 1).trim();
+          var segColonIdx = segSpec.indexOf(':');
+          var segType = segColonIdx >= 0 ? segSpec.slice(0, segColonIdx) : segSpec;
+          var segParam = segColonIdx >= 0 ? segSpec.slice(segColonIdx + 1) : null;
+          var preview = getBroadcastPreview(segType, segParam);
+          sendLineReply(replyToken, '【配信プレビュー】\n対象: ' + preview.count + '名\n' +
+            (preview.preview.length > 0 ? '（' + preview.preview.join('、') + '...）\n' : '') +
+            '\n送信しますか？\n/broadcast_confirm ' + segSpec + ' ' + broadcastMsg);
+        }
+      } else if (!isAdmin) {
+        sendLineReply(replyToken, t('router.admin_only', _locale));
+      } else {
+        sendLineReply(replyToken, 'セグメント配信機能は現在無効です。');
+      }
+      break;
     case '/stamp':
       if (isFeatureStampCardEnabled()) {
         var stampText = getStampSummaryText(userId);

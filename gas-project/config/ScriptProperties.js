@@ -72,6 +72,7 @@ var PROPERTY_KEYS = {
   FEATURE_INTAKE_FORM: 'FEATURE_INTAKE_FORM',
   FEATURE_KARTE: 'FEATURE_KARTE',
   FEATURE_STAMP_CARD: 'FEATURE_STAMP_CARD',
+  FEATURE_SEGMENT_BROADCAST: 'FEATURE_SEGMENT_BROADCAST',
 
   // Stamp card settings (W3-1)
   STAMP_THRESHOLD: 'STAMP_THRESHOLD',
@@ -408,6 +409,14 @@ function getStampRewardMessage() {
     PROPERTY_KEYS.STAMP_REWARD_MESSAGE,
     '🎉 スタンプが10枚貯まりました！\n次回ご来院時に特典をご利用ください。スタッフにお声がけください。'
   );
+}
+
+/**
+ * Check if segment broadcast feature is enabled.
+ * Set FEATURE_SEGMENT_BROADCAST=true in ScriptProperties to activate.
+ */
+function isFeatureSegmentBroadcastEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_SEGMENT_BROADCAST, 'false') === 'true';
 }
 
 /**
