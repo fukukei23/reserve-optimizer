@@ -167,6 +167,8 @@ function _getStateDispatch() {
   STATE_DISPATCH[USER_STATES.AWAITING_TICKET_SELECT] = handleAwaitingTicketSelect;
   STATE_DISPATCH[USER_STATES.AWAITING_COUPON]         = handleAwaitingCoupon;
   STATE_DISPATCH[USER_STATES.AWAITING_REVIEW_RATING]  = handleAwaitingReviewRating;
+  STATE_DISPATCH[USER_STATES.AWAITING_KARTE_SELECT]   = handleAwaitingKarteSelect;
+  STATE_DISPATCH[USER_STATES.AWAITING_KARTE_INPUT]    = handleAwaitingKarteInput;
   return STATE_DISPATCH;
 }
 
@@ -338,6 +340,15 @@ function handleCommand(command, replyToken, userId) {
         sendLineReply(replyToken, t('router.cleanup_done', _locale));
       } else {
         sendLineReply(replyToken, t('router.admin_only', _locale));
+      }
+      break;
+    case '/karte':
+      if (isAdmin && isFeatureKarteEnabled()) {
+        handleKarteTrigger(replyToken, userId);
+      } else if (!isAdmin) {
+        sendLineReply(replyToken, t('router.admin_only', _locale));
+      } else {
+        sendLineReply(replyToken, 'カルテ機能は現在無効です。');
       }
       break;
     case '/help':

@@ -70,6 +70,7 @@ var PROPERTY_KEYS = {
   FEATURE_COUPON: 'FEATURE_COUPON',
   FEATURE_REVIEW_REQUEST: 'FEATURE_REVIEW_REQUEST',
   FEATURE_INTAKE_FORM: 'FEATURE_INTAKE_FORM',
+  FEATURE_KARTE: 'FEATURE_KARTE',
 
   // Review settings
   GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL',
@@ -338,6 +339,14 @@ function isFeatureIntakeFormEnabled() {
 /**
  * Get Cloudflare Worker base URL (e.g. https://reserve-optimizer.xxx.workers.dev).
  */
+/**
+ * Check if karte feature is enabled.
+ * Set FEATURE_KARTE=true in ScriptProperties to activate.
+ */
+function isFeatureKarteEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_KARTE, 'false') === 'true';
+}
+
 function getWorkerBaseUrl() {
   return getProperty(PROPERTY_KEYS.WORKER_BASE_URL, '');
 }

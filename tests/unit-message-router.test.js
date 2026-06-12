@@ -46,6 +46,8 @@ var _trackers = {
   handleAwaitingTicketSelect: [],
   handleAwaitingCoupon: [],
   handleAwaitingReviewRating: [],
+  handleAwaitingKarteSelect: [],
+  handleAwaitingKarteInput: [],
   handleLLMQuery: [],
   handleWaitlistSlotReservation: [],
   handleTicketPurchase: [],
@@ -186,6 +188,8 @@ global.handleAwaitingChangeConfirm = function (t, rt, uid) { _trackers.handleAwa
 global.handleAwaitingWaitlistTime = function (t, rt, uid) { _trackers.handleAwaitingWaitlistTime.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleAwaitingCoupon = function (t, rt, uid) { _trackers.handleAwaitingCoupon.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleAwaitingReviewRating = function (t, rt, uid) { _trackers.handleAwaitingReviewRating.push({ text: t, replyToken: rt, userId: uid }); };
+global.handleAwaitingKarteSelect = function (t, rt, uid) { _trackers.handleAwaitingKarteSelect.push({ text: t, replyToken: rt, userId: uid }); };
+global.handleAwaitingKarteInput = function (t, rt, uid) { _trackers.handleAwaitingKarteInput.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleViewReservations = function (rt, uid) { _trackers.handleViewReservations.push({ replyToken: rt, userId: uid }); };
 
 // Service stubs

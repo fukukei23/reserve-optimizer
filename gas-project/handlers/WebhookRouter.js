@@ -370,6 +370,8 @@ function _dispatchApiRequest(body) {
       return _handleCreateReservationApi(data);
     case 'save_intake_form':
       return _handleSaveIntakeForm(data);
+    case 'save_karte':
+      return _handleSaveKarte(data);
     default:
       return _apiResponse({ error: 'Unknown action: ' + (data.action || 'null') }, 400);
   }
@@ -517,6 +519,37 @@ function _handleSaveIntakeForm(data) {
 /**
  * API response helper (JSON with CORS-friendly format)
  */
+/**
+ * POST /api/karte — save karte record (staff use)
+ */
+function _handleSaveKarte(data) {
+  if (!isFeatureKarteEnabled()) {
+    return _apiResponse({ error: 'Feature not enabled' }, 403);
+  }
+  if (!data.reservation_id) {
+    return _apiResponse({ error: 'reservation_id is required' }, 400);
+  }
+  if (!data.treatment_content || !String(data.treatment_content).trim()) {
+    return _apiResponse({ error: 'treatment_content is required' }, 400);
+  }
+
+  var result = saveKarte(data.reservation_id, {
+    line_user_id:      data.line_user_id || '',
+    patient_name:      data.patient_name || '',
+    treatment_date:    data.treatment_date || '',
+    treatment_content: data.treatment_content,
+    body_part:         data.body_part || '',
+    staff_name:        data.staff_name || '',
+    next_suggestion:   data.next_suggestion || '',
+    notes:             data.notes || ''
+  });
+
+  if (!result.ok) {
+    return _apiResponse({ error: result.error }, 400);
+  }
+  return _apiResponse({ ok: true, id: result.id }, 200);
+}
+
 function _apiResponse(data, statusCode) {
   var output = ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
