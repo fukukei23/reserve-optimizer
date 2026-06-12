@@ -44,6 +44,7 @@ var _trackers = {
   handleAwaitingChangeConfirm: [],
   handleAwaitingWaitlistTime: [],
   handleAwaitingTicketSelect: [],
+  handleAwaitingCoupon: [],
   handleLLMQuery: [],
   handleWaitlistSlotReservation: [],
   handleTicketPurchase: [],
@@ -182,6 +183,7 @@ global.handleAwaitingChangeTime = function (t, rt, uid) { _trackers.handleAwaiti
 global.handleAwaitingChangeTreatment = function (t, rt, uid) { _trackers.handleAwaitingChangeTreatment.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleAwaitingChangeConfirm = function (t, rt, uid) { _trackers.handleAwaitingChangeConfirm.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleAwaitingWaitlistTime = function (t, rt, uid) { _trackers.handleAwaitingWaitlistTime.push({ text: t, replyToken: rt, userId: uid }); };
+global.handleAwaitingCoupon = function (t, rt, uid) { _trackers.handleAwaitingCoupon.push({ text: t, replyToken: rt, userId: uid }); };
 global.handleViewReservations = function (rt, uid) { _trackers.handleViewReservations.push({ replyToken: rt, userId: uid }); };
 
 // Service stubs

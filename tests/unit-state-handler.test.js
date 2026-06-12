@@ -82,7 +82,8 @@ assert('AWAITING_TIME defined', USER_STATES.AWAITING_TIME === 'AWAITING_TIME');
 assert('AWAITING_PAYMENT defined', USER_STATES.AWAITING_PAYMENT === 'AWAITING_PAYMENT');
 assert('AWAITING_CANCEL_SELECT defined', USER_STATES.AWAITING_CANCEL_SELECT === 'AWAITING_CANCEL_SELECT');
 assert('AWAITING_TICKET_SELECT defined', USER_STATES.AWAITING_TICKET_SELECT === 'AWAITING_TICKET_SELECT');
-assert('18 states total', Object.keys(USER_STATES).length === 18);
+assert('AWAITING_COUPON defined', USER_STATES.AWAITING_COUPON === 'AWAITING_COUPON');
+assert('19 states total', Object.keys(USER_STATES).length === 19);
 
 section('setUserState / getUserState');
 resetState();

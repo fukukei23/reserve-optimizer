@@ -66,7 +66,8 @@ var PROPERTY_KEYS = {
   TICKET_10_PRICE: 'TICKET_10_PRICE',
 
   // Feature flags (opt-in)
-  FEATURE_STAFF_SELECT: 'FEATURE_STAFF_SELECT'
+  FEATURE_STAFF_SELECT: 'FEATURE_STAFF_SELECT',
+  FEATURE_COUPON: 'FEATURE_COUPON'
 };
 
 /**
@@ -293,6 +294,14 @@ function getFollowUpHoursAfter() {
  */
 function isFeatureStaffSelectEnabled() {
   return getProperty(PROPERTY_KEYS.FEATURE_STAFF_SELECT, 'false') === 'true';
+}
+
+/**
+ * Check if coupon feature is enabled.
+ * Set FEATURE_COUPON=true in ScriptProperties to activate.
+ */
+function isFeatureCouponEnabled() {
+  return getProperty(PROPERTY_KEYS.FEATURE_COUPON, 'false') === 'true';
 }
 
 /**

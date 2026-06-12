@@ -23,11 +23,14 @@ function startReservationFlow(replyToken, userId) {
   setUserState(userId, USER_STATES.AWAITING_TREATMENT, tempData);
 
   var menuOptions = _buildTreatmentMenuOptions(isReturning);
-  // When staff select is enabled, +1 step (staff selection inserted after treatment)
   var staffSelectOn = isFeatureStaffSelectEnabled();
-  var totalSteps = isReturning ? (staffSelectOn ? 4 : 3) : (staffSelectOn ? 5 : 4);
+  var couponOn = isFeatureCouponEnabled();
+  // +1 step per enabled optional feature inserted into the flow
+  var extraSteps = (staffSelectOn ? 1 : 0) + (couponOn ? 1 : 0);
+  var totalSteps = isReturning ? (3 + extraSteps) : (4 + extraSteps);
   tempData.total_steps = totalSteps;
   tempData.staff_select_enabled = staffSelectOn;
+  tempData.coupon_enabled = couponOn;
   sendQuickReply(replyToken, '予約を開始します。\n\n[Step 1/' + totalSteps + '] 施術の種類を選択してください。', menuOptions);
 }
 
@@ -199,6 +202,16 @@ function handleAwaitingTime(text, replyToken, userId) {
     return;
   }
 
+  // Coupon step (optional): inserted before name/payment when FEATURE_COUPON=true
+  if (tempData.coupon_enabled) {
+    setUserState(userId, USER_STATES.AWAITING_COUPON, tempData);
+    sendQuickReply(replyToken, 'クーポンコードをお持ちの場合は入力してください。', [
+      { label: 'スキップ', text: 'スキップ' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
   // Returning user: skip name/phone → go directly to reservation creation
   if (tempData.is_returning && tempData.patient_name && tempData.phone) {
     createReservationAndGoToPayment(replyToken, userId, tempData);
@@ -286,6 +299,58 @@ function handleAwaitingStaff(text, replyToken, userId) {
 
   setUserState(userId, USER_STATES.AWAITING_DATE, tempData);
   sendDatePromptWithQuickReply(replyToken, userId);
+}
+
+/**
+ * Handle awaiting coupon code entry (FEATURE_COUPON)
+ */
+function handleAwaitingCoupon(text, replyToken, userId) {
+  var tempData = getUserState(userId).context;
+
+  if (text === 'やめる') {
+    clearUserState(userId);
+    sendLineReply(replyToken, '操作をキャンセルしました。');
+    return;
+  }
+
+  if (text === 'スキップ') {
+    _proceedAfterCoupon(replyToken, userId, tempData);
+    return;
+  }
+
+  var result = validateCoupon(text, userId);
+  if (!result.ok) {
+    var errMsgs = {
+      NOT_FOUND: 'クーポンコードが見つかりません。',
+      INACTIVE:  'このクーポンは現在無効です。',
+      EXPIRED:   'このクーポンの有効期限が切れています。',
+      USE_LIMIT: 'このクーポンは上限に達しました。',
+      TAG_MISMATCH: 'このクーポンはご利用いただけません。'
+    };
+    sendQuickReply(replyToken, (errMsgs[result.error] || 'クーポンが使用できません。') + '\n別のコードを入力するか「スキップ」を選んでください。', [
+      { label: 'スキップ', text: 'スキップ' },
+      { label: 'やめる', text: 'やめる' }
+    ]);
+    return;
+  }
+
+  var discount = calculateDiscount(getDepositAmount(), result.coupon);
+  tempData.coupon_code = text;
+  tempData.coupon_id = result.coupon.coupon_id;
+  tempData.coupon_discount = discount;
+
+  _proceedAfterCoupon(replyToken, userId, tempData);
+}
+
+function _proceedAfterCoupon(replyToken, userId, tempData) {
+  if (tempData.is_returning && tempData.patient_name && tempData.phone) {
+    createReservationAndGoToPayment(replyToken, userId, tempData);
+  } else {
+    setUserState(userId, USER_STATES.AWAITING_NAME, tempData);
+    sendQuickReply(replyToken, '[Step ' + (tempData.total_steps - 1) + '/' + tempData.total_steps + '] お名前を入力してください。', [
+      { label: 'やめる', text: 'やめる' }
+    ]);
+  }
 }
 
 /**
@@ -439,6 +504,12 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
       used_ticket: activeTicket.ticket_id
     });
     deductSession(activeTicket.ticket_id);
+    // Record coupon usage even when ticket covers the payment
+    if (tempData.coupon_id) {
+      try { applyCoupon(tempData.coupon_id); } catch (ce) {
+        appendLogRow('WARN', 'applyCoupon (ticket path) failed: ' + ce.message);
+      }
+    }
 
     var ticketConfirmMsg = '回数券で予約が確定しました！\n\n' +
       '残り回数: ' + getSessionCountForUser(userId) + '回\n\n' +
@@ -452,12 +523,24 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     return;
   }
 
+  // Apply coupon discount to deposit amount (FEATURE_COUPON)
+  var baseDeposit = getDepositAmount();
+  var finalDeposit = tempData.coupon_discount ? Math.max(0, baseDeposit - tempData.coupon_discount) : baseDeposit;
+  if (tempData.coupon_id && finalDeposit < baseDeposit) {
+    try { applyCoupon(tempData.coupon_id); } catch (ce) {
+      appendLogRow('WARN', 'applyCoupon failed: ' + ce.message);
+    }
+    if (tempData.coupon_code) {
+      tempData.notes = (tempData.notes || '') + 'coupon:' + tempData.coupon_code;
+    }
+  }
+
   var paymentLink = null;
   try {
     paymentLink = createPaymentLink(
       result.id,
       tempData.patient_name,
-      getDepositAmount()
+      finalDeposit
     );
   } catch (e) {
     appendLogRow('ERROR', 'createPaymentLink error: ' + e.message);

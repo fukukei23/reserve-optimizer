@@ -306,6 +306,9 @@ global.getStaffByName = function() { return _stubReturns.staffByName; };
 global.buildStaffSelectionOptions = function() { return _stubReturns.staffOptions; };
 global.buildStaffSelectionOptionsWithHistory = function() { return _stubReturns.staffOptions; };
 global.getPreviousStaffIdByLineUserId = function() { return null; };
+global.validateCoupon = function() { return { ok: false, error: 'NOT_FOUND', coupon: null }; };
+global.calculateDiscount = function() { return 0; };
+global.applyCoupon = function() {};
 
 global.createReservation = function(data) { return _stubReturns.createReservationResult; };
 

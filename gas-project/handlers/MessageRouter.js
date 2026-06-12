@@ -165,6 +165,7 @@ function _getStateDispatch() {
   STATE_DISPATCH[USER_STATES.AWAITING_CHANGE_CONFIRM]= handleAwaitingChangeConfirm;
   STATE_DISPATCH[USER_STATES.AWAITING_WAITLIST_TIME] = handleAwaitingWaitlistTime;
   STATE_DISPATCH[USER_STATES.AWAITING_TICKET_SELECT] = handleAwaitingTicketSelect;
+  STATE_DISPATCH[USER_STATES.AWAITING_COUPON]        = handleAwaitingCoupon;
   return STATE_DISPATCH;
 }
 
