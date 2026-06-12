@@ -9,6 +9,7 @@ export interface Env {
   GAS_WEBAPP_URL: string;
   GAS_AUTH_TOKEN: string;
   WEB_API_KEY: string;
+  ALLOWED_ORIGIN: string;
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";
@@ -85,16 +86,11 @@ async function handleLineWebhook(request: Request, env: Env, ctx: ExecutionConte
   const body = await request.text();
   const signature = request.headers.get("x-line-signature");
 
-  console.log("[LINE] Received webhook, body length:", body.length);
-
   if (!signature) {
-    console.log("[LINE] ERROR: Missing x-line-signature");
     return new Response("Missing x-line-signature", { status: 401 });
   }
 
-  // HMAC-SHA256 検証
   const isValid = await verifyLineSignature(body, signature, env.LINE_CHANNEL_SECRET);
-  console.log("[LINE] Signature valid:", isValid);
 
   if (!isValid) {
     return new Response("Invalid signature", { status: 401 });
@@ -104,7 +100,7 @@ async function handleLineWebhook(request: Request, env: Env, ctx: ExecutionConte
   // GAS 転送は waitUntil でバックグラウンド実行
   ctx.waitUntil(
     forwardToGAS(body, env, "line").catch((e) =>
-      console.log("[LINE] forwardToGAS error:", e.message)
+      console.error("[LINE] forwardToGAS error:", e.message)
     )
   );
 
@@ -140,15 +136,13 @@ async function handleStripeWebhook(request: Request, env: Env, ctx: ExecutionCon
       "",
   };
 
-  console.log("[Stripe] Forwarding minimal data:", JSON.stringify(minimalData));
-
   return forwardToGAS(JSON.stringify(minimalData), env, "stripe");
 }
 
 /**
  * LINE 署名検証 (HMAC-SHA256 via Web Crypto API)
  */
-async function verifyLineSignature(
+export async function verifyLineSignature(
   body: string,
   signature: string,
   secret: string
@@ -172,7 +166,7 @@ async function verifyLineSignature(
 /**
  * Stripe 署名検証 (t=timestamp,v1=signature via Web Crypto API)
  */
-async function verifyStripeSignature(
+export async function verifyStripeSignature(
   body: string,
   sigHeader: string,
   secret: string
@@ -223,17 +217,12 @@ async function verifyStripeSignature(
  * GAS 側の doGet が x-verified + x-body パラメータを処理する。
  */
 async function forwardToGAS(body: string, env: Env, source: string): Promise<Response> {
-  console.log("[GAS] Forwarding to:", env.GAS_WEBAPP_URL);
-  console.log("[GAS] Source:", source);
-  console.log("[GAS] Body length:", body.length);
-
-  // Trim unnecessary fields to keep URL under ~2000 chars
   const slimBody = slimForGAS(body, source);
   const encodedBody = encodeURIComponent(slimBody);
   const gasUrl = `${env.GAS_WEBAPP_URL}?x-verified=true&x-source=${source}&x-body=${encodedBody}&x-gas-auth=${encodeURIComponent(env.GAS_AUTH_TOKEN)}`;
-  console.log("[GAS] Full URL length:", gasUrl.length);
+
   if (gasUrl.length > 2000) {
-    console.warn("[GAS] URL exceeds 2000 chars:", gasUrl.length);
+    console.error("[GAS] URL exceeds 2000 chars:", gasUrl.length);
   }
 
   let response = await fetch(gasUrl, {
@@ -241,29 +230,21 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
     redirect: "manual",
   });
 
-  console.log("[GAS] Initial response status:", response.status);
-
   // GAS が 302 を返した場合、Location に向けて再 GET
   if (response.status === 302 || response.status === 301) {
     const location = response.headers.get("Location");
-    console.log("[GAS] Redirect location:", location?.substring(0, 150));
     if (location) {
-      // Location URL にパラメータを追加
       const separator = location.includes("?") ? "&" : "?";
       const redirectUrl = `${location}${separator}x-verified=true&x-source=${source}&x-body=${encodedBody}&x-gas-auth=${encodeURIComponent(env.GAS_AUTH_TOKEN)}`;
-      console.log("[GAS] Redirect URL length:", redirectUrl.length);
 
       response = await fetch(redirectUrl, {
         method: "GET",
         redirect: "manual",
       });
-
-      console.log("[GAS] Final response status:", response.status);
     }
   }
 
   const respBody = await response.text();
-  console.log("[GAS] Response body:", respBody.substring(0, 500));
   return new Response(respBody, {
     status: response.status,
     headers: response.headers,
@@ -287,7 +268,7 @@ function slimForGAS(body: string, source: string): string {
         message: e.message,
         postback: e.postback,
       }));
-      parsed.destination = undefined;
+      delete parsed.destination;
     } else if (source === "stripe") {
       delete parsed.pending_webhooks;
       delete parsed.request;
@@ -302,7 +283,7 @@ function slimForGAS(body: string, source: string): string {
 /**
  * タイミングセーフな文字列比較
  */
-function timingSafeEqual(a: string, b: string): boolean {
+export function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let result = 0;
   for (let i = 0; i < a.length; i++) {
@@ -312,16 +293,18 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 // --- CORS headers for Web API ---
-const CORS_HEADERS: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+function corsHeaders(allowedOrigin: string): Record<string, string> {
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin || "https://reserve-optimizer.fukukei44161.workers.dev",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
 
-function corsResponse(body: string, status = 200): Response {
+function corsResponse(body: string, allowedOrigin: string, status = 200): Response {
   return new Response(body, {
     status,
-    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+    headers: { "Content-Type": "application/json", ...corsHeaders(allowedOrigin) },
   });
 }
 
@@ -331,18 +314,18 @@ function corsResponse(body: string, status = 200): Response {
  */
 async function handleApiAvailability(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
   }
 
   let body: { date?: string };
   try {
     body = await request.json() as { date?: string };
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), 400);
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
   }
 
   if (!body.date || !/^\d{4}\/\d{2}\/\d{2}$/.test(body.date)) {
-    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), 400);
+    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), env.ALLOWED_ORIGIN, 400);
   }
 
   return forwardToGAS(
@@ -358,14 +341,14 @@ async function handleApiAvailability(request: Request, env: Env): Promise<Respon
  */
 async function handleApiReserve(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
   }
 
   let body: { name?: string; phone?: string; date?: string; time?: string; treatment?: string };
   try {
     body = await request.json() as typeof body;
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), 400);
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
   }
 
   const missing: string[] = [];
@@ -376,12 +359,12 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
   if (!body.treatment) missing.push("treatment");
 
   if (missing.length > 0) {
-    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), 400);
+    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), env.ALLOWED_ORIGIN, 400);
   }
 
-  const phoneDigits = body.phone.replace(/[-\s]/g, "");
+  const phoneDigits = body.phone!.replace(/[-\s]/g, "");
   if (!/^\d{10,11}$/.test(phoneDigits)) {
-    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), 400);
+    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), env.ALLOWED_ORIGIN, 400);
   }
 
   return forwardToGAS(

@@ -4,6 +4,7 @@ compatibility_date = "2024-05-06"
 
 [vars]
 # GAS_WEBAPP_URL は .dev.vars または wrangler secret で設定
+ALLOWED_ORIGIN = "https://reserve-optimizer.fukukei44161.workers.dev"
 
 [[rules]]
 type = "Text"

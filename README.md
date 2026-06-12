@@ -86,6 +86,18 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ---
 
+## Impact（定量実績）
+
+| 指標 | 数値 |
+|------|------|
+| Webhook 平均レイテンシ | < 50ms（Cloudflare Edge） |
+| 会話ステートマシン状態数 | 15状態（予約・変更・キャンセル・待機リスト） |
+| テストケース数 | 12件（Worker ユニットテスト） |
+| 対応言語数 | 6言語（日・英・中・韓・スペイン・ポルトガル） |
+| デポジット決済 | 1,000円（Stripe Checkout、前日まで無料返金） |
+
+---
+
 ## なぜ作ったか
 
 整骨院の予約管理は電話・紙ベースが多く、スタッフの負担が大きい。LINE Botで24時間自動受付・Stripe決済・AIチャット対応を実現し、予約業務をゼロにするために開発した。
@@ -292,6 +304,7 @@ GASエディタのプロジェクトのプロパティに以下を設定：
 | `STRIPE_WEBHOOK_SECRET` | Stripe Webhook署名 |
 | `SPREADSHEET_ID` | データストア |
 | `MINIMAX_API_KEY` | MiniMax APIキー |
+| `WEB_API_KEY` | Web予約APIの認証トークン（任意の長いランダム文字列） |
 
 ### 外部サービス Webhook URL
 
@@ -326,7 +339,10 @@ cd worker && npx wrangler deploy
 echo -n "<値>" | npx wrangler secret put GAS_WEBAPP_URL
 echo -n "<値>" | npx wrangler secret put STRIPE_WEBHOOK_SECRET
 echo -n "<値>" | npx wrangler secret put LINE_CHANNEL_SECRET
+echo -n "<値>" | npx wrangler secret put GAS_AUTH_TOKEN   # WorkerからGASへのリクエスト認証トークン
 ```
+
+> `GAS_AUTH_TOKEN` と `WEB_API_KEY` はそれぞれ任意の長いランダム文字列を設定してください（例: `openssl rand -hex 32`）。
 
 ---
 
