@@ -319,6 +319,17 @@ function validateDateForBooking(parsedDate) {
     return { valid: false, errorMessage: '予約は' + MAX_BOOKING_DAYS_AHEAD + '日以内のみ可能です。' };
   }
 
+  // Same-day cutoff check (SAME_DAY_CUTOFF_HOUR)
+  if (parsedDate === todayStr) {
+    var cutoffHour = getSameDayCutoffHour();
+    if (cutoffHour < 24) {
+      var nowHour = parseInt(Utilities.formatDate(new Date(), tz, 'HH'), 10);
+      if (nowHour >= cutoffHour) {
+        return { valid: false, errorMessage: '当日の受付は' + cutoffHour + '時までとなっています。翌日以降でお選びください。' };
+      }
+    }
+  }
+
   var bookingDate = new Date(parsedDate + 'T12:00:00+09:00');
   var dow = bookingDate.getDay();
 

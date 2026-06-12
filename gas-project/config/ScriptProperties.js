@@ -75,6 +75,11 @@ var PROPERTY_KEYS = {
   // Review settings
   GOOGLE_REVIEW_URL: 'GOOGLE_REVIEW_URL',
 
+  // Operational flexibility (W2-3)
+  BUFFER_MINUTES: 'BUFFER_MINUTES',
+  SAME_DAY_CUTOFF_HOUR: 'SAME_DAY_CUTOFF_HOUR',
+  CLINIC_MAP_URL: 'CLINIC_MAP_URL',
+
   // Worker base URL (for intake form link generation)
   WORKER_BASE_URL: 'WORKER_BASE_URL'
 };
@@ -349,6 +354,30 @@ function isFeatureKarteEnabled() {
 
 function getWorkerBaseUrl() {
   return getProperty(PROPERTY_KEYS.WORKER_BASE_URL, '');
+}
+
+/**
+ * Get inter-appointment buffer in minutes (default: 0 = no buffer).
+ * Slots within BUFFER_MINUTES after a booked slot are hidden from patients.
+ */
+function getBufferMinutes() {
+  return parseInt(getProperty(PROPERTY_KEYS.BUFFER_MINUTES, '0'));
+}
+
+/**
+ * Get same-day reservation cutoff hour (0-23, default: 24 = no cutoff).
+ * After this hour, same-day reservations are blocked.
+ */
+function getSameDayCutoffHour() {
+  return parseInt(getProperty(PROPERTY_KEYS.SAME_DAY_CUTOFF_HOUR, '24'));
+}
+
+/**
+ * Get clinic map URL (e.g., Google Maps link).
+ * Appended to business hours message and appointment reminders.
+ */
+function getClinicMapUrl() {
+  return getProperty(PROPERTY_KEYS.CLINIC_MAP_URL, '');
 }
 
 /**

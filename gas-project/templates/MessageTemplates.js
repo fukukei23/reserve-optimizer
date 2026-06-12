@@ -67,11 +67,14 @@ var MessageTemplates = {
 
   getReminderMessage: function(date, time, menu, locale) {
     var loc = locale || 'ja';
+    var mapUrl = getClinicMapUrl();
+    var text = tf('reminder.title', null, loc) + '\n\n' +
+      _label('deposit.date', loc) + ' ' + date + ' ' + time + '\n' +
+      _label('deposit.treatment', loc) + ' ' + menu + '\n\n' +
+      tf('reminder.confirm_attendance', null, loc);
+    if (mapUrl) text += '\n\n🗺 地図: ' + mapUrl;
     return {
-      text: tf('reminder.title', null, loc) + '\n\n' +
-        _label('deposit.date', loc) + ' ' + date + ' ' + time + '\n' +
-        _label('deposit.treatment', loc) + ' ' + menu + '\n\n' +
-        tf('reminder.confirm_attendance', null, loc),
+      text: text,
       quickReplies: [
         { label: tf('reminder.yes', null, loc), text: tf('reminder.yes', null, loc) },
         { label: tf('reminder.want_change', null, loc), text: t('welcome.change', loc) },
@@ -217,9 +220,11 @@ var MessageTemplates = {
     var loc = locale || 'ja';
     var hours = getBusinessHours();
     var address = getBusinessAddress();
+    var mapUrl = getClinicMapUrl();
     var msg = tf('hours.title', null, loc) + '\n\n';
     msg += tf('hours.hours', loc) + ':\n' + (hours || tf('hours.contact_us', loc)) + '\n\n';
     msg += tf('hours.access', loc) + ':\n' + (address || tf('hours.contact_us', loc));
+    if (mapUrl) msg += '\n\n🗺 地図: ' + mapUrl;
     return msg;
   },
 

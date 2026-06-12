@@ -212,12 +212,31 @@ function sendTimePromptWithQuickReply(replyToken, date) {
   var targetDate = date || Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
   var leadTime = getBookingLeadTimeMinutes();
   var maxConcurrent = getMaxConcurrentBookings();
+  var bufferMinutes = getBufferMinutes();
   var bookedSlots = getBookedSlotsForDate(targetDate);
 
   // Generate slots based on day of week (configured in SheetConfig.js)
   var targetDateObj = new Date(targetDate + 'T12:00:00+09:00');
   var dayOfWeek = targetDateObj.getDay();
   var allSlots = (dayOfWeek === 6) ? TIME_SLOTS.SATURDAY : TIME_SLOTS.WEEKDAY;
+
+  // Build set of blocked slot times due to buffer (minutes after a booked slot)
+  var blockedByBuffer = {};
+  if (bufferMinutes > 0) {
+    for (var bs = 0; bs < allSlots.length; bs++) {
+      if ((bookedSlots[allSlots[bs]] || 0) > 0) {
+        var bookedMins = _slotToMinutes(allSlots[bs]);
+        for (var ns = bs + 1; ns < allSlots.length; ns++) {
+          var nextMins = _slotToMinutes(allSlots[ns]);
+          if (nextMins - bookedMins <= bufferMinutes) {
+            blockedByBuffer[allSlots[ns]] = true;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+  }
 
   var availableSlots = [];
   for (var i = 0; i < allSlots.length; i++) {
@@ -227,6 +246,8 @@ function sendTimePromptWithQuickReply(replyToken, date) {
     // Skip fully booked slots
     var bookedCount = bookedSlots[slot] || 0;
     if (bookedCount >= maxConcurrent) continue;
+    // Skip slots within buffer window after a booked slot
+    if (blockedByBuffer[slot]) continue;
     availableSlots.push(slot);
   }
 
@@ -296,4 +317,10 @@ function validateTreatmentTimeOrdering(userId, date, time, treatmentType, exclud
   }
 
   return { valid: true, reason: '' };
+}
+
+// Convert HH:MM slot string to minutes since midnight.
+function _slotToMinutes(slot) {
+  var parts = slot.split(':');
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
 }
