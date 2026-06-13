@@ -75,6 +75,53 @@ function addStamp(lineUserId, reservationId) {
 }
 
 /**
+ * スタンプを1つ取り消す（キャンセル時用）。
+ * stamp_count が 0 の場合は何もしない。
+ * @param {string} lineUserId
+ * @param {string} reservationId
+ * @returns {{ ok: boolean, stampCount: number, error?: string }}
+ */
+function removeStamp(lineUserId, reservationId) {
+  if (!lineUserId) return { ok: false, error: 'lineUserId is required' };
+  if (!reservationId) return { ok: false, error: 'reservationId is required' };
+
+  var sheet = _getOrCreateStampSheet();
+  var data = sheet.getDataRange().getValues();
+  var rowIndex = -1;
+  var stampCard = null;
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === lineUserId) {
+      stampCard = _rowToStampCard(data[i]);
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
+  if (!stampCard || rowIndex < 0) {
+    return { ok: true, stampCount: 0 };
+  }
+
+  if (stampCard.stamp_count <= 0) {
+    return { ok: true, stampCount: 0 };
+  }
+
+  var nowStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss');
+  var newCount = stampCard.stamp_count - 1;
+
+  sheet.getRange(rowIndex, 2, 1, 5).setValues([[
+    newCount,
+    stampCard.total_stamps_earned,
+    stampCard.last_stamped_reservation_id,
+    stampCard.last_stamped_at,
+    nowStr
+  ]]);
+
+  appendLogRow('INFO', '[Stamp] Removed for: ' + lineUserId + ' (cancel: ' + reservationId + ')');
+  return { ok: true, stampCount: newCount };
+}
+
+/**
  * スタンプカード情報を取得する。
  * @param {string} lineUserId
  * @returns {{ line_user_id, stamp_count, total_stamps_earned, last_stamped_at }|null}

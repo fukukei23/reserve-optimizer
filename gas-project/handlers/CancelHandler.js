@@ -195,6 +195,18 @@ function handleAwaitingCancelConfirm(text, replyToken, userId) {
   // Notify waitlist candidates about the vacancy (always, regardless of refund outcome)
   _notifyWaitlistVacancy(reservation);
 
+  // Stamp card: remove stamp if feature enabled
+  if (typeof isFeatureStampCardEnabled === 'function' && isFeatureStampCardEnabled()) {
+    try {
+      var lineUserId = reservation.line_display_name || '';
+      if (lineUserId) {
+        removeStamp(lineUserId, reservationId);
+      }
+    } catch (stampErr) {
+      appendLogRow('WARN', '[Stamp] Remove failed on cancel: ' + stampErr.message);
+    }
+  }
+
   // Calendar sync — mark cancelled
   try { deleteCalendarEvent(reservationId); } catch (calErr) {
     appendLogRow('WARN', '[Calendar] Cancel sync failed: ' + calErr.message);
