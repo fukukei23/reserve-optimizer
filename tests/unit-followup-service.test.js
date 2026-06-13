@@ -234,6 +234,44 @@ addTargetReservation('R004', 'U004', 'N', 'Confirmed');
 sendPostVisitFollowUps();
 assert('Confirmed: no push', _lastPushText === null);
 
+// ─── エッジケース ───
+
+section('M5a: _parseDateTime: 不正な dateStr → null');
+assert('M5a: 不正dateStr → null', _parseDateTime('abc', '10:00') === null);
+
+section('M5b: _parseDateTime: 不正な timeStr → null');
+assert('M5b: 不正timeStr → null', _parseDateTime('2026/06/13', 'xx:yy') === null);
+
+section('M6a: reserved_date が空の予約 → スキップ');
+clearReservations(); resetSpies();
+_reviewFeatureOn = false;
+var d6a = makeTargetDate();
+var endTime6a = ('0' + d6a.getHours()).slice(-2) + ':' + ('0' + d6a.getMinutes()).slice(-2);
+_mockSheetData.reservations.rows.push([
+  'R_M6A', new Date(), 'テスト患者', '09011112222', 'U_M6A',
+  'First', '初診', '', endTime6a, endTime6a,
+  'Visited', 'Y', 1000, 'Paid', 'N', '', '', 'N', 'N', 5000, '', '', 'N', ''
+]);
+_invalidateReservationCache();
+sendPostVisitFollowUps();
+assert('M6a: reserved_date 空 → 送信なし', _lastPushText === null);
+
+section('M6b: line_display_name が空の予約 → スキップ');
+clearReservations(); resetSpies();
+_reviewFeatureOn = false;
+var d6b = makeTargetDate();
+var dateStr6b = d6b.getFullYear() + '/' + ('0' + (d6b.getMonth() + 1)).slice(-2) + '/' + ('0' + d6b.getDate()).slice(-2);
+var endTime6b = ('0' + d6b.getHours()).slice(-2) + ':' + ('0' + d6b.getMinutes()).slice(-2);
+var startHour6b = d6b.getHours() - 1 >= 0 ? d6b.getHours() - 1 : 23;
+_mockSheetData.reservations.rows.push([
+  'R_M6B', new Date(), 'テスト患者', '09011112222', '',
+  'First', '初診', dateStr6b, ('0' + startHour6b).slice(-2) + ':00', endTime6b,
+  'Visited', 'Y', 1000, 'Paid', 'N', '', '', 'N', 'N', 5000, '', '', 'N', ''
+]);
+_invalidateReservationCache();
+sendPostVisitFollowUps();
+assert('M6b: line_display_name 空 → 送信なし', _lastPushText === null);
+
 // ─── Results ───
 console.log('\n========================================');
 console.log('FollowUpService Unit Tests');

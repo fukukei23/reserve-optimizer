@@ -266,6 +266,29 @@ _mockScriptProps['FEATURE_COUPON'] = 'true';
 assert('enabled when set', isFeatureCouponEnabled() === true);
 _mockScriptProps = {};
 
+// ─── エッジケース ───
+
+section('M3: validateCoupon: CRM null + target_tags → TAG_MISMATCH');
+setupCoupons([
+  ['C_M3', 'VIPONLY', 'percent', 10, TOMORROW, 100, 0, 'vip', 'TRUE']
+]);
+_stubCRM = null;
+var rM3 = validateCoupon('VIPONLY', 'U001', new Date(2026, 5, 12));
+assert('M3: ok は false', rM3.ok === false);
+assertEqual('M3: error は TAG_MISMATCH', rM3.error, 'TAG_MISMATCH');
+
+section('M4: applyCoupon: 存在しないコードはエラーにならない');
+setupCoupons([]);
+var m4Threw = false;
+try { applyCoupon('NOTEXIST'); } catch(e) { m4Threw = true; }
+assert('M4: 例外が発生しない', !m4Threw);
+
+section('L1: calculateDiscount: baseAmount=0 → 0');
+var cPctL1 = { discount_type: 'percent', discount_value: 10 };
+assertEqual('L1: percent 10% × 0 = 0', calculateDiscount(0, cPctL1), 0);
+var cAmtL1 = { discount_type: 'amount', discount_value: 500 };
+assertEqual('L1: amount 500 でも負にならず 0', calculateDiscount(0, cAmtL1), 0);
+
 // ─── Results ───
 console.log('\n========================================');
 console.log('CouponService Unit Tests');

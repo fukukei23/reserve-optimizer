@@ -352,6 +352,41 @@ var confRow = _mockSheets['reservations'].rows[0];
 assertEqual('old Confirmed stays Confirmed', confRow[10], 'Confirmed');
 assert('no sendLinePush for Confirmed', sendLinePushCalls.length === 0);
 
+// ─── エッジケース ───
+
+section('M1: 複数の期限切れ予約が一括キャンセルされる');
+var fourHoursAgoM1 = new Date(Date.now() - 4 * 60 * 60 * 1000);
+addMockSheet('reservations', RESERVATIONS_HEADERS, [
+  makeRow('R_M1A', fourHoursAgoM1.toISOString(), 'Pending', 'Unpaid', '2026-06-01', '10:00', 'LINE_M1A'),
+  makeRow('R_M1B', fourHoursAgoM1.toISOString(), 'Pending', 'Unpaid', '2026-06-01', '11:00', 'LINE_M1B')
+]);
+resetCache();
+sendLinePushCalls = [];
+cancelExpiredUnpaidReservations();
+assertEqual('M1: R_M1A → Cancelled', _mockSheets['reservations'].rows[0][10], 'Cancelled');
+assertEqual('M1: R_M1B → Cancelled', _mockSheets['reservations'].rows[1][10], 'Cancelled');
+assertEqual('M1: 2件のpush送信', sendLinePushCalls.length, 2);
+
+section('M2: 不正な created_at (NaN) → スキップ');
+addMockSheet('reservations', RESERVATIONS_HEADERS, [
+  makeRow('R_M2', 'INVALID_DATE', 'Pending', 'Unpaid', '2026-06-01', '10:00', 'LINE_M2')
+]);
+resetCache();
+sendLinePushCalls = [];
+cancelExpiredUnpaidReservations();
+assertEqual('M2: ステータス変わらず Pending', _mockSheets['reservations'].rows[0][10], 'Pending');
+assert('M2: push送信なし', sendLinePushCalls.length === 0);
+
+section('L3: Visited/NoShow は getBookedSlotsForDate でカウントされない');
+addMockSheet('reservations', RESERVATIONS_HEADERS, [
+  makeRow('R_L3A', '2026-06-01T08:00:00Z', 'Visited',  'Paid',      '2026-06-01', '10:00'),
+  makeRow('R_L3B', '2026-06-01T08:00:00Z', 'NoShow',   'Forfeited', '2026-06-01', '10:00'),
+  makeRow('R_L3C', '2026-06-01T08:00:00Z', 'Pending',  'Unpaid',    '2026-06-01', '10:00')
+]);
+resetCache();
+var slotsL3 = getBookedSlotsForDate('2026-06-01');
+assertEqual('L3: 10:00 は Pending 1件のみカウント', slotsL3['10:00'], 1);
+
 // ─── Results ───
 console.log('\n========================================');
 console.log('BookingService Unit Tests');

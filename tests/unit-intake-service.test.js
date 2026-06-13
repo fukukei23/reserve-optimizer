@@ -395,6 +395,25 @@ test('_findIntakeRow: returns null when ID not found', function() {
   assertEqual(res, null);
 });
 
+// ─── エッジケース ───
+
+test('L2: saveIntakeForm: formData が null → ok:false', function() {
+  resetState();
+  var result = saveIntakeForm('R001', null);
+  assertEqual(result.ok, false);
+});
+
+test('L_warn: saveIntakeForm: サマリー生成が失敗しても ok:true + WARNログ', function() {
+  resetState();
+  makeIntakeSheet([]);
+  var origFn = global._generateIntakeSummary;
+  global._generateIntakeSummary = function() { throw new Error('summary fail'); };
+  var result = saveIntakeForm('R001', { chief_complaint: '腰痛' });
+  global._generateIntakeSummary = origFn;
+  assertEqual(result.ok, true);
+  assert(_logRows.some(function(l) { return l.level === 'WARN'; }), 'WARNログが記録される');
+});
+
 // ─── Report ───
 console.log('\n');
 console.log('IntakeService Tests:', _results.pass + _results.fail, 'total');

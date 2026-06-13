@@ -315,6 +315,34 @@ test('_getOrCreateKarteSheet: creates sheet with headers when missing', function
   assertEqual(sheet._rows[0][5], 'treatment_content');
 });
 
+test('M7: saveKarte: karteData が null → ok:false', function() {
+  resetState();
+  var result = saveKarte('R001', null);
+  assertEqual(result.ok, false);
+});
+
+test('M8: getKarteHistoryByUserId: 最新順（逆順）で返す', function() {
+  resetState();
+  makeKarteSheet([
+    ['K-001', 'R001', 'U001', '山田', '2026/01/10', '施術A', '', '', '', '', ''],
+    ['K-002', 'R002', 'U001', '山田', '2026/01/12', '施術B', '', '', '', '', ''],
+    ['K-003', 'R003', 'U001', '山田', '2026/01/15', '施術C', '', '', '', '', '']
+  ]);
+  var history = getKarteHistoryByUserId('U001', 3);
+  assertEqual(history[0].id, 'K-003');
+});
+
+test('H1_fixed: getKarteHistoryByUserId: limit=1 → 1件のみ返す', function() {
+  resetState();
+  var rows = [];
+  for (var i = 1; i <= 5; i++) {
+    rows.push(['K-00' + i, 'R00' + i, 'U001', '山田', '2026/01/' + ('0' + i).slice(-2), '施術' + i, '', '', '', '', '']);
+  }
+  makeKarteSheet(rows);
+  var result = getKarteHistoryByUserId('U001', 1);
+  assertEqual(result.length, 1);
+});
+
 test('_getOrCreateKarteSheet: returns existing sheet', function() {
   resetState();
   makeKarteSheet([['K-001','R001','','','','施術','','','','','']]);
