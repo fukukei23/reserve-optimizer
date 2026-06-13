@@ -75,6 +75,9 @@ loadFile(path.join(gasDir, 'i18n', 'Locales.js'));
 loadFile(path.join(gasDir, 'i18n', 'I18n.js'));
 loadFile(path.join(gasDir, 'handlers', 'StateHandler.js'));
 
+// Stub functions needed by MessageTemplates (loaded later)
+global.getClinicMapUrl = function() { return ''; };
+
 // ─── Test framework ───
 var passed = 0;
 var failed = 0;
@@ -154,7 +157,7 @@ assert('Welcome ja first reply is Japanese', welcomeJa.quickReplies[0].label ===
 
 var welcomeEn = MessageTemplates.getWelcomeMessage('en');
 assert('Welcome en first reply is English', welcomeEn.quickReplies[0].label === 'Book');
-assert('Welcome en has 4 quickReplies', welcomeEn.quickReplies.length === 4);
+assert('Welcome en has 5 quickReplies', welcomeEn.quickReplies.length === 5);
 
 var menuJa = MessageTemplates.getMenuOptionsMessage('ja');
 assert('Menu ja has Japanese', menuJa.indexOf('初診') >= 0);

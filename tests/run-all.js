@@ -3,7 +3,7 @@
  * Usage: node tests/run-all.js
  */
 
-var { execSync } = require('child_process');
+var { execFileSync } = require('child_process');
 var path = require('path');
 var fs = require('fs');
 
@@ -21,8 +21,14 @@ console.log('=== reserve-optimizer テスト実行 ===\n');
 files.forEach(function(file) {
   var filePath = path.join(testDir, file);
   try {
-    var output = execSync('node ' + filePath, { encoding: 'utf8', timeout: 30000 });
+    var output = execFileSync('node', [filePath], { encoding: 'utf8', timeout: 30000 });
     var match = output.match(/Passed:\s*(\d+)\s+Failed:\s*(\d+)/);
+    if (!match) {
+      // Alternate format: "PASS: 33\nFAIL: 0"
+      var pMatch = output.match(/PASS:\s*(\d+)/);
+      var fMatch = output.match(/FAIL:\s*(\d+)/);
+      if (pMatch) match = [null, pMatch[1], fMatch ? fMatch[1] : '0'];
+    }
     var passed = match ? parseInt(match[1]) : 0;
     var failed = match ? parseInt(match[2]) : 0;
     totalPassed += passed;

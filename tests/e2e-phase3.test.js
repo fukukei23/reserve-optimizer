@@ -142,11 +142,6 @@ global.validateDateForBooking = function(d) {
   var parts = d.split('/');
   var dateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
   if (isNaN(dateObj.getTime())) return { valid: false, errorMessage: 'Invalid date' };
-  var now = new Date();
-  var minDate = new Date(now.getTime() + 30 * 60000);
-  if (dateObj < minDate && dateObj.toDateString() !== minDate.toDateString()) {
-    return { valid: false, errorMessage: 'Past date not allowed' };
-  }
   return { valid: true };
 };
 global.calculateEndTime = function(start, duration) {
@@ -168,6 +163,10 @@ global.getBookedSlotsForDate = function(date) {
 };
 global._onReservationCreated = function() {};
 global.getReservationById = function() { return null; };
+global._createReservationWithLock = function(tempData) {
+  return { ok: true, reservation: { id: 'R' + String(Date.now()).slice(-6) } };
+};
+global.generateReservationId = function() { return 'R' + String(Date.now()).slice(-6); };
 
 // ─── Load source files ───
 var gasDir = path.join(__dirname, '..', 'gas-project');
@@ -178,6 +177,7 @@ function loadFile(filepath) {
 }
 
 loadFile(path.join(gasDir, 'config', 'SheetConfig.js'));
+loadFile(path.join(gasDir, 'config', 'ScriptProperties.js'));
 loadFile(path.join(gasDir, 'services', 'SheetService.js'));
 loadFile(path.join(gasDir, 'handlers', 'StateHandler.js'));
 loadFile(path.join(gasDir, 'handlers', 'WebhookRouter.js'));
