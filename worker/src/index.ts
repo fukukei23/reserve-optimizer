@@ -9,7 +9,8 @@ export interface Env {
   GAS_WEBAPP_URL: string;
   GAS_AUTH_TOKEN: string;
   WEB_API_KEY: string;
-  ALLOWED_ORIGIN: string;
+  ALLOWED_ORIGINS: string; // カンマ区切り複数オリジン（本番 + デモ等）
+  DEBUG?: string; // "true" のみデバッグログ出力
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";
@@ -306,9 +307,19 @@ export function timingSafeEqual(a: string, b: string): boolean {
 }
 
 // --- CORS headers for Web API ---
+export function resolveAllowedOrigin(env: Env, request: Request): string {
+  const origins = (env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const reqOrigin = request.headers.get("Origin");
+  if (reqOrigin && origins.includes(reqOrigin)) return reqOrigin;
+  return origins[0] || "";
+}
+
 function corsHeaders(allowedOrigin: string): Record<string, string> {
   return {
-    "Access-Control-Allow-Origin": allowedOrigin || "https://reserve-optimizer.fukukei44161.workers.dev",
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
@@ -327,18 +338,18 @@ function corsResponse(body: string, allowedOrigin: string, status = 200): Respon
  */
 async function handleApiAvailability(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
+    return new Response(null, { status: 204, headers: corsHeaders(resolveAllowedOrigin(env, request)) });
   }
 
   let body: { date?: string };
   try {
     body = await request.json() as { date?: string };
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), resolveAllowedOrigin(env, request), 400);
   }
 
   if (!body.date || !/^\d{4}\/\d{2}\/\d{2}$/.test(body.date)) {
-    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), resolveAllowedOrigin(env, request), 400);
   }
 
   return forwardToGAS(
@@ -354,7 +365,7 @@ async function handleApiAvailability(request: Request, env: Env): Promise<Respon
  */
 async function handleApiIntake(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
+    return new Response(null, { status: 204, headers: corsHeaders(resolveAllowedOrigin(env, request)) });
   }
 
   let body: {
@@ -368,14 +379,14 @@ async function handleApiIntake(request: Request, env: Env): Promise<Response> {
   try {
     body = await request.json() as typeof body;
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), resolveAllowedOrigin(env, request), 400);
   }
 
   if (!body.reservation_id) {
-    return corsResponse(JSON.stringify({ error: "reservation_id is required" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "reservation_id is required" }), resolveAllowedOrigin(env, request), 400);
   }
   if (!body.chief_complaint || !body.chief_complaint.trim()) {
-    return corsResponse(JSON.stringify({ error: "chief_complaint is required" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "chief_complaint is required" }), resolveAllowedOrigin(env, request), 400);
   }
 
   return forwardToGAS(
@@ -400,14 +411,14 @@ async function handleApiIntake(request: Request, env: Env): Promise<Response> {
  */
 async function handleApiReserve(request: Request, env: Env): Promise<Response> {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders(env.ALLOWED_ORIGIN) });
+    return new Response(null, { status: 204, headers: corsHeaders(resolveAllowedOrigin(env, request)) });
   }
 
   let body: { name?: string; phone?: string; date?: string; time?: string; treatment?: string };
   try {
     body = await request.json() as typeof body;
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), resolveAllowedOrigin(env, request), 400);
   }
 
   const missing: string[] = [];
@@ -418,12 +429,12 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
   if (!body.treatment) missing.push("treatment");
 
   if (missing.length > 0) {
-    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), resolveAllowedOrigin(env, request), 400);
   }
 
   const phoneDigits = body.phone!.replace(/[-\s]/g, "");
   if (!/^\d{10,11}$/.test(phoneDigits)) {
-    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), env.ALLOWED_ORIGIN, 400);
+    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), resolveAllowedOrigin(env, request), 400);
   }
 
   return forwardToGAS(

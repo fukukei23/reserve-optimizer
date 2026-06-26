@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { timingSafeEqual, verifyLineSignature, verifyStripeSignature } from "./index";
+import { timingSafeEqual, verifyLineSignature, verifyStripeSignature, resolveAllowedOrigin } from "./index";
 
 // --- timingSafeEqual ---
 
@@ -106,5 +106,39 @@ describe("verifyStripeSignature", () => {
     expect(await verifyStripeSignature(body, "v1=abc", secret)).toBe(false);
     expect(await verifyStripeSignature(body, "t=12345", secret)).toBe(false);
     expect(await verifyStripeSignature(body, "", secret)).toBe(false);
+  });
+});
+
+// --- resolveAllowedOrigin ---
+
+describe("resolveAllowedOrigin", () => {
+  it("リクエスト Origin が許可リストにあればそれを返す", () => {
+    const env = { ALLOWED_ORIGINS: "https://a.example,https://b.example" } as any;
+    const req = new Request("https://a.example/api", { headers: { Origin: "https://a.example" } });
+    expect(resolveAllowedOrigin(env, req)).toBe("https://a.example");
+  });
+
+  it("リクエスト Origin が許可リストに無ければ先頭の許可オリジンを返す", () => {
+    const env = { ALLOWED_ORIGINS: "https://a.example,https://b.example" } as any;
+    const req = new Request("https://evil.example/api", { headers: { Origin: "https://evil.example" } });
+    expect(resolveAllowedOrigin(env, req)).toBe("https://a.example");
+  });
+
+  it("Origin ヘッダーが無ければ先頭の許可オリジンを返す", () => {
+    const env = { ALLOWED_ORIGINS: "https://a.example,https://b.example" } as any;
+    const req = new Request("https://a.example/api");
+    expect(resolveAllowedOrigin(env, req)).toBe("https://a.example");
+  });
+
+  it("ALLOWED_ORIGINS が空なら空文字を返す", () => {
+    const env = { ALLOWED_ORIGINS: "" } as any;
+    const req = new Request("https://a.example/api", { headers: { Origin: "https://a.example" } });
+    expect(resolveAllowedOrigin(env, req)).toBe("");
+  });
+
+  it("スペース混じりのリストを trim して扱う", () => {
+    const env = { ALLOWED_ORIGINS: " https://a.example , https://b.example " } as any;
+    const req = new Request("https://b.example/api", { headers: { Origin: "https://b.example" } });
+    expect(resolveAllowedOrigin(env, req)).toBe("https://b.example");
   });
 });
