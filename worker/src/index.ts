@@ -65,12 +65,12 @@ export default {
     }
 
     // API: availability check
-    if (url.pathname === "/api/availability" && request.method === "POST") {
+    if (url.pathname === "/api/availability" && (request.method === "POST" || request.method === "OPTIONS")) {
       return handleApiAvailability(request, env);
     }
 
     // API: create reservation
-    if (url.pathname === "/api/reserve" && request.method === "POST") {
+    if (url.pathname === "/api/reserve" && (request.method === "POST" || request.method === "OPTIONS")) {
       return handleApiReserve(request, env);
     }
 
@@ -230,7 +230,7 @@ export async function verifyStripeSignature(
  * そのため GET リクエストで body をクエリパラメータとして渡す。
  * GAS 側の doGet が x-verified + x-body パラメータを処理する。
  */
-async function forwardToGAS(body: string, env: Env, source: string): Promise<Response> {
+async function forwardToGAS(body: string, env: Env, source: string, allowedOrigin = ""): Promise<Response> {
   const slimBody = slimForGAS(body, source);
   const encodedBody = encodeURIComponent(slimBody);
   const gasUrl = `${env.GAS_WEBAPP_URL}?x-verified=true&x-source=${source}&x-body=${encodedBody}&x-gas-auth=${encodeURIComponent(env.GAS_AUTH_TOKEN)}`;
@@ -259,9 +259,15 @@ async function forwardToGAS(body: string, env: Env, source: string): Promise<Res
   }
 
   const respBody = await response.text();
+  const headers = new Headers(response.headers);
+  if (allowedOrigin) {
+    headers.set("Access-Control-Allow-Origin", allowedOrigin);
+    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type");
+  }
   return new Response(respBody, {
     status: response.status,
-    headers: response.headers,
+    headers,
   });
 }
 
@@ -355,7 +361,8 @@ async function handleApiAvailability(request: Request, env: Env): Promise<Respon
   return forwardToGAS(
     JSON.stringify({ action: "get_availability", date: body.date, api_token: env.WEB_API_KEY }),
     env,
-    "api"
+    "api",
+    resolveAllowedOrigin(env, request)
   );
 }
 
@@ -401,7 +408,8 @@ async function handleApiIntake(request: Request, env: Env): Promise<Response> {
       api_token: env.WEB_API_KEY,
     }),
     env,
-    "api"
+    "api",
+    resolveAllowedOrigin(env, request)
   );
 }
 
@@ -448,6 +456,7 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
       api_token: env.WEB_API_KEY,
     }),
     env,
-    "api"
+    "api",
+    resolveAllowedOrigin(env, request)
   );
 }

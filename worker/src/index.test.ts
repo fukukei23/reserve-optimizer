@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { timingSafeEqual, verifyLineSignature, verifyStripeSignature, resolveAllowedOrigin } from "./index";
+import worker from "./index";
 
 // --- timingSafeEqual ---
 
@@ -140,5 +141,97 @@ describe("resolveAllowedOrigin", () => {
     const env = { ALLOWED_ORIGINS: " https://a.example , https://b.example " } as any;
     const req = new Request("https://b.example/api", { headers: { Origin: "https://b.example" } });
     expect(resolveAllowedOrigin(env, req)).toBe("https://b.example");
+  });
+});
+
+// --- fetch routing: CORS preflight (OPTIONS) + success response headers ---
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+const stubEnv = () => ({
+  ALLOWED_ORIGINS: "https://app.example,https://demo.example",
+  GAS_WEBAPP_URL: "https://gas.example/exec",
+  GAS_AUTH_TOKEN: "tok",
+  WEB_API_KEY: "key",
+  LINE_CHANNEL_SECRET: "s",
+  STRIPE_WEBHOOK_SECRET: "s",
+} as any);
+
+const stubCtx = () => ({ waitUntil: (_: Promise<unknown>) => {} } as any);
+
+function mockGAS(status: number, body: string) {
+  globalThis.fetch = vi.fn(async () => new Response(body, { status })) as typeof fetch;
+}
+
+describe("CORS preflight: OPTIONS on API routes", () => {
+  it("/api/availability OPTIONS → 204 + CORS ヘッダ", async () => {
+    const req = new Request("https://w.example/api/availability", {
+      method: "OPTIONS",
+      headers: { Origin: "https://app.example" },
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://app.example");
+  });
+
+  it("/api/reserve OPTIONS → 204 + CORS ヘッダ", async () => {
+    const req = new Request("https://w.example/api/reserve", {
+      method: "OPTIONS",
+      headers: { Origin: "https://demo.example" },
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://demo.example");
+  });
+
+  it("/api/intake OPTIONS → 204 + CORS ヘッダ（既存・回帰保証）", async () => {
+    const req = new Request("https://w.example/api/intake", {
+      method: "OPTIONS",
+      headers: { Origin: "https://app.example" },
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://app.example");
+  });
+});
+
+describe("forwardToGAS 成功レスポンスの CORS ヘッダ付与", () => {
+  it("/api/availability POST 成功 → Access-Control-Allow-Origin 付与", async () => {
+    mockGAS(200, '{"slots":[]}');
+    const req = new Request("https://w.example/api/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://app.example" },
+      body: JSON.stringify({ date: "2026/05/30" }),
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://app.example");
+  });
+
+  it("/api/reserve POST 成功 → Access-Control-Allow-Origin 付与", async () => {
+    mockGAS(200, '{"reservation_id":"r1"}');
+    const req = new Request("https://w.example/api/reserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://demo.example" },
+      body: JSON.stringify({
+        name: "山田", phone: "09012345678", date: "2026/05/30", time: "10:00", treatment: "massage",
+      }),
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://demo.example");
+  });
+
+  it("/api/availability バリデーションエラー(400) → CORS ヘッダ付与（既存corsResponse・回帰保証）", async () => {
+    const req = new Request("https://w.example/api/availability", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: "https://app.example" },
+      body: JSON.stringify({ date: "invalid" }),
+    });
+    const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
+    expect(res.status).toBe(400);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://app.example");
   });
 });
