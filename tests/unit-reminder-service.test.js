@@ -503,6 +503,94 @@ global.sendLinePush = origSendLinePush;
 // Restore Utilities.formatDate
 global.Utilities.formatDate = origFormatDate;
 
+// ─── Tests: checkWaitlistResponses logic ───
+// checkWaitlistResponses uses new Date() (real wall-clock), not Utilities.formatDate.
+// So we anchor updated_at to the real current time dynamically per scenario.
+
+var origSendLinePushWL = global.sendLinePush;
+var origFindWaitlistCandidate = global.findWaitlistCandidate;
+
+var wlSendCalls = [];
+var wlFindCalls = [];
+var wlFindReturn = [];
+global.sendLinePush = function(userId, text) {
+  wlSendCalls.push({ userId: userId, text: text });
+  return true;
+};
+global.findWaitlistCandidate = function(appointmentDateTime) {
+  wlFindCalls.push(appointmentDateTime);
+  return wlFindReturn;
+};
+
+// Build a cancelled-notified reservation anchored `minutesAgo` before now
+function makeNotifiedCancellation(id, start, end, minutesAgo, opts) {
+  opts = opts || {};
+  var now = new Date();
+  return {
+    id: id,
+    reserved_date: '2026-06-28',
+    reserved_start: start,
+    reserved_end: end,
+    status: opts.status || 'Cancelled',
+    resale_notified: opts.resale_notified != null ? opts.resale_notified : 'Y',
+    resale_success: opts.resale_success != null ? opts.resale_success : '',
+    updated_at: new Date(now.getTime() - minutesAgo * 60 * 1000).toISOString(),
+    menu_type: 'Initial'
+  };
+}
+
+section('checkWaitlistResponses - notifies next candidate for unclaimed vacancy');
+wlSendCalls = []; wlFindCalls = []; wlFindReturn = [{ id: 'WL_NEXT', line_display_name: 'U_NEXT' }];
+_reservationCache = [makeNotifiedCancellation('R_WL001', '14:00', '14:30', 30)];
+var wlResult1 = checkWaitlistResponses();
+assertEqual('1 unclaimed slot processed', wlResult1, 1);
+assertEqual('findWaitlistCandidate called once', wlFindCalls.length, 1);
+assertEqual('sendLinePush called for next candidate', wlSendCalls.length, 1);
+if (wlSendCalls.length >= 1) {
+  assertIncludes('notified correct candidate user', wlSendCalls[0].userId, 'U_NEXT');
+}
+
+section('checkWaitlistResponses - skips slot already claimed by a Confirmed booking');
+wlSendCalls = []; wlFindCalls = []; wlFindReturn = [{ id: 'WL_ANY', line_display_name: 'U_ANY' }];
+_reservationCache = [
+  makeNotifiedCancellation('R_WL002', '15:00', '15:30', 20),
+  { id: 'R_WL003', reserved_date: '2026-06-28', reserved_start: '15:00', reserved_end: '15:30',
+    status: 'Confirmed', menu_type: 'Initial' }  // same slot, claimed
+];
+var wlResult2 = checkWaitlistResponses();
+assertEqual('claimed slot not counted', wlResult2, 0);
+assertEqual('no candidate lookup for claimed slot', wlFindCalls.length, 0);
+assertEqual('no push sent for claimed slot', wlSendCalls.length, 0);
+
+section('checkWaitlistResponses - ignores stale cancellation (older than 2h window)');
+wlSendCalls = []; wlFindCalls = []; wlFindReturn = [{ id: 'WL_ANY', line_display_name: 'U_ANY' }];
+_reservationCache = [makeNotifiedCancellation('R_WL004', '16:00', '16:30', 180)]; // 3h ago
+var wlResult3 = checkWaitlistResponses();
+assertEqual('stale cancellation ignored', wlResult3, 0);
+assertEqual('no candidate lookup for stale', wlFindCalls.length, 0);
+
+section('checkWaitlistResponses - no push when no candidates available');
+wlSendCalls = []; wlFindCalls = []; wlFindReturn = [];
+_reservationCache = [makeNotifiedCancellation('R_WL005', '17:00', '17:30', 15)];
+var wlResult4 = checkWaitlistResponses();
+assertEqual('unclaimed slot still counted', wlResult4, 1);
+assertEqual('candidate lookup attempted', wlFindCalls.length, 1);
+assertEqual('no push when no candidates', wlSendCalls.length, 0);
+
+section('checkWaitlistResponses - skips already-resold and non-cancelled rows');
+wlSendCalls = []; wlFindCalls = []; wlFindReturn = [{ id: 'WL_ANY', line_display_name: 'U_ANY' }];
+_reservationCache = [
+  makeNotifiedCancellation('R_WL006', '18:00', '18:30', 10, { resale_success: 'Y' }), // already resold
+  makeNotifiedCancellation('R_WL007', '19:00', '19:30', 10, { status: 'Confirmed' })  // not cancelled
+];
+var wlResult5 = checkWaitlistResponses();
+assertEqual('resold/non-cancelled skipped', wlResult5, 0);
+assertEqual('no lookup for skipped rows', wlFindCalls.length, 0);
+
+// Restore stubs
+global.sendLinePush = origSendLinePushWL;
+global.findWaitlistCandidate = origFindWaitlistCandidate;
+
 // ─── Tests: cleanupWaitlist ───
 
 section('cleanupWaitlist - deletes old entries');
