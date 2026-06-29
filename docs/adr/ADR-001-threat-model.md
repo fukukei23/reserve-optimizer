@@ -35,6 +35,7 @@ reserve-optimizer はLINE Bot + Stripe + Cloudflare Workers + Google Apps Script
 | T07 | リプレイ攻撃（Webhook再送） | Repudiation | 重複処理 | Stripe/LINE双方: CacheServiceで冪等性確保（20分TTL） | **対応済** |
 | T08 | LINEメッセージの入力検証なし | Tampering | 意図しない処理実行 | 文字数制限（1000文字）+ 制御文字サニタイズ | **対応済** |
 | T09 | Webhookエンドポイントのレート制限なし | Denial of Service | サービス停止 | Cloudflare Workers（エッジ側で一部緩和） | **低リスク** |
+| T10 | GAS_AUTH_TOKEN 漏洩時の無効化・rotation 手順なし | Elevation / Operational | トークン漏洩後の継続不正アクセス | `rotateAuthToken()` 関数 + rotation runbook（[docs/runbooks/token-rotation.md](../runbooks/token-rotation.md)）・6ヶ月予防的 rotation | **対応済** |
 
 ## 決定
 

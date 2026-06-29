@@ -488,6 +488,25 @@ function initializeDefaultProperties() {
 }
 
 /**
+ * Rotate GAS_AUTH_TOKEN (run from GAS editor for token rotation / leak response).
+ *
+ * Generates a new UUID-based token and overwrites the stored one, immediately
+ * invalidating the previous token. Returns the new token so the operator can
+ * update the Worker secret (`wrangler secret put GAS_AUTH_TOKEN`).
+ *
+ * Related threats: ADR-001 T03 (auth), T10 (rotation/leak response).
+ * Runbook: docs/runbooks/token-rotation.md
+ *
+ * @return {string} new token (also logged)
+ */
+function rotateAuthToken() {
+  var newToken = Utilities.getUuid().replace(/-/g, '');
+  PropertiesService.getScriptProperties().setProperty('GAS_AUTH_TOKEN', newToken);
+  appendLogRow('WARN', 'GAS_AUTH_TOKEN rotated. Update Worker secret (wrangler secret put GAS_AUTH_TOKEN) and redeploy immediately.');
+  return newToken;
+}
+
+/**
  * Check if all required properties are set
  */
 function validateRequiredProperties() {
