@@ -87,6 +87,9 @@ function _buildCustomer(row) {
 
 /**
  * Get or create customer by phone number
+ *
+ * NOTE: phone は顧客の照合キー（lookup key）。永続識別子は戻り値の
+ * customer_id（UUID）。主キー（Firestore doc id / Sheet 行キー）はUUID。
  */
 function getOrCreateCustomer(phone, name, lineUserId) {
   _ensureCustomerCache();
@@ -122,7 +125,7 @@ function getOrCreateCustomer(phone, name, lineUserId) {
 }
 
 /**
- * Get customer by phone
+ * Get customer by phone (照合キー). 戻り値の customer_id（UUID）が永続識別子。
  */
 function getCustomerByPhone(phone) {
   _ensureCustomerCache();
@@ -130,7 +133,7 @@ function getCustomerByPhone(phone) {
 }
 
 /**
- * Increment visit count and update tags
+ * Increment visit count and update tags. phone は照合キー（顧客特定は customer_id=UUID）。
  */
 function incrementVisitCount(phone) {
   var customer = getOrCreateCustomer(phone);
@@ -150,7 +153,7 @@ function incrementVisitCount(phone) {
 }
 
 /**
- * Increment no-show count and update tags
+ * Increment no-show count and update tags. phone は照合キー（顧客特定は customer_id=UUID）。
  */
 function incrementNoShowCount(phone) {
   var customer = getOrCreateCustomer(phone);
