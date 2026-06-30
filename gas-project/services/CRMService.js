@@ -100,8 +100,12 @@ function getOrCreateCustomer(phone, name, lineUserId) {
     return existing;
   }
 
+  var uuid = Utilities.getUuid();
+  if (!/^[a-f0-9-]{36}$/.test(uuid)) {
+    throw new Error('Invalid UUID generated for customer_id: ' + uuid);
+  }
   var customer = {
-    customer_id: phone,
+    customer_id: uuid,
     phone: phone,
     line_user_id: lineUserId || '',
     name: name || '',

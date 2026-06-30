@@ -92,7 +92,12 @@ global.Utilities = {
     return d.toISOString();
   },
   getUuid: function() {
-    return Math.random().toString(36).substring(2, 18);
+    // 本番 Utilities.getUuid() 相当（UUID v4形式: 36字・ハイフン区切り）
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0;
+      var v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 };
 
@@ -320,6 +325,19 @@ section('getCustomerTagLabels - whitespace handling');
 var labelSpace = getCustomerTagLabels(' new , vip ', 'ja');
 assertIncludes('handles spaces around tags', labelSpace, 'new');
 assertIncludes('handles spaces around tags (vip)', labelSpace, 'vip');
+
+// ─── getOrCreateCustomer: customer_id UUID化 ───
+section('getOrCreateCustomer - new customer_id is UUID (not phone)');
+(function() {
+  // テスト用リセット: customers シートを空に + キャッシュ無効化
+  _mockSheets['customers'].rows = [];
+  _invalidateCustomerCache();
+
+  var c1 = getOrCreateCustomer('090-1234-5678', 'Test User', 'LINE_001');
+  assertEqual('customer_id differs from phone', c1.customer_id !== '090-1234-5678', true);
+  assertEqual('customer_id matches UUID v4 format', /^[a-f0-9-]{36}$/.test(c1.customer_id), true);
+  assertEqual('phone field preserved', c1.phone, '090-1234-5678');
+})();
 
 // ─── Results ───
 console.log('\n========================================');
