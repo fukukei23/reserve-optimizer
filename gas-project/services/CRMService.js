@@ -7,7 +7,7 @@
 
 // Per-execution cache
 var _customerCache = null;
-var _customerByIdMap = null;
+var _customerByPhoneMap = null;
 
 /**
  * Ensure customer cache is loaded
@@ -15,7 +15,7 @@ var _customerByIdMap = null;
 function _ensureCustomerCache() {
   if (_customerCache !== null) return;
   _customerCache = [];
-  _customerByIdMap = {};
+  _customerByPhoneMap = {};
 
   if (isFirebaseConfigured()) {
     try {
@@ -35,7 +35,7 @@ function _ensureCustomerCache() {
           notes: doc.notes || ''
         };
         _customerCache.push(customer);
-        _customerByIdMap[customer.customer_id] = customer;
+        _customerByPhoneMap[customer.phone] = customer;
       }
       return;
     } catch (e) {
@@ -56,7 +56,7 @@ function _ensureCustomerCache() {
     if (!row[0]) continue;
     var customer = _buildCustomer(row);
     _customerCache.push(customer);
-    _customerByIdMap[customer.customer_id] = customer;
+    _customerByPhoneMap[customer.phone] = customer;
   }
 }
 
@@ -65,7 +65,7 @@ function _ensureCustomerCache() {
  */
 function _invalidateCustomerCache() {
   _customerCache = null;
-  _customerByIdMap = null;
+  _customerByPhoneMap = null;
 }
 
 /**
@@ -91,7 +91,7 @@ function _buildCustomer(row) {
 function getOrCreateCustomer(phone, name, lineUserId) {
   _ensureCustomerCache();
 
-  var existing = _customerByIdMap[phone];
+  var existing = _customerByPhoneMap[phone];
   if (existing) {
     var updated = false;
     if (name && !existing.name) { existing.name = name; updated = true; }
@@ -122,7 +122,7 @@ function getOrCreateCustomer(phone, name, lineUserId) {
  */
 function getCustomerByPhone(phone) {
   _ensureCustomerCache();
-  return _customerByIdMap[phone] || null;
+  return _customerByPhoneMap[phone] || null;
 }
 
 /**
