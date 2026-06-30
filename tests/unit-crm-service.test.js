@@ -339,6 +339,52 @@ section('getOrCreateCustomer - new customer_id is UUID (not phone)');
   assertEqual('phone field preserved', c1.phone, '090-1234-5678');
 })();
 
+section('getOrCreateCustomer - same phone returns same customer (no duplicate)');
+(function() {
+  _mockSheets['customers'].rows = [];
+  _invalidateCustomerCache();
+
+  var c1 = getOrCreateCustomer('090-9999-0000', 'User One', '');
+  var c2 = getOrCreateCustomer('090-9999-0000', 'User One Updated', '');
+  assertEqual('same customer_id on duplicate phone', c2.customer_id, c1.customer_id);
+  assertEqual('customers sheet has 1 row (no duplicate)', _mockSheets['customers'].rows.length, 1);
+})();
+
+section('getCustomerByPhone - lookup by phone works');
+(function() {
+  _mockSheets['customers'].rows = [];
+  _invalidateCustomerCache();
+
+  var created = getOrCreateCustomer('080-1111-2222', 'Lookup User', 'LINE_X');
+  _invalidateCustomerCache();  // キャッシュクリア後に再取得で永続性確認
+  var found = getCustomerByPhone('080-1111-2222');
+  assertEqual('getCustomerByPhone finds persisted customer', found !== null, true);
+  assertEqual('found customer_id matches created', found.customer_id, created.customer_id);
+})();
+
+section('different phone = different customer (phone is lookup key)');
+(function() {
+  _mockSheets['customers'].rows = [];
+  _invalidateCustomerCache();
+
+  var cA = getOrCreateCustomer('090-AAAA-AAAA', 'User A', '');
+  var cB = getOrCreateCustomer('090-BBBB-BBBB', 'User B', '');
+  assertEqual('different phones yield different customer_ids', cA.customer_id !== cB.customer_id, true);
+  assertEqual('customers sheet has 2 rows', _mockSheets['customers'].rows.length, 2);
+})();
+
+section('cache invalidation preserves UUID identity');
+(function() {
+  _mockSheets['customers'].rows = [];
+  _invalidateCustomerCache();
+
+  var c1 = getOrCreateCustomer('090-7777-8888', 'Persist User', '');
+  var uuidBefore = c1.customer_id;
+  _invalidateCustomerCache();
+  var c2 = getOrCreateCustomer('090-7777-8888', 'Persist User', '');
+  assertEqual('UUID stable across cache invalidation', c2.customer_id, uuidBefore);
+})();
+
 // ─── Results ───
 console.log('\n========================================');
 console.log('CRMService Unit Tests');
