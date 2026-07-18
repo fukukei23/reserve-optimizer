@@ -2,7 +2,7 @@
 project: reserve-optimizer
 date: 2026-07-18
 status: design
-review_round: 2（Gemini+MiniMax specレビュー反映）
+review_round: 3（Gemini+MiniMax specレビュー反映・Round3軽微修正）
 tags: [reserve-optimizer, LINE-Bot, 施術中自動応答, ココナラオプション]
 related:
   - docs/FEATURE_ROADMAP_2026-06-12.md
@@ -95,9 +95,11 @@ LINE → Cloudflare Worker（署名検証）→ GAS doPost
 ### CacheService（ユーザー別・TTL付き・肥大化回避）
 | キー | 内容 | TTL |
 |---|---|---|
-| `IN_SESSION_LAST_REPLY_{userId}` | ユーザー別の最終自動応答時刻 | COOLDOWN_MIN相当 |
+| `in_session:last_reply:{userId}` | ユーザー別の最終自動応答時刻 | COOLDOWN_MIN相当 |
 
 → StateHandler.js の getUserCache パターン（CacheService + PropertiesService fallback）を踏襲。**ユーザー数増でScriptPropertiesが肥大化しない**。
+→ **キーprefix `in_session:`** で既存StateHandlerキー（`state:userId:flowName`等）との衝突を回避（Round3反映）。
+→ MANUAL_UNTILは**ScriptProperties（永続）**・CacheServiceには置かない（重要状態の揮発回避・Round3レビューで誤読された点を明確化）。クールダウンは消失了ら「再応答するだけ」で害軽微なのでCacheServiceで可。
 
 ### タイムゾーン
 - 全時刻は **Unix epoch（ms）** で保存・比較（TZ不問）
@@ -132,6 +134,7 @@ function isInSession(now, props, reservationFinder) {
 ### atomic更新（Round 2指摘対応）
 - `isInSession` の呼出は **WebhookRouter の LockService.getScriptLock().waitLock() 内**で実行（既存の重複除外ロックと同じスコープ）
 - MANUAL_UNTIL の get〜判定〜set（期限切れ掃除・手動ON時のセット）は全てロック内で完結→ lost update 回避
+- **ロック解放の try/finally 保証**（Round3反映）: waitLock取得後は try/finally で必ず releaseLock。6分制限等で処理中断されてもロック解放漏れ（デッドロック）を防ぐ。既存パターン（ReservationHandler等）の解放方法を確認し踏襲
 
 ### 手動モード中に新規予約が入った場合の挙動（Round 2指摘対応）
 - **手動優先のまま**（手動期限内は予約判定に行かない）
@@ -177,7 +180,7 @@ function isInSession(now, props, reservationFinder) {
 | 終了時刻null | マニュアル時文面へフォールバック | InSessionService |
 | 予約キャンセル残存 | findActiveAtでキャンセル済み除外 | ReservationService連携 |
 | **非テキストイベント**（follow/postback等） | InSessionServiceは**テキストメッセージのみ**対象・postback（手動切替）は別処理 | WebhookRouter |
-| **グループ/ルーム送信** | `source.type === 'user'`のみ処理（group/roomは無視） | WebhookRouter |
+| **グループ/ルーム送信** | `source.type === 'user'`のみ処理（group/roomは無視）・**ロック取得前**に早期除外しロックコスト削減（Round3反映） | WebhookRouter |
 
 ## テスト戦略（TDD・Round 2 DI反映）
 
@@ -219,13 +222,19 @@ function isInSession(now, props, reservationFinder) {
 - 文面A/Bテスト
 - 予約ベース判定の精度向上（実際の施術開始/終了とのズレ学習）
 
-## 実装順序（writing-plansで詳細化・Round 2反映）
+## 実装順序（writing-plansで詳細化・Round 3反映）
 
-1. **ドメインモデル・インターフェース確定**（InSessionResult構造・reservationFinder IF・props IF）→ 手戻りコスト最大なので最初
+0. **既存実装確認**（Round3ステップ0新設・手戻り防止の最優先）
+   - ADMIN_USER_IDS（既存管理者判定の有無・取得方法）
+   - ReservationService.findActiveAt（現在予約枠内判定メソッドの有無・戻り値型）
+   - 既存CacheServiceキー一覧（namespace衝突確認・`in_session:`prefixで安全か）
+   - 既存WebhookRouterのロック取得〜解放パターン（try/finally確認）
+   - リッチメニュー既存構成（管理者専用エリア or 4タブ目の現実性）
+1. **ドメインモデル・インターフェース確定**（InSessionResult構造・reservationFinder IF・props IF）→ 手戻りコスト最大
 2. **InSessionService.js**（純粋関数・DI・TDD）
 3. **ScriptProperties定義**（config/ScriptProperties.js拡張）
-4. **ReservationService.findActiveAt** 連携（既存確認・なければ追加）
-5. **WebhookRouter割込**（既存ロック内でInSessionService呼出・テキスト判定・source.type=user・管理者除外）
+4. **ReservationService.findActiveAt** 連携（ステップ0で既存なければ追加）
+5. **WebhookRouter割込**（source.type=userはロック前・既存ロック内でInSessionService呼出・テキスト判定・管理者除外・try/finally解放）
 6. **MessageRouter postback処理**（in_session_start/end・ロック内）
 7. **リッチメニュー設定**（管理者専用）
 8. **統合テスト・E2E**
