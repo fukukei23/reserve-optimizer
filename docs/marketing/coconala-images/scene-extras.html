@@ -117,11 +117,23 @@
   #scene-features .card.span2 { grid-column: span 1; }
   #scene-features .card.wide { grid-column: span 3; flex-direction: row; align-items: center; gap: 28px; }
   #scene-features .card .ico {
-    font-size: 52px;
-    margin-bottom: 14px;
-    line-height: 1;
+    width: 76px; height: 76px;
+    background: rgba(255,255,255,0.30);
+    border: 3px solid rgba(255,255,255,0.55);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; font-weight: 800;
+    margin-bottom: 16px; line-height: 1;
   }
-  #scene-features .card.wide .ico { font-size: 48px; margin-bottom: 0; }
+  #scene-features .card.wide .ico {
+    width: 92px; height: 92px;
+    background: #fff;
+    color: #06C755;
+    border: none;
+    border-radius: 20px;
+    font-size: 30px; font-weight: 800;
+    margin-bottom: 0;
+  }
   #scene-features .card h3 { font-size: 27px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
   #scene-features .card p { font-size: 20px; line-height: 1.55; opacity: 0.95; }
 
@@ -409,32 +421,32 @@
   </div>
   <div class="grid">
     <div class="card">
-      <div class="ico">🕐</div>
+      <div class="ico">1</div>
       <h3>24時間自動受付</h3>
       <p>営業時間外でもLINEで予約受付。夜の予約ニーズを逃しません。</p>
     </div>
     <div class="card">
-      <div class="ico">🚫</div>
+      <div class="ico">2</div>
       <h3>ダブルブッキング防止</h3>
       <p>同じ日時の重複を自動ブロック。二重予約事故をなくします。</p>
     </div>
     <div class="card">
-      <div class="ico">🔔</div>
+      <div class="ico">3</div>
       <h3>リマインド自動送信</h3>
       <p>前日にLINEで自動お知らせ。無断キャンセルを大きく減らします。</p>
     </div>
     <div class="card">
-      <div class="ico">🔄</div>
+      <div class="ico">4</div>
       <h3>変更・キャンセル完結</h3>
       <p>LINE内で「変更したい」に自動応対。電話対応が不要に。</p>
     </div>
     <div class="card">
-      <div class="ico">📊</div>
+      <div class="ico">5</div>
       <h3>スプレッドシート管理</h3>
       <p>予約は自動で記録。スマホ・PCからいつでも状況確認。</p>
     </div>
     <div class="card wide">
-      <div class="ico">💚</div>
+      <div class="ico">¥0</div>
       <div>
         <h3>月額0円でずっと運用</h3>
         <p>GAS＋スプレッドシートの無料枠で動くから、構築後のランニングコストなし。</p>
