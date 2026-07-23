@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>LINE予約Bot 追加画像（情報画像5枚・1220x1240）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif; }
+  html, body { background: #fff; }
+  body { width: 1220px; height: 1240px; overflow: hidden; }
+
+  .frame {
+    width: 1220px;
+    height: 1240px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+  }
+  .frame.active { display: block; }
+
+  /* 共通：キッカー・見出し */
+  .kicker {
+    display: inline-block;
+    background: #E8F8EE;
+    color: #06C755;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 22px;
+    font-weight: 700;
+    width: fit-content;
+  }
+  h2.section {
+    font-size: 54px;
+    line-height: 1.32;
+    color: #1a1a1a;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  h2.section .accent { color: #06C755; }
+
+  /* ===== Frame 6: 比較表（全画面） ===== */
+  #scene-compare {
+    background: linear-gradient(180deg, #F5FBF7 0%, #ffffff 100%);
+    padding: 80px 90px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scene-compare .head { text-align: center; margin-bottom: 50px; }
+  #scene-compare .head .kicker { margin-bottom: 24px; }
+  #scene-compare .head h2 { font-size: 50px; font-weight: 800; line-height: 1.35; color: #1a1a1a; }
+  #scene-compare table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 24px;
+    background: #fff;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 14px 44px rgba(6,199,85,0.10);
+  }
+  #scene-compare th, #scene-compare td {
+    padding: 24px 28px;
+    text-align: center;
+    border-bottom: 1px solid #eef3ef;
+    vertical-align: middle;
+  }
+  #scene-compare tr:last-child th, #scene-compare tr:last-child td { border-bottom: none; }
+  #scene-compare thead th {
+    font-size: 24px;
+    font-weight: 700;
+    padding: 26px 28px;
+  }
+  #scene-compare thead th.col-saas { background: #F2F4F5; color: #6b7785; }
+  #scene-compare thead th.col-item { background: #F2F4F5; color: #6b7785; text-align: left; }
+  #scene-compare thead th.col-line { background: #06C755; color: #fff; }
+  #scene-compare td.col-item { text-align: left; font-weight: 700; color: #333; }
+  #scene-compare td.col-saas { color: #8a949e; font-size: 22px; }
+  #scene-compare td.col-line { background: #E8F8EE; color: #06703a; font-weight: 700; }
+  #scene-compare .note {
+    margin-top: 36px;
+    text-align: center;
+    font-size: 24px;
+    color: #333;
+    font-weight: 700;
+  }
+  #scene-compare .note .em { color: #06C755; }
+
+  /* ===== Frame 7: 機能一覧（全画面・5カード） ===== */
+  #scene-features {
+    background: linear-gradient(160deg, #06C755 0%, #00A347 100%);
+    color: #fff;
+    padding: 80px 80px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scene-features .head { text-align: center; margin-bottom: 50px; }
+  #scene-features .head .kicker {
+    background: rgba(255,255,255,0.24);
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  #scene-features .head h2 { font-size: 52px; font-weight: 800; line-height: 1.32; }
+  #scene-features .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+    flex: 1;
+  }
+  #scene-features .card {
+    background: rgba(255,255,255,0.16);
+    border-radius: 22px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  #scene-features .card.span2 { grid-column: span 1; }
+  #scene-features .card.wide { grid-column: span 3; flex-direction: row; align-items: center; gap: 28px; }
+  #scene-features .card .ico {
+    font-size: 52px;
+    margin-bottom: 14px;
+    line-height: 1;
+  }
+  #scene-features .card.wide .ico { font-size: 48px; margin-bottom: 0; }
+  #scene-features .card h3 { font-size: 27px; font-weight: 800; margin-bottom: 10px; line-height: 1.3; }
+  #scene-features .card p { font-size: 20px; line-height: 1.55; opacity: 0.95; }
+
+  /* ===== Frame 8: スプレッドシート管理画面（2カラム） ===== */
+  #scene-sheet .sheet-col {
+    position: absolute;
+    left: 0; top: 0;
+    width: 660px;
+    height: 1240px;
+    background: linear-gradient(160deg, #06C755 0%, #00A347 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #scene-sheet .sheet {
+    width: 540px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+    overflow: hidden;
+  }
+  #scene-sheet .sheet-bar {
+    background: #0F9D58;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 19px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #scene-sheet .sheet-bar .logo {
+    width: 30px; height: 30px;
+    background: #fff;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: #0F9D58;
+    font-weight: 800;
+    font-size: 18px;
+  }
+  #scene-sheet table.ss {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 17px;
+  }
+  #scene-sheet table.ss thead th {
+    background: #E8F0EA;
+    color: #2a4733;
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 700;
+    border-bottom: 1px solid #cfdacf;
+    font-size: 16px;
+  }
+  #scene-sheet table.ss td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eef1ed;
+    color: #333;
+  }
+  #scene-sheet table.ss td.status {
+    font-size: 15px;
+    font-weight: 700;
+  }
+  #scene-sheet table.ss td.status.ok { color: #06C755; }
+  #scene-sheet table.ss td.status.paid { color: #1a73e8; }
+  #scene-sheet table.ss tr:nth-child(even) td { background: #fafbfa; }
+  #scene-sheet .text-col {
+    position: absolute;
+    right: 0; top: 0;
+    width: 560px;
+    height: 1240px;
+    padding: 110px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  #scene-sheet .text-col .kicker { margin-bottom: 32px; }
+  #scene-sheet .text-col h2 { margin-bottom: 32px; }
+  #scene-sheet .text-col .lead {
+    font-size: 25px;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 40px;
+  }
+  #scene-sheet .text-col .points { list-style: none; }
+  #scene-sheet .text-col .points li {
+    font-size: 23px;
+    line-height: 1.55;
+    color: #333;
+    padding: 18px 0 18px 44px;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+  #scene-sheet .text-col .points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0; top: 18px;
+    color: #06C755;
+    font-weight: 800;
+    font-size: 26px;
+  }
+
+  /* ===== Frame 9: 価格・オプション表（全画面） ===== */
+  #scene-price {
+    background: linear-gradient(180deg, #ffffff 0%, #F5FBF7 100%);
+    padding: 76px 90px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scene-price .head { text-align: center; margin-bottom: 38px; }
+  #scene-price .head .kicker { margin-bottom: 22px; }
+  #scene-price .head h2 { font-size: 50px; font-weight: 800; color: #1a1a1a; line-height: 1.32; }
+  #scene-price .base {
+    background: #06C755;
+    color: #fff;
+    border-radius: 24px;
+    padding: 36px 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 34px;
+    box-shadow: 0 14px 36px rgba(6,199,85,0.28);
+  }
+  #scene-price .base .label { font-size: 26px; font-weight: 700; }
+  #scene-price .base .amt { font-size: 62px; font-weight: 800; line-height: 1; }
+  #scene-price .base .amt span { font-size: 26px; font-weight: 600; margin-left: 6px; }
+  #scene-price .base .sub { font-size: 21px; opacity: 0.95; text-align: right; }
+  #scene-price .opt-head {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
+    padding-left: 6px;
+  }
+  #scene-price .opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+  #scene-price .opt {
+    background: #fff;
+    border: 1.5px solid #e4efe8;
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #scene-price .opt .name { font-size: 21px; font-weight: 700; color: #333; }
+  #scene-price .opt .name small { display: block; font-size: 16px; font-weight: 500; color: #888; margin-top: 3px; }
+  #scene-price .opt .price { font-size: 26px; font-weight: 800; color: #06C755; white-space: nowrap; }
+  #scene-price .all {
+    text-align: center;
+    font-size: 24px;
+    color: #555;
+    font-weight: 700;
+    padding: 16px;
+    background: #E8F8EE;
+    border-radius: 16px;
+  }
+  #scene-price .all b { color: #06C755; font-size: 28px; }
+
+  /* ===== Frame 10: 導入事例 Before→After ===== */
+  #scene-case {
+    background: #fff;
+    padding: 76px 80px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scene-case .head { text-align: center; margin-bottom: 38px; }
+  #scene-case .head .kicker { margin-bottom: 22px; }
+  #scene-case .head h2 { font-size: 50px; font-weight: 800; color: #1a1a1a; line-height: 1.32; }
+  #scene-case .salon {
+    text-align: center;
+    font-size: 22px;
+    color: #666;
+    margin-bottom: 34px;
+  }
+  #scene-case .ba {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 20px;
+    flex: 1;
+  }
+  #scene-case .col {
+    border-radius: 22px;
+    padding: 40px 36px;
+    display: flex;
+    flex-direction: column;
+  }
+  #scene-case .col.before { background: #FDECEA; }
+  #scene-case .col.after { background: #E8F8EE; }
+  #scene-case .col h3 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 26px;
+    text-align: center;
+  }
+  #scene-case .col.before h3 { color: #c0392b; }
+  #scene-case .col.after h3 { color: #06703a; }
+  #scene-case .col ul { list-style: none; }
+  #scene-case .col li {
+    font-size: 22px;
+    line-height: 1.5;
+    padding: 14px 0 14px 46px;
+    position: relative;
+    color: #444;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  #scene-case .col li:last-child { border-bottom: none; }
+  #scene-case .col.before li::before {
+    content: "✕";
+    position: absolute; left: 0; top: 13px;
+    color: #c0392b; font-weight: 800; font-size: 26px;
+  }
+  #scene-case .col.after li::before {
+    content: "✓";
+    position: absolute; left: 0; top: 13px;
+    color: #06C755; font-weight: 800; font-size: 26px;
+  }
+  #scene-case .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 70px;
+    color: #06C755;
+    font-weight: 800;
+  }
+  #scene-case .disc {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 18px;
+    color: #999;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== Frame 6: 月額SaaS比較表 ========== -->
+<div class="frame active" id="scene-compare">
+  <div class="head">
+    <span class="kicker">COMPARISON</span>
+    <h2>月額の予約システムと<br>こう違います</h2>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-item">比較項目</th>
+        <th class="col-saas">月額SaaS<br><span style="font-size:18px;font-weight:500">（ポチコ・リピッテ等）</span></th>
+        <th class="col-line">LINE予約Bot<br><span style="font-size:18px;font-weight:500;opacity:0.95">（本サービス）</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="col-item">毎月の費用</td>
+        <td class="col-saas">月額数千円〜<br>ずっと支払い</td>
+        <td class="col-line">月額0円<br>（構築費のみ）</td>
+      </tr>
+      <tr>
+        <td class="col-item">カスタマイズ</td>
+        <td class="col-saas">SaaSの範囲内</td>
+        <td class="col-line">業種に合わせ自由</td>
+      </tr>
+      <tr>
+        <td class="col-item">機能の過不足</td>
+        <td class="col-saas">余分・不足あり</td>
+        <td class="col-line">必要な機能だけ</td>
+      </tr>
+      <tr>
+        <td class="col-item">データの扱い</td>
+        <td class="col-saas">解約で移行困難</td>
+        <td class="col-line">自分のもの・ずっと</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note">最大の違いは <span class="em">「月額費用がずっと0円」</span> であること</div>
+</div>
+
+<!-- ========== Frame 7: できること一覧（5機能） ========== -->
+<div class="frame" id="scene-features">
+  <div class="head">
+    <span class="kicker">FEATURES</span>
+    <h2>LINE予約Botで<br>できること（5つ）</h2>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="ico">🕐</div>
+      <h3>24時間自動受付</h3>
+      <p>営業時間外でもLINEで予約受付。夜の予約ニーズを逃しません。</p>
+    </div>
+    <div class="card">
+      <div class="ico">🚫</div>
+      <h3>ダブルブッキング防止</h3>
+      <p>同じ日時の重複を自動ブロック。二重予約事故をなくします。</p>
+    </div>
+    <div class="card">
+      <div class="ico">🔔</div>
+      <h3>リマインド自動送信</h3>
+      <p>前日にLINEで自動お知らせ。無断キャンセルを大きく減らします。</p>
+    </div>
+    <div class="card">
+      <div class="ico">🔄</div>
+      <h3>変更・キャンセル完結</h3>
+      <p>LINE内で「変更したい」に自動応対。電話対応が不要に。</p>
+    </div>
+    <div class="card">
+      <div class="ico">📊</div>
+      <h3>スプレッドシート管理</h3>
+      <p>予約は自動で記録。スマホ・PCからいつでも状況確認。</p>
+    </div>
+    <div class="card wide">
+      <div class="ico">💚</div>
+      <div>
+        <h3>月額0円でずっと運用</h3>
+        <p>GAS＋スプレッドシートの無料枠で動くから、構築後のランニングコストなし。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Frame 8: スプレッドシート管理画面 ========== -->
+<div class="frame" id="scene-sheet">
+  <div class="sheet-col">
+    <div class="sheet">
+      <div class="sheet-bar">
+        <div class="logo">S</div>
+        予約管理表
+      </div>
+      <table class="ss">
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>時間</th>
+            <th>メニュー</th>
+            <th>顧客名</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>7/22(火)</td><td>15:00</td><td>カット</td><td>山田 様</td><td class="status ok">確定</td></tr>
+          <tr><td>7/22(火)</td><td>16:30</td><td>カラー</td><td>佐藤 様</td><td class="status paid">支払済</td></tr>
+          <tr><td>7/23(水)</td><td>11:00</td><td>パーマ</td><td>鈴木 様</td><td class="status ok">確定</td></tr>
+          <tr><td>7/23(水)</td><td>14:00</td><td>カット+Color</td><td>高橋 様</td><td class="status paid">支払済</td></tr>
+          <tr><td>7/24(木)</td><td>10:30</td><td>カット</td><td>田中 様</td><td class="status ok">確定</td></tr>
+          <tr><td>7/24(木)</td><td>13:00</td><td>ヘッドスパ</td><td>伊藤 様</td><td class="status ok">確定</td></tr>
+          <tr><td>7/25(金)</td><td>15:30</td><td>カラー</td><td>渡辺 様</td><td class="status paid">支払済</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="text-col">
+    <span class="kicker">STEP 3 / 管理</span>
+    <h2 class="section">予約は<br><span class="accent">自動で記録</span></h2>
+    <p class="lead">お客様が予約すると、内容がスプレッドシートに自動で書き込まれます。</p>
+    <ul class="points">
+      <li>スマホ・PCからいつでも予約状況を確認</li>
+      <li>クラウド保存で紛失の心配なし・バックアップ容易</li>
+      <li>Excel感覚で管理・複数人での共有も可能</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ========== Frame 9: 価格・オプション表 ========== -->
+<div class="frame" id="scene-price">
+  <div class="head">
+    <span class="kicker">PRICING</span>
+    <h2>明朗会計・月額0円で始められる</h2>
+  </div>
+  <div class="base">
+    <div>
+      <div class="label">基本構築費（買い切り）</div>
+      <div class="amt">5,000円<span>（税込）</span></div>
+    </div>
+    <div class="sub">予約Bot一式<br>月額費用なし</div>
+  </div>
+  <div class="opt-head">オプション（必要な方だけ後から追加）</div>
+  <div class="opts">
+    <div class="opt">
+      <div class="name">決済（Stripe）連携<small>事前決済で無断キャンセル対策</small></div>
+      <div class="price">+10,000円</div>
+    </div>
+    <div class="opt">
+      <div class="name">Googleカレンダー同期<small>予約を自動反映</small></div>
+      <div class="price">+5,000円</div>
+    </div>
+    <div class="opt">
+      <div class="name">キャンセル待ち自動再販<small>空き枠を自動案内</small></div>
+      <div class="price">+5,000円</div>
+    </div>
+    <div class="opt">
+      <div class="name">リッチメニュー画像作成<small>店舗オリジナル</small></div>
+      <div class="price">+5,000円</div>
+    </div>
+  </div>
+  <div class="all">全オプション乗せでも <b>25,000円</b>（買い切り・ランニングなし）</div>
+</div>
+
+<!-- ========== Frame 10: 導入事例 Before→After ========== -->
+<div class="frame" id="scene-case">
+  <div class="head">
+    <span class="kicker">CASE STUDY</span>
+    <h2>導入イメージ：サロン・ルミエール</h2>
+  </div>
+  <div class="salon">美容サロン（スタッフ2名）・※導入イメージ（実在しません）</div>
+  <div class="ba">
+    <div class="col before">
+      <h3>Before</h3>
+      <ul>
+        <li>施術中の電話に出られず機会損失</li>
+        <li>手動でDM予約を管理</li>
+        <li>ダブルブッキングの事故</li>
+        <li>無断キャンセルが多く売上ロス</li>
+        <li>予約対応に追われ本業に集中できない</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col after">
+      <h3>After</h3>
+      <ul>
+        <li>24時間受付で機会損失ゼロ</li>
+        <li>LINE上で予約が完結</li>
+        <li>ダブルブッキング自動防止</li>
+        <li>リマインド送信で無断キャンセル減</li>
+        <li>施術に集中・月額0円で運用</li>
+      </ul>
+    </div>
+  </div>
+  <div class="disc">※上記は導入イメージであり、特定の成果を保証するものではありません。</div>
+</div>
+
+</body>
+</html>
