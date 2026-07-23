@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>LINE予約Bot モック（1220x1240）</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif; }
+  html, body { background: #fff; }
+  body { width: 1220px; height: 1240px; overflow: hidden; }
+
+  .frame {
+    width: 1220px;
+    height: 1240px;
+    position: relative;
+    overflow: hidden;
+    display: none;
+  }
+  .frame.active { display: flex; }
+
+  /* === 共通：右カラムテキスト === */
+  .text-col {
+    position: absolute;
+    right: 0; top: 0;
+    width: 700px;
+    height: 1240px;
+    padding: 110px 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .text-col .kicker {
+    display: inline-block;
+    background: #E8F8EE;
+    color: #06C755;
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 22px;
+    font-weight: 700;
+    width: fit-content;
+    margin-bottom: 36px;
+  }
+  .text-col h2 {
+    font-size: 56px;
+    line-height: 1.32;
+    color: #1a1a1a;
+    font-weight: 800;
+    margin-bottom: 36px;
+    letter-spacing: -0.5px;
+  }
+  .text-col h2 .accent { color: #06C755; }
+  .text-col .lead {
+    font-size: 26px;
+    line-height: 1.7;
+    color: #555;
+    margin-bottom: 44px;
+  }
+  .text-col .points {
+    list-style: none;
+  }
+  .text-col .points li {
+    font-size: 24px;
+    line-height: 1.55;
+    color: #333;
+    padding: 18px 0 18px 44px;
+    border-bottom: 1px solid #eee;
+    position: relative;
+  }
+  .text-col .points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    color: #06C755;
+    font-weight: 800;
+    font-size: 26px;
+  }
+
+  /* === 左カラム：スマホ === */
+  .phone-col {
+    position: absolute;
+    left: 0; top: 0;
+    width: 520px;
+    height: 1240px;
+    background: linear-gradient(160deg, #06C755 0%, #00A347 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone {
+    width: 380px; height: 822px;
+    background: #000;
+    border-radius: 46px;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    background: #ffffff;
+    border-radius: 34px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* LINE共通ヘッダ */
+  .line-header {
+    background: #06C755;
+    color: #fff;
+    padding: 44px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .line-header .back { font-size: 20px; }
+  .line-header .avatar {
+    width: 32px; height: 32px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .line-header .name { font-weight: 600; flex: 1; }
+  .line-header .menu { font-size: 18px; }
+
+  .talk {
+    flex: 1;
+    background: #7AADDA;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+  }
+  .bubble {
+    max-width: 75%;
+    padding: 12px 14px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .bot {
+    background: #fff;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .user {
+    background: #85E249;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .timestamp {
+    font-size: 10px;
+    color: rgba(255,255,255,0.85);
+    align-self: flex-start;
+  }
+  .template {
+    background: #fff;
+    border-radius: 18px;
+    align-self: flex-start;
+    max-width: 82%;
+    overflow: hidden;
+  }
+  .template .title { padding: 14px 14px 8px; font-size: 14px; font-weight: 600; }
+  .template .body { padding: 0 14px 12px; font-size: 13px; color: #555; }
+  .template .btn {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-top: 1px solid #eee;
+    color: #06C755;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* リッチメニュー */
+  .richmenu {
+    background: #fff;
+    border-top: 1px solid #e5e5e5;
+    display: flex;
+    height: 96px;
+  }
+  .richmenu .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-right: 1px solid #f0f0f0;
+    color: #06C755;
+  }
+  .richmenu .tab:last-child { border-right: none; }
+  .richmenu .tab .icon { font-size: 24px; }
+  .richmenu .tab .label { font-size: 12px; font-weight: 600; }
+
+  /* 決済完了画面 */
+  .pay-confirm {
+    background: #fff;
+    padding: 40px 28px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+  .pay-check {
+    width: 72px; height: 72px;
+    background: #06C755;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 40px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .pay-confirm h3 { font-size: 20px; margin-bottom: 6px; }
+  .pay-confirm .sub { font-size: 13px; color: #888; margin-bottom: 22px; }
+  .pay-detail {
+    background: #f7f7f7;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: left;
+    font-size: 13px;
+  }
+  .pay-detail .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .pay-detail .row:last-child { border-bottom: none; font-weight: 700; font-size: 15px; padding-top: 12px; }
+  .pay-secured {
+    margin-top: 18px;
+    font-size: 11px;
+    color: #06C755;
+  }
+
+  /* 納品フロー画面 */
+  .flow-screen {
+    background: #fff;
+    padding: 40px 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .flow-screen h3 { font-size: 20px; text-align: center; margin-bottom: 28px; color: #333; }
+  .flow-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .flow-num {
+    width: 32px; height: 32px;
+    background: #06C755;
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .flow-text h4 { font-size: 15px; margin-bottom: 2px; }
+  .flow-text p { font-size: 12px; color: #666; line-height: 1.5; }
+  .flow-screen .arrow { text-align: center; color: #ccc; font-size: 16px; margin: -8px 0 4px 16px; }
+
+  /* ===== Scene 1: フルバナー ===== */
+  #scene-banner {
+    background: linear-gradient(135deg, #06C755 0%, #00A347 55%, #008A3D 100%);
+    color: #fff;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 90px 100px;
+    text-align: center;
+  }
+  #scene-banner .badge {
+    background: rgba(255,255,255,0.22);
+    padding: 14px 30px;
+    border-radius: 30px;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 50px;
+  }
+  #scene-banner h1 {
+    font-size: 82px;
+    line-height: 1.25;
+    margin-bottom: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  #scene-banner .price {
+    font-size: 56px;
+    font-weight: 800;
+    margin-bottom: 48px;
+  }
+  #scene-banner .price span { font-size: 28px; font-weight: 600; opacity: 0.95; margin-left: 8px; }
+  #scene-banner .features {
+    background: rgba(255,255,255,0.16);
+    border-radius: 22px;
+    padding: 38px 46px;
+    text-align: left;
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 760px;
+  }
+  #scene-banner .features li {
+    list-style: none;
+    font-size: 28px;
+    line-height: 2.1;
+  }
+  #scene-banner .features li::before { content: "✓ "; font-weight: 800; }
+  #scene-banner .catch {
+    font-size: 26px;
+    opacity: 0.96;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== Scene 1: アイキャッチバナー（全画面） ========== -->
+<div class="frame" id="scene-banner">
+  <div class="badge">🎯 月額0円・ランニングコストなし</div>
+  <h1>LINE予約Botで<br>24時間自動受付</h1>
+  <div class="price">5,000円<span>（買い切り・月額なし）</span></div>
+  <ul class="features">
+    <li>LINE内で予約・変更・キャンセル完結</li>
+    <li>ダブルブッキング自動防止</li>
+    <li>リマインド自動送信で無断キャンセル防止</li>
+    <li>スプレッドシートで予約一元管理</li>
+  </ul>
+  <div class="catch">小規模サロン・整体・セラピスト向け オーダーメイド構築</div>
+</div>
+
+<!-- ========== Scene 2: リッチメニュー（2カラム） ========== -->
+<div class="frame" id="scene-richmenu">
+  <div class="phone-col">
+    <div class="phone">
+      <div class="screen">
+        <div class="line-header">
+          <span class="back">‹</span>
+          <div class="avatar">💆</div>
+          <span class="name">サロン・ルミエール</span>
+          <span class="menu">≡</span>
+        </div>
+        <div class="talk">
+          <div class="bubble bot">ようこそ！サロン・ルミエールへ。<br>下のメニューからご希望の操作をお選びください✨</div>
+          <div class="timestamp">既読 10:32</div>
+        </div>
+        <div class="richmenu">
+          <div class="tab"><span class="icon">📅</span><span class="label">予約する</span></div>
+          <div class="tab"><span class="icon">🔍</span><span class="label">予約確認</span></div>
+          <div class="tab"><span class="icon">💬</span><span class="label">お問い合わせ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-col">
+    <span class="kicker">STEP 1 / はじめの一歩</span>
+    <h2><span class="accent">LINE内で完結</span>する<br>リッチメニュー</h2>
+    <p class="lead">お客様はアプリ追加不要。LINEの画面下にあるメニューをタップするだけ。</p>
+    <ul class="points">
+      <li>予約・確認・問い合わせの3タブを標準装備</li>
+      <li>店舗の雰囲気に合わせた画像を作成</li>
+      <li>スマホに不慣れな層でも直感的に操作</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ========== Scene 3: 予約Bot会話（2カラム） ========== -->
+<div class="frame active" id="scene-reservation">
+  <div class="phone-col">
+    <div class="phone">
+      <div class="screen">
+        <div class="line-header">
+          <span class="back">‹</span>
+          <div class="avatar">💆</div>
+          <span class="name">サロン・ルミエール</span>
+          <span class="menu">≡</span>
+        </div>
+        <div class="talk">
+          <div class="bubble user">予約したいです</div>
+          <div class="template">
+            <div class="title">メニューをお選びください</div>
+            <div class="body">ご希望のメニューをタップしてください</div>
+            <a class="btn">カット 4,000円</a>
+            <a class="btn">カラー 6,000円</a>
+            <a class="btn">パーマ 8,000円</a>
+          </div>
+          <div class="bubble user">明日15時でカットお願いします</div>
+          <div class="template">
+            <div class="title">ご予約内容のご確認</div>
+            <div class="body">日時：7月22日（火）15:00〜<br>メニュー：カット（約60分）</div>
+            <a class="btn">✅ 予約を確定する</a>
+            <a class="btn">キャンセル</a>
+          </div>
+          <div class="bubble bot">ご予約を確定しました✅<br>7/22（火）15:00にお待ちしております。</div>
+        </div>
+        <div class="richmenu">
+          <div class="tab"><span class="icon">📅</span><span class="label">予約する</span></div>
+          <div class="tab"><span class="icon">🔍</span><span class="label">予約確認</span></div>
+          <div class="tab"><span class="icon">💬</span><span class="label">お問い合わせ</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-col">
+    <span class="kicker">STEP 2 / 自動受付</span>
+    <h2><span class="accent">24時間</span>自動で<br>予約を受け付け</h2>
+    <p class="lead">お客様がメニューと日時を選ぶだけ。Botが応対し、予約を自動で確定します。</p>
+    <ul class="points">
+      <li>ダブルブッキングを自動で防止</li>
+      <li>前日リマインドで無断キャンセルを防止</li>
+      <li>予約内容はスプレッドシートへ自動記録</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ========== Scene 4: 決済（2カラム・オプション） ========== -->
+<div class="frame" id="scene-payment">
+  <div class="phone-col">
+    <div class="phone">
+      <div class="screen">
+        <div class="pay-confirm">
+          <div class="pay-check">✓</div>
+          <h3>お支払いが完了しました</h3>
+          <div class="sub">事前決済で予約を確定しました</div>
+          <div class="pay-detail">
+            <div class="row"><span>メニュー</span><span>カット＋カラー</span></div>
+            <div class="row"><span>日時</span><span>7/22（火）15:00</span></div>
+            <div class="row"><span>支払方法</span><span>Stripe（事前決済）</span></div>
+            <div class="row"><span>合計</span><span>¥10,000</span></div>
+          </div>
+          <div class="pay-secured">🔒 無断キャンセル対策：事前決済で売上を保全</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-col">
+    <span class="kicker">OPTION +10,000円</span>
+    <h2><span class="accent">事前決済</span>で<br>無断キャンセル対策</h2>
+    <p class="lead">予約時にStripeで事前決済。売上ロスを防ぎ、本気度の低い予約を減らします。</p>
+    <ul class="points">
+      <li>Stripe連携で予約と同時に決済</li>
+      <li>カード情報はStripeが安全に処理</li>
+      <li>他オプション：Googleカレンダー・キャンセル待ち等</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ========== Scene 5: 納品フロー（2カラム） ========== -->
+<div class="frame" id="scene-flow">
+  <div class="phone-col">
+    <div class="phone">
+      <div class="screen">
+        <div class="flow-screen">
+          <h3>納品までの流れ</h3>
+          <div class="flow-step">
+            <div class="flow-num">1</div>
+            <div class="flow-text">
+              <h4>ヒアリング</h4>
+              <p>チャットで業種・営業時間・メニューを共有</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="flow-step">
+            <div class="flow-num">2</div>
+            <div class="flow-text">
+              <h4>構築（7営業日）</h4>
+              <p>初期設定完了・確認テスト</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="flow-step">
+            <div class="flow-num">3</div>
+            <div class="flow-text">
+              <h4>操作説明・納品</h4>
+              <p>15分のテキストチャットで操作説明</p>
+            </div>
+          </div>
+          <div class="arrow">↓</div>
+          <div class="flow-step">
+            <div class="flow-num">4</div>
+            <div class="flow-text">
+              <h4>運用開始（月額0円）</h4>
+              <p>構築後はランニングなしでずっと使える</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-col">
+    <span class="kicker">DELIVERY</span>
+    <h2>購入から<br><span class="accent">7営業日</span>で運用開始</h2>
+    <p class="lead">必要な情報をご提供いただければ、あとはこちらで構築。納品後は月額0円で運用できます。</p>
+    <ul class="points">
+      <li>業種・メニュー・営業時間をチャットで共有</li>
+      <li>標準7営業日で初期設定完了</li>
+      <li>15分の操作説明つきで安心スタート</li>
+    </ul>
+  </div>
+</div>
+
+
+</body>
+</html>
