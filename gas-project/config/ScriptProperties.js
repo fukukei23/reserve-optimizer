@@ -92,7 +92,12 @@ var PROPERTY_KEYS = {
   CLINIC_MAP_URL: 'CLINIC_MAP_URL',
 
   // Worker base URL (for intake form link generation)
-  WORKER_BASE_URL: 'WORKER_BASE_URL'
+  WORKER_BASE_URL: 'WORKER_BASE_URL',
+
+  // QuickReport settings (毎朝の来院数報告)
+  QUICK_REPORT_HOUR: 'QUICK_REPORT_HOUR',
+  QUICK_REPORT_REMINDER_HOUR: 'QUICK_REPORT_REMINDER_HOUR',
+  WORKING_DAYS: 'WORKING_DAYS'
 };
 
 /**
@@ -467,7 +472,10 @@ function initializeDefaultProperties() {
     FOLLOW_UP_HOURS_AFTER: '24',
     TICKET_EXPIRY_DAYS: '180',
     TICKET_5_PRICE: '25000',
-    TICKET_10_PRICE: '45000'
+    TICKET_10_PRICE: '45000',
+    QUICK_REPORT_HOUR: '8',
+    QUICK_REPORT_REMINDER_HOUR: '12',
+    WORKING_DAYS: '1,2,3,4,5'
   };
 
   var properties = PropertiesService.getScriptProperties();
