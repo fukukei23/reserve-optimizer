@@ -157,7 +157,23 @@ function setupTriggers() {
     .atHour(9)
     .create();
 
-  Logger.log('Created ' + (5 + NOSHOW_CHECK_HOURS.length + 3) + ' triggers');
+  // Trigger 9: QuickReport 送信（毎日・休診日は sendQuickReport 本体でガード）
+  var QR_HOUR = parseInt(getProperty('QUICK_REPORT_HOUR', '8'));
+  ScriptApp.newTrigger('sendQuickReport')
+    .timeBased()
+    .everyDays(1)
+    .atHour(QR_HOUR)
+    .create();
+
+  // Trigger 10: QuickReport リマインド（昼・前日分未記録時）
+  var QR_REMINDER_HOUR = parseInt(getProperty('QUICK_REPORT_REMINDER_HOUR', '12'));
+  ScriptApp.newTrigger('sendQuickReportReminder')
+    .timeBased()
+    .everyDays(1)
+    .atHour(QR_REMINDER_HOUR)
+    .create();
+
+  Logger.log('Created ' + (5 + NOSHOW_CHECK_HOURS.length + 3 + 2) + ' triggers');
 }
 
 /**
