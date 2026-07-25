@@ -297,6 +297,15 @@ function _handleGlobalInput(text, replyToken, userId, currentState, _locale) {
     }
   }
 
+  // QuickReport 待ち状態: 数字返信を優先処理（ナビゲーション優先で抜けられます）
+  if (currentState === 'QUICK_REPORT_AWAITING') {
+    var qr = handleQuickReportReply(text, userId, replyToken);
+    if (qr.handled) {
+      sendLineReply(replyToken, qr.reply);
+      return true;
+    }
+  }
+
   // Admin / slash commands
   if (text.charAt(0) === '/') {
     handleCommand(text, replyToken, userId);
