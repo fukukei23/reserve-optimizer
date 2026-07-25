@@ -49,7 +49,8 @@ function createAllSheets() {
     SHEET_NAMES.RESERVATIONS,
     SHEET_NAMES.WAITLIST,
     SHEET_NAMES.WEEKLY_SUMMARY,
-    SHEET_NAMES.TICKETS
+    SHEET_NAMES.TICKETS,
+    SHEET_NAMES.DAILY_REPORT
   ];
 
   for (var i = 0; i < sheetNames.length; i++) {
@@ -68,6 +69,9 @@ function createAllSheets() {
           break;
         case SHEET_NAMES.TICKETS:
           sheet = createSheetWithHeaders(ss, SHEET_NAMES.TICKETS, TICKETS_HEADERS);
+          break;
+        case SHEET_NAMES.DAILY_REPORT:
+          sheet = createSheetWithHeaders(ss, SHEET_NAMES.DAILY_REPORT, DAILY_REPORT_HEADERS);
           break;
       }
       Logger.log('Created sheet: ' + sheetNames[i]);
