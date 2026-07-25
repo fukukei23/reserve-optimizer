@@ -11,8 +11,26 @@ var SHEET_NAMES = {
   WEEKLY_SUMMARY: 'weekly_summary',
   CUSTOMERS: 'customers',
   TICKETS: 'tickets',
-  LOG: 'ログ'
+  LOG: 'ログ',
+  DAILY_REPORT: 'daily_report'
 };
+
+// DAILY_REPORT sheet column indices (1-based)
+var DAILY_REPORT_COLUMNS = {
+  DATE: 1,
+  REPORTED_VISITS: 2,
+  BOT_RESERVATIONS: 3,
+  BOT_COMPLETED_VISITS: 4,
+  PHONE_WINDOW_VISITS: 5,
+  REPORTED_AT: 6,
+  REPORTED_BY: 7
+};
+
+// DAILY_REPORT sheet headers
+var DAILY_REPORT_HEADERS = [
+  'date', 'reported_visits', 'bot_reservations', 'bot_completed_visits',
+  'phone_window_visits', 'reported_at', 'reported_by'
+];
 
 // Reservations sheet column indices (1-based)
 var RESERVATIONS_COLUMNS = {
