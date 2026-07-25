@@ -157,3 +157,71 @@ function recordDailyReport(dateStr, reportedVisits, reportedBy) {
   }
 }
 
+/**
+ * QuickReport 送信先（管理者配列・カンマ区切り LINE_ADMIN_USER_ID を展開）。
+ * @return {string[]}
+ */
+function getQuickReportRecipients() {
+  var raw = getProperty(PROPERTY_KEYS.LINE_ADMIN_USER_ID, '');
+  if (!raw) return [];
+  return raw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+}
+
+/**
+ * 毎朝のQuickReportを管理者へ送信（時限トリガーから呼出）。
+ * 休診日（昨日）はスキップ。送信後 QUOTE_REPORT_AWAITING 状態をセット。
+ */
+function sendQuickReport() {
+  var yest = getYesterdayDateStr();
+  var workingDays = getProperty(PROPERTY_KEYS.WORKING_DAYS, '1,2,3,4,5');
+  if (!isWorkingDay(yest, workingDays)) {
+    appendLogRow('INFO', 'QuickReport: 昨日(' + yest + ')は休診日のためスキップ');
+    return;
+  }
+
+  var stats = getDailyBotStats();
+  var adminIds = getQuickReportRecipients();
+  if (adminIds.length === 0) {
+    appendLogRow('WARN', 'QuickReport: 送信先0件・トリガー生存監視要');
+    return;
+  }
+
+  var msg = buildQuickReportMessage(stats.reservations);
+  for (var i = 0; i < adminIds.length; i++) {
+    _sendPush(adminIds[i], [msg]);
+    setUserState(adminIds[i], 'QUICK_REPORT_AWAITING', { date: yest });
+  }
+  appendLogRow('INFO', 'QuickReport 送信: ' + adminIds.length + '件 / 昨日Bot予約 ' + stats.reservations);
+}
+
+/**
+ * 昼のリマインド：前日分の来院数が未記録ならリマインド送信。
+ */
+function sendQuickReportReminder() {
+  var yest = getYesterdayDateStr();
+  var sheet = getDailyReportSheet();
+  if (_findDailyReportRow(sheet, yest) > 0) return;  // 記録済み
+
+  var adminIds = getQuickReportRecipients();
+  var msg = buildQuickReportMessage(getDailyBotStats().reservations);
+  for (var i = 0; i < adminIds.length; i++) {
+    _sendPush(adminIds[i], [msg]);
+    setUserState(adminIds[i], 'QUICK_REPORT_AWAITING', { date: yest });
+  }
+  appendLogRow('INFO', 'QuickReport リマインド送信: 昨日(' + yest + ')分未記録');
+}
+
+/**
+ * 記録失敗を管理者へ通知。
+ * @param {string} dateStr
+ * @param {string} errMsg
+ */
+function _notifyRecordFailure(dateStr, errMsg) {
+  var adminIds = getQuickReportRecipients();
+  var text = '【QuickReport記録失敗】' + dateStr + '分の来院数記録に失敗: ' + errMsg;
+  for (var i = 0; i < adminIds.length; i++) {
+    _sendPush(adminIds[i], [{ type: 'text', text: text }]);
+  }
+}
+
+

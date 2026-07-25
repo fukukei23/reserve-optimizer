@@ -377,3 +377,28 @@ var MessageTemplates = {
     return t('ticket.balance_title', loc) + getTicketStatusMessage(ticket.ticket_id, loc);
   }
 };
+
+/**
+ * QuickReport 用 Flex メッセージを構築（毎朝の来院数報告依頼）。
+ * @param {number} botReservations 昨日のBot予約数
+ * @return {object} LINE Flex message
+ */
+function buildQuickReportMessage(botReservations) {
+  return {
+    type: 'flex',
+    altText: '【昨日の来院数報告】昨日のBot予約 ' + botReservations + ' 件。実際の来院数を数字で返信してください。',
+    contents: {
+      type: 'bubble',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          { type: 'text', text: '昨日の予約（Bot）', size: 'sm', color: '#666666' },
+          { type: 'text', text: botReservations + ' 件', size: 'xl', weight: 'bold', margin: 'sm' },
+          { type: 'separator', margin: 'md' },
+          { type: 'text', text: '実際の来院数を数字で返信してください（例: 25）', size: 'md', margin: 'md', wrap: true }
+        ]
+      }
+    }
+  };
+}
