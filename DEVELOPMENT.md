@@ -168,3 +168,26 @@ git commit -m "Add: JWT認証" -m "Why: セッション管理の複雑性回避
 - 全てを記録しない（重要な判断のみ）
 - 形式に囚われない（箇条書きで十分）
 - 開発を止めない（事前仕様は Tier 1 のみ）
+
+---
+
+## テスト実行履歴
+
+### 2026-07-28: QuickReport機能 実装後 runAllTests 検証
+
+**コマンド**: `npm test`（`node tests/run-all.js`）
+**結果**: 合計 1241 / 通過 1238 / 失敗 3
+
+**判定**: QuickReport 実装による regression なし。
+- QuickReport 関連テストは全て合格（`unit-message-router` 170/170・純粋ロジック 9/9・QuickReportHandler/Service・Setup/ScriptProperties）
+- QuickReport コミット群（`22af6c8`→`d55c6c5`）が触ったのは QuickReport 専用 8 ファイルのみ（CRM/Ticket/Segment のソースは非接触）
+
+**失敗 3 件（全て pre-existing・QuickReport 開始前 `22af6c8` で実測確認済）**:
+
+| テスト | 内容 | 由来 | 実GASへの影響 |
+|---|---|---|---|
+| `e2e-phase4-crm.test.js` | Node 環境に GAS `Utilities.getUuid()` モック不足でクラッシュ（CRMService.js:106） | テストインフラ | なし（実GASでは動作） |
+| `e2e-phase5-ticket.test.js` | 回数券 `expiry_date` assertion fail（Failed:1/50） | Phase 5-3（`589c76a`） | 要確認 |
+| `unit-segment-broadcast-service.test.js` | `getSegmentCustomers inactive:30` expected 1 got 2（Failed:1） | W3（`d3f5dc7`） | 要確認 |
+
+**備考**: バックログ P3「reserve-optimizer pre-existing 赤テスト3件 修正」として登録済。
