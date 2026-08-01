@@ -11,6 +11,7 @@ export interface Env {
   WEB_API_KEY: string;
   ALLOWED_ORIGINS: string; // カンマ区切り複数オリジン（本番 + デモ等）
   DEBUG?: string; // "true" のみデバッグログ出力
+  DEMO_MODE?: string; // "true" でデモ環境（Phase α E11・S3で分岐本実装・今晚は掛け点のみ）
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";

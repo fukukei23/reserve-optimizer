@@ -9,3 +9,15 @@ ALLOWED_ORIGINS = "https://reserve-optimizer.fukukei44161.workers.dev"
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
+
+# ─── Phase α demo environment (spec E11) ───
+# deploy:  cd worker && npx wrangler deploy --env demo
+# secrets: npx wrangler secret put --env demo <NAME>
+#   必須: GAS_WEBAPP_URL / GAS_AUTH_TOKEN / STRIPE_WEBHOOK_SECRET / LINE_CHANNEL_SECRET / WEB_API_KEY
+# 詳細: docs/runbooks/demo-deploy.md
+[env.demo]
+name = "reserve-optimizer-demo"
+[env.demo.vars]
+# TODO: deploy 後の実 demo origin 確定で書き換え（現状は推定URL）
+ALLOWED_ORIGINS = "https://reserve-optimizer-demo.fukukei44161.workers.dev"
+DEMO_MODE = "true"

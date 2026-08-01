@@ -327,3 +327,68 @@ function renameResources() {
   Logger.log('Spreadsheet renamed to: ' + ss.getName());
   return 'OK: Spreadsheet renamed to ' + ss.getName();
 }
+
+// ════════════════════════════════════════════════════════════════
+// Phase α E11 — Demo environment data reset (DEMO PROJECT ONLY)
+// ════════════════════════════════════════════════════════════════
+// SAFETY:
+//  - isDemoMode() guard rejects run when DEMO_MODE != 'true'
+//  - demo GAS project uses its own SPREADSHEET_ID (物理分離: 本番Sheetを汚さない)
+//  - 本番 runSetup() / setupTriggers() はこれらを呼ばない（独立運用）
+// 詳細: docs/runbooks/demo-deploy.md
+// ════════════════════════════════════════════════════════════════
+
+/**
+ * Reset demo data: clear data rows (keep header row 1) and inject
+ * DemoSeed.generateDemoSeed() into reservations / customers sheets.
+ * Hourly cron target.
+ */
+function resetDemoData() {
+  if (!isDemoMode()) {
+    throw new Error('resetDemoData() is demo-only. Set ScriptProperties DEMO_MODE=true to run.');
+  }
+  var ss = SpreadsheetApp.openById(getSpreadsheetId());
+  var seed = DemoSeed.generateDemoSeed();
+
+  _injectSeedRows(ss, SHEET_NAMES.RESERVATIONS, RESERVATIONS_HEADERS, seed.reservations);
+  _injectSeedRows(ss, SHEET_NAMES.CUSTOMERS, CUSTOMERS_HEADERS, seed.customers);
+
+  appendLogRow('INFO', '[demo] reset: ' + seed.stats.reservations + ' reservations, ' + seed.stats.customers + ' customers injected');
+  return seed.stats;
+}
+
+// Clear data rows (preserve header row 1) and inject seed records in HEADERS order.
+function _injectSeedRows(ss, sheetName, headers, records) {
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return;
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
+  if (!records || records.length === 0) return;
+  var rows = records.map(function (rec) {
+    return headers.map(function (h) { return rec[h] != null ? rec[h] : ''; });
+  });
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+}
+
+/**
+ * Install hourly trigger for resetDemoData (demo project only).
+ * Call manually in the demo GAS project after first deploy.
+ */
+function setupDemoResetTrigger() {
+  if (!isDemoMode()) {
+    throw new Error('setupDemoResetTrigger() is demo-only. Set DEMO_MODE=true first.');
+  }
+  var triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(function (t) {
+    if (t.getHandlerFunction() === 'resetDemoData') {
+      ScriptApp.deleteTrigger(t);
+    }
+  });
+  ScriptApp.newTrigger('resetDemoData')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  appendLogRow('INFO', '[demo] hourly reset trigger installed');
+}

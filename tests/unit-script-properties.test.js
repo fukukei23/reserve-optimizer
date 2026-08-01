@@ -72,6 +72,29 @@ var newToken2 = rotateAuthToken();
 assert('second rotation produces a distinct token', newToken2 !== newToken);
 assert('ScriptProperties reflects second rotation', _props['GAS_AUTH_TOKEN'] === newToken2);
 
+// ─── Tests: isDemoMode (Phase α E11) ───
+
+console.log('\n== isDemoMode ==');
+
+// Default: DEMO_MODE unset → false (production-safe default)
+delete _props['DEMO_MODE'];
+assert('isDemoMode() false when DEMO_MODE unset (default)', isDemoMode() === false);
+
+// Explicit demo on
+_props['DEMO_MODE'] = 'true';
+assert('isDemoMode() true when DEMO_MODE="true"', isDemoMode() === true);
+
+// Explicit off
+_props['DEMO_MODE'] = 'false';
+assert('isDemoMode() false when DEMO_MODE="false"', isDemoMode() === false);
+
+// Strict: only literal "true" enables demo (no truthy coercion)
+_props['DEMO_MODE'] = 'yes';
+assert('isDemoMode() false for non-"true" value (strict)', isDemoMode() === false);
+
+// Clean up so downstream tests see production default
+delete _props['DEMO_MODE'];
+
 // ─── Results ───
 console.log('\n========================================');
 console.log('ScriptProperties Unit Tests');

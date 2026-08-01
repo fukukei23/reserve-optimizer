@@ -97,7 +97,10 @@ var PROPERTY_KEYS = {
   // QuickReport settings (毎朝の来院数報告)
   QUICK_REPORT_HOUR: 'QUICK_REPORT_HOUR',
   QUICK_REPORT_REMINDER_HOUR: 'QUICK_REPORT_REMINDER_HOUR',
-  WORKING_DAYS: 'WORKING_DAYS'
+  WORKING_DAYS: 'WORKING_DAYS',
+
+  // Demo environment flag (Phase α E11)
+  DEMO_MODE: 'DEMO_MODE'
 };
 
 /**
@@ -106,6 +109,16 @@ var PROPERTY_KEYS = {
 function getProperty(key, defaultValue) {
   var value = PropertiesService.getScriptProperties().getProperty(key);
   return value !== null ? value : defaultValue;
+}
+
+/**
+ * Whether running in demo environment (Phase α E11).
+ * Driven by ScriptProperties DEMO_MODE='true'. Mount point only —
+ * branch wiring (rate-limit / GLM fallback) lands in S3.
+ * Production/demo physical separation is the primary guard; this flag is secondary defense.
+ */
+function isDemoMode() {
+  return getProperty(PROPERTY_KEYS.DEMO_MODE, 'false') === 'true';
 }
 
 /**

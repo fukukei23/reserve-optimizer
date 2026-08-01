@@ -11,6 +11,28 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ---
 
+## 採用デモ環境（Phase α・準備中）
+
+> 🚧 デモ環境は Phase α で整備中。公開URLはデプロイ後にここへ掲載します。
+> <!-- TODO: demo URL（Cloudflare demo env /reserve 等） -->
+
+採用面接等で「触れて・説明できる」品質証明のための公開デモを予定しています。
+
+### デモで体験できること（予定）
+- **Web予約 5ステップ**（`/reserve`・施術選択 → 日付 → 時間 → お客様情報 → 確認 → 完了）
+- **AIチャット**（GLM・1セッション5回まで・超過は固定応答フォールバック）
+- **6言語切替**（日・英・中・韓・スペイン・ポルトガル）
+- **管理者Dashboard**（readOnly）
+- **Stripe 決済**（テストモード・**実際の課金なし**・テストカード `4242 4242 4242 4242`）
+
+### デモ環境の特性
+- すべてのデータは**架空のサンプル**（デモ鍼灸サロン・顧客30人・予約3ヶ月分）
+- 入力内容は**毎時自動リセット**されます（永続しません）
+- 本番環境と**物理分離**（別GASプロジェクト・別Spreadsheet・別Worker + `DEMO_MODE` フラグ二重防御）
+- **個人情報は入力しないでください** → 詳細は [免責事項](docs/legal/DISCLAIMER.md)
+
+---
+
 ## スクリーンショット
 
 ### CLI デモ（GIF）
@@ -89,13 +111,15 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ## Impact（定量実績）
 
-| 指標 | 数値 |
-|------|------|
-| Webhook 平均レイテンシ | < 50ms（Cloudflare Edge） |
-| 会話ステートマシン状態数 | 15状態（予約・変更・キャンセル・待機リスト） |
-| テストケース数 | 12件（Worker ユニットテスト） |
-| 対応言語数 | 6言語（日・英・中・韓・スペイン・ポルトガル） |
-| デポジット決済 | 1,000円（Stripe Checkout、前日まで無料返金） |
+| 指標 | 実績値 | デモ環境実測（Phase α S3 で計測） |
+|------|------|------|
+| Webhook 平均レイテンシ | < 50ms（Cloudflare Edge） | <!-- TODO: demo env で実測 --> |
+| 会話ステートマシン状態数 | 15状態（予約・変更・キャンセル・待機リスト） | — |
+| テストケース数 | 12件（Worker ユニットテスト） | <!-- TODO: カバレッジ実測 --> |
+| 対応言語数 | 6言語（日・英・中・韓・スペイン・ポルトガル） | — |
+| デポジット決済 | 1,000円（Stripe Checkout、前日まで無料返金） | Stripe test mode（課金なし） |
+
+> ※ デモ環境の実測値（レイテンシ・決済成功率・カバレッジ）は Phase α E11 の公開デモ稼働後、本表へ埋め戻します（spec A2・実データに差し替え可能な構造）。
 
 ---
 
@@ -133,32 +157,22 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 ### アーキテクチャ図
 
+```mermaid
+flowchart TD
+    U[LINEユーザー] -->|メッセージ送信| LP[LINE Platform]
+    LP -->|Webhook POST| W[Cloudflare Worker]
+    W -->|① HMAC-SHA256 署名検証| W
+    W -->|② 即座に 200 OK<br/>LINEタイムアウト回避| LP
+    W -->|③ waitUntil で転送| GAS[GAS Web App doGet]
+    GAS -->|x-verified=true 検証済み判定| SM[StateHandler 会話ステートマシン]
+    SM --> SHEET[(Google Sheets)]
+    SM -->|AIチャット| GLM[GLM-4.7 Z.AI]
+    SC[Stripe Checkout] -->|checkout.session.completed| W2[Cloudflare Worker]
+    W2 -->|署名検証 → 最小データ転送<br/>type, id, reservation_id| GAS
+    GAS -->|Stripe API で詳細取得 → 予約確定| SC
 ```
-=== 本番モード ===
 
-[LINEユーザー]
-    ↓ メッセージ送信
-[LINE Platform]
-    ↓ Webhook (POST)
-[Cloudflare Worker]
-    ↓ ① HMAC-SHA256署名検証
-    ↓ ② 即座に200 OK返却（LINEタイムアウト回避）
-    ↓ ③ waitUntil でGAS転送
-[GAS Web App] (doGet)
-    ↓ x-verified=true で検証済み判定
-    ↓ handleLineWebhookVerified → 会話ステートマシン実行
-
-[Stripe Checkout]
-    ↓ checkout.session.completed
-[Cloudflare Worker]
-    ↓ 署名検証 → 最小データ転送 (type, id, reservation_id)
-[GAS Web App]
-    ↓ Stripe API からセッション詳細取得 → 予約確定
-
-=== テストモード ===
-
-[LINE Platform] → [GAS doPost] (直接LINE署名検証)
-```
+> テストモード: `[LINE Platform] → [GAS doPost]`（Worker を経由せず直接 LINE 署名検証）
 
 ### Worker API エンドポイント
 
@@ -174,21 +188,34 @@ A LINE reservation management bot for orthopedic clinics, built with GAS + Cloud
 
 `LineWebhookHandler.js` による会話状態管理。QuickReply UIで選択式にすることでフリー入力を最小限に抑制。
 
-```
-=== 新規予約フロー ===
-
-IDLE → AWAITING_NAME → AWAITING_PHONE → AWAITING_DATE → AWAITING_TIME
-  → AWAITING_TREATMENT → AWAITING_PAYMENT → Stripe Checkout → 予約確定
-
-=== キャンセルフロー ===
-
-IDLE → AWAITING_CANCEL_SELECT → AWAITING_CANCEL_CONFIRM → キャンセル実行
-
-=== 変更フロー ===
-
-IDLE → AWAITING_CHANGE_SELECT → AWAITING_CHANGE_FIELD
-  → AWAITING_CHANGE_DATE / AWAITING_CHANGE_TIME / AWAITING_CHANGE_TREATMENT
-  → AWAITING_CHANGE_CONFIRM → 変更実行
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    state 新規予約 {
+        IDLE --> AWAITING_NAME: /reserve
+        AWAITING_NAME --> AWAITING_PHONE
+        AWAITING_PHONE --> AWAITING_DATE
+        AWAITING_DATE --> AWAITING_TIME
+        AWAITING_TIME --> AWAITING_TREATMENT
+        AWAITING_TREATMENT --> AWAITING_PAYMENT
+        AWAITING_PAYMENT --> 予約確定: Stripe Checkout
+    }
+    state キャンセル {
+        IDLE --> AWAITING_CANCEL_SELECT: /cancel
+        AWAITING_CANCEL_SELECT --> AWAITING_CANCEL_CONFIRM
+        AWAITING_CANCEL_CONFIRM --> キャンセル実行
+    }
+    state 変更 {
+        IDLE --> AWAITING_CHANGE_SELECT: /change
+        AWAITING_CHANGE_SELECT --> AWAITING_CHANGE_FIELD
+        AWAITING_CHANGE_FIELD --> AWAITING_CHANGE_DATE: 日付
+        AWAITING_CHANGE_FIELD --> AWAITING_CHANGE_TIME: 時間
+        AWAITING_CHANGE_FIELD --> AWAITING_CHANGE_TREATMENT: 施術
+        AWAITING_CHANGE_DATE --> AWAITING_CHANGE_CONFIRM
+        AWAITING_CHANGE_TIME --> AWAITING_CHANGE_CONFIRM
+        AWAITING_CHANGE_TREATMENT --> AWAITING_CHANGE_CONFIRM
+        AWAITING_CHANGE_CONFIRM --> 変更実行
+    }
 ```
 
 各状態でQuickReply選択肢を提示し、ユーザーの入力をガイド。
@@ -197,19 +224,25 @@ IDLE → AWAITING_CHANGE_SELECT → AWAITING_CHANGE_FIELD
 
 ## Stripe決済フロー
 
-```
-予約確定 → Stripe Checkout セッション作成（1,000円デポジット）
-    ↓
-ユーザーが支払い完了
-    ↓
-checkout.session.completed → 予約ステータス: CONFIRMED / デポジット: PAID
-    ↓
-患者に確定通知 + 管理者に通知
-
---- キャンセル時 ---
-
-キャンセル実行 → charge.refunded → デポジット: REFUNDED
-    ↓ 前日キャンセルまでは無料返金
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as ユーザー
+    participant GAS as GAS
+    participant S as Stripe
+    participant W as Worker
+    participant L as LINE
+    U->>GAS: 予約確定
+    GAS->>S: Checkout Session 作成（1,000円デポジット）
+    S-->>U: 支払いページ表示
+    U->>S: 支払い完了
+    S->>W: checkout.session.completed
+    W->>W: HMAC-SHA256 署名検証
+    W->>GAS: 最小データ転送（type, id, reservation_id）
+    GAS->>S: Session 詳細取得
+    GAS->>GAS: 予約 CONFIRMED / デポジット PAID
+    GAS->>L: 確定通知（患者 + 管理者）
+    Note over GAS,S: キャンセル時: charge.refunded → デポジット REFUNDED（前日まで無料返金）
 ```
 
 ---
@@ -353,6 +386,9 @@ echo -n "<値>" | npx wrangler secret put GAS_AUTH_TOKEN   # WorkerからGASへ�
 |---|---|
 | [開発ガイドライン](./DEVELOPMENT.md) | コーディング規約・テスト方針 |
 | [仕様書・設計判断](https://github.com/fukukei23/obsidian-ssot/tree/main/01_DECISIONS/reserve-optimizer) | 設計判断の変遷（SSOT） |
+| [利用規約](./docs/legal/TERMS.md) | サービス利用条件（ドラフト・公開前レビュー要） |
+| [プライバシーポリシー](./docs/legal/PRIVACY.md) | 個人情報・決済データの取り扱い（ドラフト） |
+| [免責事項](./docs/legal/DISCLAIMER.md) | 医学的診断非提供・稼働安定性・デモ環境特記（ドラフト） |
 
 ---
 
@@ -363,7 +399,7 @@ echo -n "<値>" | npx wrangler secret put GAS_AUTH_TOKEN   # WorkerからGASへ�
 ```bash
 cd worker
 npm test
-# → 12件のユニットテスト（verifyLineSignature / verifyStripeSignature / timingSafeEqual）
+# → 23件のユニットテスト（署名検証 / CORS / resolveAllowedOrigin / forwardToGAS）
 ```
 
 ### GAS テスト（Node.js ランナー）
