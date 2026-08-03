@@ -88,6 +88,7 @@
 | LINE_ADMIN_USER_ID | （管理者のLINEユーザーID） | 任意・通知用 |
 | STRIPE_API_KEY | sk_test_xxxx... または sk_live_xxxx... | Stripe取得後 |
 | STRIPE_WEBHOOK_SECRET | whsec_xxxx... | デプロイ後に取得 |
+| GAS_AUTH_TOKEN | （推測困難なランダム文字列） | 必須・Worker→GAS間認証（x-gas-authヘッダ）。Worker側 wrangler secret と**同じ値**を設定。詳細: [token-rotation.md](runbooks/token-rotation.md) |
 | SPREADSHEET_ID | （ステップ2でメモしたID） | 必須 |
 | DEPOSIT_AMOUNT_JPY | 1000 | 任意・デフォルト1000 |
 | CANCELLATION_DEADLINE_HOURS | 2 | 任意 |
