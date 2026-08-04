@@ -21,3 +21,22 @@ describe("reserve-page i18n setup", () => {
     expect((window as any).ReserveI18n).toBeDefined();
   });
 });
+
+describe("t / tError", () => {
+  it("t('ja','page.title') は日本語を返す", () => {
+    loadPage();
+    const { t } = (window as any).ReserveI18n;
+    expect(t("ja", "page.title")).toBe("Web予約");
+  });
+  it("t は未対応キーを en→ja→key へフォールバック", () => {
+    loadPage();
+    const { t } = (window as any).ReserveI18n;
+    expect(t("en", "nonexistent.key")).toBe("nonexistent.key");
+  });
+  it("tError は code を各言語表示し en→ja→code へフォールバック", () => {
+    loadPage();
+    const { tError } = (window as any).ReserveI18n;
+    expect(tError("ja", "ERR_GENERIC")).toMatch(/.+/);
+    expect(tError("en", "ERR_UNKNOWN_CODE")).toBe("ERR_UNKNOWN_CODE");
+  });
+});

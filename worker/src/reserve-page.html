@@ -79,6 +79,51 @@ input:focus{outline:none;border-color:#06c755}
 <script>
 (function() {
   var __test = {}; // テスト用露出（本番でも無害）
+  var I18N = {
+    ja: {
+      "page.title": "Web予約",
+      "errors.ERR_GENERIC": "エラーが発生しました。",
+      "errors.ERR_MISSING_FIELDS": "必須項目が入力されていません。",
+      "errors.ERR_INVALID_PHONE": "電話番号は10-11桁で入力してください。",
+      "errors.ERR_SLOT_FULL": "この時間は満席です。",
+      "errors.ERR_RESERVATION_FAILED": "予約に失敗しました。"
+    },
+    en: {
+      "page.title": "Web Reservation",
+      "errors.ERR_GENERIC": "An error occurred.",
+      "errors.ERR_MISSING_FIELDS": "Required fields are missing.",
+      "errors.ERR_INVALID_PHONE": "Phone number must be 10-11 digits.",
+      "errors.ERR_SLOT_FULL": "This time slot is fully booked.",
+      "errors.ERR_RESERVATION_FAILED": "Reservation failed."
+    },
+    zh: {}, ko: {}, pt: {}, es: {}  // Task 6 で GLM 翻訳
+  };
+
+  function t(lang, key) {
+    var v = (I18N[lang] && I18N[lang][key]);
+    if (v !== undefined) return v;
+    v = (I18N.en && I18N.en[key]);   // en フォールバック
+    if (v !== undefined) return v;
+    v = (I18N.ja && I18N.ja[key]);   // ja フォールバック
+    if (v !== undefined) return v;
+    return key;
+  }
+
+  function tError(lang, code) {
+    var k = "errors." + code;
+    var v = (I18N[lang] && I18N[lang][k]);
+    if (v !== undefined) return v;
+    v = (I18N.en && I18N.en[k]);
+    if (v !== undefined) return v;
+    v = (I18N.ja && I18N.ja[k]);
+    if (v !== undefined) return v;
+    return code;
+  }
+
+  __test.I18N = I18N;
+  __test.t = t;
+  __test.tError = tError;
+
   var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
   var currentStep = 1;
