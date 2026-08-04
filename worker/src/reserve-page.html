@@ -31,7 +31,7 @@ input:focus{outline:none;border-color:#06c755}
 </style>
 </head>
 <body>
-<h1>Web予約</h1>
+<h1 data-i18n="page.title">Web予約</h1>
 <div class="progress" id="progress"></div>
 
 <div class="step active" id="step1">
@@ -56,7 +56,7 @@ input:focus{outline:none;border-color:#06c755}
 
 <div class="step" id="step4">
   <div class="step-title">Step 4: お客様情報</div>
-  <input type="text" id="name-input" placeholder="お名前">
+  <input type="text" id="name-input" placeholder="お名前" data-i18n-attr="placeholder:placeholder.name">
   <input type="tel" id="phone-input" placeholder="電話番号（09012345678）">
   <div class="error" id="info-error"></div>
   <button class="btn btn-primary" id="info-next">確認画面へ</button>
@@ -159,6 +159,39 @@ input:focus{outline:none;border-color:#06c755}
 
   __test.SUPPORTED = SUPPORTED;
   __test.detectLang = detectLang;
+
+  var currentLang = "ja";
+
+  function render() {
+    // テキスト
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++) {
+      nodes[i].textContent = t(currentLang, nodes[i].getAttribute("data-i18n"));
+    }
+    // 属性
+    var attrNodes = document.querySelectorAll("[data-i18n-attr]");
+    for (var j = 0; j < attrNodes.length; j++) {
+      var pairs = (attrNodes[j].getAttribute("data-i18n-attr") || "").split(";");
+      for (var k = 0; k < pairs.length; k++) {
+        var parts = pairs[k].split(":");
+        if (parts.length === 2) {
+          attrNodes[j].setAttribute(parts[0].trim(), t(currentLang, parts[1].trim()));
+        }
+      }
+    }
+    document.documentElement.lang = currentLang;
+    document.title = t(currentLang, "page.title");
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    try { localStorage.setItem("reserve_lang", lang); } catch (e) { /* プライベートモード等 */ }
+    render();
+  }
+
+  __test.setLang = setLang;
+  __test.render = render;
+  __test.getCurrentLang = function() { return currentLang; };
 
   var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };

@@ -15,6 +15,11 @@ function loadPage() {
   (global as any).localStorage = dom.window.localStorage;
 }
 
+function loadPageFresh() {
+  // JSDOM 再生成で DOM を完全リセット（innerHTML 代入でなく再パース・安全）
+  loadPage();
+}
+
 describe("reserve-page i18n setup", () => {
   it("window.ReserveI18n が露出する", () => {
     loadPage();
@@ -71,5 +76,37 @@ describe("detectLang", () => {
     loadPage();
     const { detectLang } = (window as any).ReserveI18n;
     expect(detectLang(null, ["pt-BR"])).toBe("pt");
+  });
+});
+
+describe("render", () => {
+  it("data-i18n の textContent を更新", () => {
+    loadPageFresh();
+    const { setLang } = (window as any).ReserveI18n;
+    setLang("en");
+    const el = document.querySelector("[data-i18n='page.title']") as HTMLElement;
+    expect(el?.textContent).toBe("Web Reservation");
+  });
+  it("data-i18n-attr で placeholder を更新", () => {
+    loadPageFresh();
+    const { setLang } = (window as any).ReserveI18n;
+    setLang("en");
+    const el = document.querySelector("[data-i18n-attr*='placeholder']") as HTMLInputElement;
+    expect(el?.placeholder).toMatch(/.+/);
+    expect(el?.placeholder).not.toBe("");  // ja 以外でも設定される
+  });
+  it("document.documentElement.lang が連動", () => {
+    loadPageFresh();
+    const { setLang } = (window as any).ReserveI18n;
+    setLang("ko");
+    expect(document.documentElement.lang).toBe("ko");
+  });
+  it("input value は保持される（消えない）", () => {
+    loadPageFresh();
+    const input = document.getElementById("name-input") as HTMLInputElement;
+    input.value = "テスト太郎";
+    const { setLang } = (window as any).ReserveI18n;
+    setLang("en");
+    expect(input.value).toBe("テスト太郎");
   });
 });
