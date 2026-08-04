@@ -124,6 +124,42 @@ input:focus{outline:none;border-color:#06c755}
   __test.t = t;
   __test.tError = tError;
 
+  var SUPPORTED = {
+    ja: ["ja"],
+    en: ["en"],
+    zh: ["zh-CN","zh-TW","zh-Hans","zh-Hant","zh"],
+    ko: ["ko"],
+    pt: ["pt-BR","pt-PT","pt"],
+    es: ["es-AR","es-MX","es-ES","es"]
+  };
+  var SUPPORTED_KEYS = ["ja","en","zh","ko","pt","es"];
+
+  function detectLang(stored, navLangs) {
+    // 1. localStorage 値（例外時は stored===null）
+    if (stored && SUPPORTED_KEYS.indexOf(stored) !== -1) return stored;
+    // 2. navigator.languages 完全一致
+    var langs = navLangs || [];
+    for (var i = 0; i < langs.length; i++) {
+      var l = langs[i];
+      for (var k = 0; k < SUPPORTED_KEYS.length; k++) {
+        var key = SUPPORTED_KEYS[k];
+        if (SUPPORTED[key].indexOf(l) !== -1) return key;
+      }
+    }
+    // 3. 接頭辞一致
+    for (var i2 = 0; i2 < langs.length; i2++) {
+      var pfx = (langs[i2] || "").split("-")[0];
+      if (SUPPORTED_KEYS.indexOf(pfx) !== -1) return pfx;
+    }
+    // 4. en フォールバック（SUPPORTED 外言語）
+    if (langs.length > 0) return "en";
+    // 5. 最終 ja
+    return "ja";
+  }
+
+  __test.SUPPORTED = SUPPORTED;
+  __test.detectLang = detectLang;
+
   var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
   var currentStep = 1;

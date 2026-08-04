@@ -40,3 +40,36 @@ describe("t / tError", () => {
     expect(tError("en", "ERR_UNKNOWN_CODE")).toBe("ERR_UNKNOWN_CODE");
   });
 });
+
+describe("detectLang", () => {
+  it("localStorage 値 ∈ SUPPORTED を返す", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang("ko", ["en"])).toBe("ko");
+  });
+  it("navigator.languages の完全一致（zh-TW→zh）", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang(undefined, ["zh-TW", "en"])).toBe("zh");
+  });
+  it("接頭辞一致（en-US→en）", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang(undefined, ["en-US"])).toBe("en");
+  });
+  it("SUPPORTED 外は en フォールバック（fr-FR→en）", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang(undefined, ["fr-FR"])).toBe("en");
+  });
+  it("最終フォールバック ja（空配列）", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang(undefined, [])).toBe("ja");
+  });
+  it("localStorage 例外時も navigator で解決", () => {
+    loadPage();
+    const { detectLang } = (window as any).ReserveI18n;
+    expect(detectLang(null, ["pt-BR"])).toBe("pt");
+  });
+});
