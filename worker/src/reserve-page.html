@@ -38,44 +38,44 @@ input:focus{outline:none;border-color:#06c755}
 <div class="progress" id="progress"></div>
 
 <div class="step active" id="step1">
-  <div class="step-title">Step 1: 施術を選択</div>
+  <div class="step-title" data-i18n="step1.title">Step 1: 施術を選択</div>
   <div id="treatment-list"></div>
 </div>
 
 <div class="step" id="step2">
-  <div class="step-title">Step 2: 日付を選択</div>
+  <div class="step-title" data-i18n="step2.title">Step 2: 日付を選択</div>
   <input type="date" id="date-input">
   <div class="error" id="date-error"></div>
-  <button class="btn btn-primary" id="date-next">空き枠を確認</button>
-  <button class="btn" id="date-back">戻る</button>
+  <button class="btn btn-primary" id="date-next" data-i18n="btn.check_slots">空き枠を確認</button>
+  <button class="btn" id="date-back" data-i18n="btn.back">戻る</button>
 </div>
 
 <div class="step" id="step3">
-  <div class="step-title">Step 3: 時間を選択</div>
+  <div class="step-title" data-i18n="step3.title">Step 3: 時間を選択</div>
   <div class="slot-grid" id="slot-list"></div>
   <div class="error" id="slot-error"></div>
-  <button class="btn" id="slot-back">戻る</button>
+  <button class="btn" id="slot-back" data-i18n="btn.back">戻る</button>
 </div>
 
 <div class="step" id="step4">
-  <div class="step-title">Step 4: お客様情報</div>
+  <div class="step-title" data-i18n="step4.title">Step 4: お客様情報</div>
   <input type="text" id="name-input" placeholder="お名前" data-i18n-attr="placeholder:placeholder.name">
-  <input type="tel" id="phone-input" placeholder="電話番号（09012345678）">
+  <input type="tel" id="phone-input" placeholder="電話番号（09012345678）" data-i18n-attr="placeholder:placeholder.phone">
   <div class="error" id="info-error"></div>
-  <button class="btn btn-primary" id="info-next">確認画面へ</button>
-  <button class="btn" id="info-back">戻る</button>
+  <button class="btn btn-primary" id="info-next" data-i18n="btn.to_confirm">確認画面へ</button>
+  <button class="btn" id="info-back" data-i18n="btn.back">戻る</button>
 </div>
 
 <div class="step" id="step5">
-  <div class="step-title">予約内容の確認</div>
+  <div class="step-title" data-i18n="step5.title">予約内容の確認</div>
   <div class="confirm-box" id="confirm-details"></div>
-  <button class="btn btn-primary" id="confirm-submit">予約する</button>
-  <button class="btn" id="confirm-back">戻る</button>
+  <button class="btn btn-primary" id="confirm-submit" data-i18n="btn.submit">予約する</button>
+  <button class="btn" id="confirm-back" data-i18n="btn.back">戻る</button>
   <div class="error" id="confirm-error"></div>
 </div>
 
 <div class="step" id="step-done">
-  <div class="step-title" style="color:#06c755">予約完了</div>
+  <div class="step-title" style="color:#06c755" data-i18n="step6.title">予約完了</div>
   <p id="done-msg"></p>
 </div>
 
@@ -85,21 +85,262 @@ input:focus{outline:none;border-color:#06c755}
   var I18N = {
     ja: {
       "page.title": "Web予約",
+      "step1.title": "Step 1: 施術を選択",
+      "step2.title": "Step 2: 日付を選択",
+      "step3.title": "Step 3: 時間を選択",
+      "step4.title": "Step 4: お客様情報",
+      "step5.title": "予約内容の確認",
+      "step6.title": "予約完了",
+      "treatment.first_30": "初診（30分）",
+      "treatment.follow_30": "再診（30分）",
+      "treatment.follow_60": "再診（60分）",
+      "btn.check_slots": "空き枠を確認",
+      "btn.back": "戻る",
+      "btn.to_confirm": "確認画面へ",
+      "btn.submit": "予約する",
+      "btn.submitting": "送信中...",
+      "placeholder.name": "お名前",
+      "placeholder.phone": "電話番号（09012345678）",
+      "confirm.treatment": "施術",
+      "confirm.date": "日付",
+      "confirm.time": "時間",
+      "confirm.name": "お名前",
+      "confirm.phone": "電話番号",
+      "fields.name": "お名前",
+      "fields.phone": "電話番号",
+      "fields.date": "日付",
+      "fields.time": "時間",
+      "fields.treatment": "施術",
+      "done.prefix": "予約ID: ",
+      "done.suffix": " — 後ほどLINEから確認・お支払いができます。",
+      "slots.loading": "読み込み中...",
       "errors.ERR_GENERIC": "エラーが発生しました。",
       "errors.ERR_MISSING_FIELDS": "必須項目が入力されていません。",
       "errors.ERR_INVALID_PHONE": "電話番号は10-11桁で入力してください。",
       "errors.ERR_SLOT_FULL": "この時間は満席です。",
-      "errors.ERR_RESERVATION_FAILED": "予約に失敗しました。"
+      "errors.ERR_RESERVATION_FAILED": "予約に失敗しました。",
+      "error.date_required": "日付を選択してください",
+      "error.no_slots": "空き枠がありません",
+      "error.fetch_failed": "空き枠取得に失敗しました",
+      "error.name_required": "お名前を入力してください",
+      "error.phone_invalid": "電話番号は10-11桁で入力してください",
+      "error.reserve_failed": "予約に失敗しました。時間をおいてもう一度お試しください。"
     },
     en: {
       "page.title": "Web Reservation",
+      "step1.title": "Step 1: Select treatment",
+      "step2.title": "Step 2: Select date",
+      "step3.title": "Step 3: Select time",
+      "step4.title": "Step 4: Your information",
+      "step5.title": "Confirm reservation",
+      "step6.title": "Reservation complete",
+      "treatment.first_30": "First visit (30 min)",
+      "treatment.follow_30": "Follow-up (30 min)",
+      "treatment.follow_60": "Follow-up (60 min)",
+      "btn.check_slots": "Check availability",
+      "btn.back": "Back",
+      "btn.to_confirm": "To confirmation",
+      "btn.submit": "Reserve",
+      "btn.submitting": "Sending...",
+      "placeholder.name": "Name",
+      "placeholder.phone": "Phone (09012345678)",
+      "confirm.treatment": "Treatment",
+      "confirm.date": "Date",
+      "confirm.time": "Time",
+      "confirm.name": "Name",
+      "confirm.phone": "Phone",
+      "fields.name": "Name",
+      "fields.phone": "Phone",
+      "fields.date": "Date",
+      "fields.time": "Time",
+      "fields.treatment": "Treatment",
+      "done.prefix": "Reservation ID: ",
+      "done.suffix": " — You can confirm and pay via LINE later.",
+      "slots.loading": "Loading...",
       "errors.ERR_GENERIC": "An error occurred.",
       "errors.ERR_MISSING_FIELDS": "Required fields are missing.",
       "errors.ERR_INVALID_PHONE": "Phone number must be 10-11 digits.",
       "errors.ERR_SLOT_FULL": "This time slot is fully booked.",
-      "errors.ERR_RESERVATION_FAILED": "Reservation failed."
+      "errors.ERR_RESERVATION_FAILED": "Reservation failed.",
+      "error.date_required": "Please select a date",
+      "error.no_slots": "No slots available",
+      "error.fetch_failed": "Failed to fetch slots",
+      "error.name_required": "Please enter your name",
+      "error.phone_invalid": "Phone must be 10-11 digits",
+      "error.reserve_failed": "Reservation failed. Please try again later."
     },
-    zh: {}, ko: {}, pt: {}, es: {}  // Task 6 で GLM 翻訳
+    zh: {
+      "page.title": "网页预约",
+      "step1.title": "第1步：选择项目",
+      "step2.title": "第2步：选择日期",
+      "step3.title": "第3步：选择时间",
+      "step4.title": "第4步：您的信息",
+      "step5.title": "确认预约内容",
+      "step6.title": "预约完成",
+      "treatment.first_30": "初诊（30分钟）",
+      "treatment.follow_30": "复诊（30分钟）",
+      "treatment.follow_60": "复诊（60分钟）",
+      "btn.check_slots": "查看空位",
+      "btn.back": "返回",
+      "btn.to_confirm": "前往确认",
+      "btn.submit": "预约",
+      "btn.submitting": "发送中...",
+      "placeholder.name": "姓名",
+      "placeholder.phone": "电话号码（09012345678）",
+      "confirm.treatment": "项目",
+      "confirm.date": "日期",
+      "confirm.time": "时间",
+      "confirm.name": "姓名",
+      "confirm.phone": "电话号码",
+      "fields.name": "姓名",
+      "fields.phone": "电话号码",
+      "fields.date": "日期",
+      "fields.time": "时间",
+      "fields.treatment": "项目",
+      "done.prefix": "预约编号：",
+      "done.suffix": " — 稍后可通过 LINE 确认与付款。",
+      "slots.loading": "加载中...",
+      "errors.ERR_GENERIC": "发生错误。",
+      "errors.ERR_MISSING_FIELDS": "有必填项未填写。",
+      "errors.ERR_INVALID_PHONE": "电话号码须为10-11位。",
+      "errors.ERR_SLOT_FULL": "该时段已满。",
+      "errors.ERR_RESERVATION_FAILED": "预约失败。",
+      "error.date_required": "请选择日期",
+      "error.no_slots": "没有空位",
+      "error.fetch_failed": "获取空位失败",
+      "error.name_required": "请输入姓名",
+      "error.phone_invalid": "电话号码须为10-11位",
+      "error.reserve_failed": "预约失败。请稍后再试。"
+    },
+    ko: {
+      "page.title": "웹 예약",
+      "step1.title": "1단계: 시술 선택",
+      "step2.title": "2단계: 날짜 선택",
+      "step3.title": "3단계: 시간 선택",
+      "step4.title": "4단계: 고객 정보",
+      "step5.title": "예약 내용 확인",
+      "step6.title": "예약 완료",
+      "treatment.first_30": "초진 (30분)",
+      "treatment.follow_30": "재진 (30분)",
+      "treatment.follow_60": "재진 (60분)",
+      "btn.check_slots": "빈자리 확인",
+      "btn.back": "뒤로",
+      "btn.to_confirm": "확인 화면으로",
+      "btn.submit": "예약하기",
+      "btn.submitting": "전송 중...",
+      "placeholder.name": "성함",
+      "placeholder.phone": "전화번호 (09012345678)",
+      "confirm.treatment": "시술",
+      "confirm.date": "날짜",
+      "confirm.time": "시간",
+      "confirm.name": "성함",
+      "confirm.phone": "전화번호",
+      "fields.name": "성함",
+      "fields.phone": "전화번호",
+      "fields.date": "날짜",
+      "fields.time": "시간",
+      "fields.treatment": "시술",
+      "done.prefix": "예약 번호: ",
+      "done.suffix": " — 나중에 LINE에서 확인 및 결제하실 수 있습니다.",
+      "slots.loading": "불러오는 중...",
+      "errors.ERR_GENERIC": "오류가 발생했습니다.",
+      "errors.ERR_MISSING_FIELDS": "필수 항목이 누락되었습니다.",
+      "errors.ERR_INVALID_PHONE": "전화번호는 10-11자리여야 합니다.",
+      "errors.ERR_SLOT_FULL": "해당 시간대는 마감되었습니다.",
+      "errors.ERR_RESERVATION_FAILED": "예약에 실패했습니다.",
+      "error.date_required": "날짜를 선택해 주세요",
+      "error.no_slots": "예약 가능한 시간이 없습니다",
+      "error.fetch_failed": "빈자리 조회에 실패했습니다",
+      "error.name_required": "성함을 입력해 주세요",
+      "error.phone_invalid": "전화번호는 10-11자리여야 합니다",
+      "error.reserve_failed": "예약에 실패했습니다. 잠시 후 다시 시도해 주세요."
+    },
+    pt: {
+      "page.title": "Reserva Web",
+      "step1.title": "Passo 1: Escolha o serviço",
+      "step2.title": "Passo 2: Escolha a data",
+      "step3.title": "Passo 3: Escolha o horário",
+      "step4.title": "Passo 4: Seus dados",
+      "step5.title": "Confirmar reserva",
+      "step6.title": "Reserva concluída",
+      "treatment.first_30": "Primeira consulta (30 min)",
+      "treatment.follow_30": "Retorno (30 min)",
+      "treatment.follow_60": "Retorno (60 min)",
+      "btn.check_slots": "Verificar horários",
+      "btn.back": "Voltar",
+      "btn.to_confirm": "Confirmar",
+      "btn.submit": "Reservar",
+      "btn.submitting": "Enviando...",
+      "placeholder.name": "Nome",
+      "placeholder.phone": "Telefone (09012345678)",
+      "confirm.treatment": "Serviço",
+      "confirm.date": "Data",
+      "confirm.time": "Horário",
+      "confirm.name": "Nome",
+      "confirm.phone": "Telefone",
+      "fields.name": "Nome",
+      "fields.phone": "Telefone",
+      "fields.date": "Data",
+      "fields.time": "Horário",
+      "fields.treatment": "Serviço",
+      "done.prefix": "ID da reserva: ",
+      "done.suffix": " — Você pode confirmar e pagar pelo LINE depois.",
+      "slots.loading": "Carregando...",
+      "errors.ERR_GENERIC": "Ocorreu um erro.",
+      "errors.ERR_MISSING_FIELDS": "Há campos obrigatórios não preenchidos.",
+      "errors.ERR_INVALID_PHONE": "O telefone deve ter 10-11 dígitos.",
+      "errors.ERR_SLOT_FULL": "Este horário está lotado.",
+      "errors.ERR_RESERVATION_FAILED": "Falha na reserva.",
+      "error.date_required": "Selecione uma data",
+      "error.no_slots": "Não há horários disponíveis",
+      "error.fetch_failed": "Falha ao buscar horários",
+      "error.name_required": "Informe seu nome",
+      "error.phone_invalid": "O telefone deve ter 10-11 dígitos",
+      "error.reserve_failed": "Falha na reserva. Tente novamente mais tarde."
+    },
+    es: {
+      "page.title": "Reserva Web",
+      "step1.title": "Paso 1: Elige el servicio",
+      "step2.title": "Paso 2: Elige la fecha",
+      "step3.title": "Paso 3: Elige la hora",
+      "step4.title": "Paso 4: Tus datos",
+      "step5.title": "Confirmar reserva",
+      "step6.title": "Reserva completada",
+      "treatment.first_30": "Primera consulta (30 min)",
+      "treatment.follow_30": "Consulta de seguimiento (30 min)",
+      "treatment.follow_60": "Consulta de seguimiento (60 min)",
+      "btn.check_slots": "Verificar horarios",
+      "btn.back": "Volver",
+      "btn.to_confirm": "Confirmar",
+      "btn.submit": "Reservar",
+      "btn.submitting": "Enviando...",
+      "placeholder.name": "Nombre",
+      "placeholder.phone": "Teléfono (09012345678)",
+      "confirm.treatment": "Servicio",
+      "confirm.date": "Fecha",
+      "confirm.time": "Hora",
+      "confirm.name": "Nombre",
+      "confirm.phone": "Teléfono",
+      "fields.name": "Nombre",
+      "fields.phone": "Teléfono",
+      "fields.date": "Fecha",
+      "fields.time": "Hora",
+      "fields.treatment": "Servicio",
+      "done.prefix": "ID de reserva: ",
+      "done.suffix": " — Puede confirmar y pagar por LINE más tarde.",
+      "slots.loading": "Cargando...",
+      "errors.ERR_GENERIC": "Ocurrió un error.",
+      "errors.ERR_MISSING_FIELDS": "Faltan campos obligatorios.",
+      "errors.ERR_INVALID_PHONE": "El teléfono debe tener 10-11 dígitos.",
+      "errors.ERR_SLOT_FULL": "Este horario está lleno.",
+      "errors.ERR_RESERVATION_FAILED": "Error en la reserva.",
+      "error.date_required": "Seleccione una fecha",
+      "error.no_slots": "No hay horarios disponibles",
+      "error.fetch_failed": "Error al buscar horarios",
+      "error.name_required": "Ingrese su nombre",
+      "error.phone_invalid": "El teléfono debe tener 10-11 dígitos",
+      "error.reserve_failed": "Error en la reserva. Intente de nuevo más tarde."
+    }
   };
 
   function t(lang, key) {
@@ -216,7 +457,11 @@ input:focus{outline:none;border-color:#06c755}
   __test.getCurrentLang = function() { return currentLang; };
   __test.renderSwitcher = renderSwitcher;
 
-  var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
+  var treatments = [
+    { ja: "初診（30分）", key: "treatment.first_30" },
+    { ja: "再診（30分）", key: "treatment.follow_30" },
+    { ja: "再診（60分）", key: "treatment.follow_60" }
+  ];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
   var currentStep = 1;
 
@@ -252,12 +497,13 @@ input:focus{outline:none;border-color:#06c755}
 
   // Step 1: treatment buttons
   var list = document.getElementById("treatment-list");
-  treatments.forEach(function(t) {
+  treatments.forEach(function(tr) {
     var btn = document.createElement("button");
     btn.className = "btn";
-    btn.textContent = t;
+    btn.setAttribute("data-i18n", tr.key);
+    btn.textContent = t(currentLang, tr.key);
     btn.addEventListener("click", function() {
-      selected.treatment = t;
+      selected.treatment = tr.ja;  // GASへは日本語統一送信（予約管理者が日本語で閲覧）
       showStep(2);
     });
     list.appendChild(btn);
@@ -273,7 +519,7 @@ input:focus{outline:none;border-color:#06c755}
   document.getElementById("date-next").addEventListener("click", function() {
     setError("date-error", "");
     var val = dateInput.value;
-    if (!val) { setError("date-error", "日付を選択してください"); return; }
+    if (!val) { setError("date-error", t(currentLang, "error.date_required")); return; }
     selected.date = val.replace(/-/g, "/");
     fetchSlots();
   });
@@ -283,7 +529,7 @@ input:focus{outline:none;border-color:#06c755}
     var slotList = document.getElementById("slot-list");
     clearChildren(slotList);
     var loading = document.createElement("div");
-    loading.textContent = "読み込み中...";
+    loading.textContent = t(currentLang, "slots.loading");
     slotList.appendChild(loading);
     showStep(3);
 
@@ -297,7 +543,7 @@ input:focus{outline:none;border-color:#06c755}
       clearChildren(slotList);
       if (data.error) { setError("slot-error", data.error); return; }
       var slots = data.slots || [];
-      if (slots.length === 0) { setError("slot-error", "空き枠がありません"); return; }
+      if (slots.length === 0) { setError("slot-error", t(currentLang, "error.no_slots")); return; }
       slots.forEach(function(s) {
         var btn = document.createElement("button");
         btn.className = "slot-btn" + (s.available ? "" : " full");
@@ -315,7 +561,7 @@ input:focus{outline:none;border-color:#06c755}
         slotList.appendChild(btn);
       });
     })
-    .catch(function() { setError("slot-error", "空き枠取得に失敗しました"); });
+    .catch(function() { setError("slot-error", t(currentLang, "error.fetch_failed")); });
   }
 
   document.getElementById("slot-back").addEventListener("click", function() { showStep(2); });
@@ -325,9 +571,9 @@ input:focus{outline:none;border-color:#06c755}
     setError("info-error", "");
     var name = document.getElementById("name-input").value.trim();
     var phone = document.getElementById("phone-input").value.trim();
-    if (!name) { setError("info-error", "お名前を入力してください"); return; }
+    if (!name) { setError("info-error", t(currentLang, "error.name_required")); return; }
     if (!phone || !/^\d{10,11}$/.test(phone.replace(/[-\s]/g, ""))) {
-      setError("info-error", "電話番号は10-11桁で入力してください"); return;
+      setError("info-error", t(currentLang, "error.phone_invalid")); return;
     }
     selected.name = name;
     selected.phone = phone.replace(/[-\s]/g, "");
@@ -340,11 +586,11 @@ input:focus{outline:none;border-color:#06c755}
     var box = document.getElementById("confirm-details");
     clearChildren(box);
     var items = [
-      ["施術", selected.treatment],
-      ["日付", selected.date],
-      ["時間", selected.time],
-      ["お名前", selected.name],
-      ["電話番号", selected.phone]
+      [t(currentLang, "confirm.treatment"), selected.treatment],
+      [t(currentLang, "confirm.date"), selected.date],
+      [t(currentLang, "confirm.time"), selected.time],
+      [t(currentLang, "confirm.name"), selected.name],
+      [t(currentLang, "confirm.phone"), selected.phone]
     ];
     items.forEach(function(item) {
       var p = document.createElement("p");
@@ -362,7 +608,7 @@ input:focus{outline:none;border-color:#06c755}
     setError("confirm-error", "");
     var btn = document.getElementById("confirm-submit");
     btn.disabled = true;
-    btn.textContent = "送信中...";
+    btn.textContent = t(currentLang, "btn.submitting");
     fetch("/api/reserve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -379,17 +625,17 @@ input:focus{outline:none;border-color:#06c755}
       if (data.error) {
         setError("confirm-error", data.error);
         btn.disabled = false;
-        btn.textContent = "予約する";
+        btn.textContent = t(currentLang, "btn.submit");
         return;
       }
       showStep(6);
       document.getElementById("done-msg").textContent =
-        "予約ID: " + (data.reservation_id || "") + " — 後ほどLINEから確認・お支払いができます。";
+        t(currentLang, "done.prefix") + (data.reservation_id || "") + t(currentLang, "done.suffix");
     })
     .catch(function() {
-      setError("confirm-error", "予約に失敗しました。時間をおいてもう一度お試しください。");
+      setError("confirm-error", t(currentLang, "error.reserve_failed"));
       btn.disabled = false;
-      btn.textContent = "予約する";
+      btn.textContent = t(currentLang, "btn.submit");
     });
   });
 

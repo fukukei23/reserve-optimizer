@@ -131,3 +131,19 @@ describe("language switcher UI", () => {
     expect(pressed?.getAttribute("data-lang")).toBe("zh");
   });
 });
+
+describe("I18N カタログ網羅性", () => {
+  it("ja の全キーが 6言語すべてに存在", () => {
+    loadPage();
+    const { I18N } = (window as any).ReserveI18n;
+    const langs = ["ja","en","zh","ko","pt","es"];
+    const jaKeys = Object.keys(I18N.ja);
+    const missing: string[] = [];
+    for (const lang of langs) {
+      for (const key of jaKeys) {
+        if (!(key in I18N[lang])) missing.push(`${lang}.${key}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});
