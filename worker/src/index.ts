@@ -340,31 +340,74 @@ function corsResponse(body: string, allowedOrigin: string, status = 200): Respon
 }
 
 /**
+ * GAS エラーメッセージ → エラーコード分類（両handler共通）
+ */
+function classifyGasError(msg: string): string {
+  if (/満|full|slot/i.test(msg)) return "ERR_SLOT_FULL";
+  if (/phone|電話/i.test(msg)) return "ERR_INVALID_PHONE";
+  if (/missing|必須|未入力/i.test(msg)) return "ERR_MISSING_FIELDS";
+  return "ERR_GENERIC";
+}
+
+/**
+ * GAS レスポンスを {ok:true,...} / {ok:false, code} 形式に正規化
+ * spec §3.5: Workerは正規化層・ローカライズはフロント・人間可読文字列は破棄
+ * mode="reserve": reservation_id ホワイトリスト検証 / mode="availability": slots 配列検証
+ */
+export function normalizeGasError(
+  gasResp: any,
+  mode: "reserve" | "availability"
+): { ok: boolean; reservation_id?: string; slots?: any[]; code?: string; fields?: string[] } {
+  if (!gasResp || typeof gasResp !== "object") {
+    return { ok: false, code: "ERR_GENERIC" };
+  }
+  // GAS 側の明示的エラー
+  if (gasResp.ok === false || gasResp.error || gasResp.message) {
+    return { ok: false, code: classifyGasError(String(gasResp.error || gasResp.message || "")) };
+  }
+  if (mode === "reserve") {
+    if (typeof gasResp.reservation_id === "string") {
+      return { ok: true, reservation_id: gasResp.reservation_id };
+    }
+    return { ok: false, code: "ERR_RESERVATION_FAILED" };
+  }
+  // availability
+  if (Array.isArray(gasResp.slots)) {
+    return { ok: true, slots: gasResp.slots };
+  }
+  return { ok: false, code: "ERR_GENERIC" };
+}
+
+/**
  * API: 空き枠取得
  * POST /api/availability  { date: "2026/05/30" }
  */
 async function handleApiAvailability(request: Request, env: Env): Promise<Response> {
+  const allowedOrigin = resolveAllowedOrigin(env, request);
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders(resolveAllowedOrigin(env, request)) });
+    return new Response(null, { status: 204, headers: corsHeaders(allowedOrigin) });
   }
 
   let body: { date?: string };
   try {
     body = await request.json() as { date?: string };
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), resolveAllowedOrigin(env, request), 400);
+    return corsResponse(JSON.stringify({ ok: false, code: "ERR_GENERIC" }), allowedOrigin, 400);
   }
 
   if (!body.date || !/^\d{4}\/\d{2}\/\d{2}$/.test(body.date)) {
-    return corsResponse(JSON.stringify({ error: "date must be YYYY/MM/DD" }), resolveAllowedOrigin(env, request), 400);
+    return corsResponse(JSON.stringify({ ok: false, code: "ERR_GENERIC" }), allowedOrigin, 400);
   }
 
-  return forwardToGAS(
+  const gasResponse = await forwardToGAS(
     JSON.stringify({ action: "get_availability", date: body.date, api_token: env.WEB_API_KEY }),
     env,
     "api",
-    resolveAllowedOrigin(env, request)
+    allowedOrigin
   );
+  const gasRespBody = await gasResponse.json().catch(() => null);
+  const normalized = normalizeGasError(gasRespBody, "availability");
+  return corsResponse(JSON.stringify(normalized), allowedOrigin, normalized.ok ? 200 : 400);
 }
 
 /**
@@ -419,15 +462,16 @@ async function handleApiIntake(request: Request, env: Env): Promise<Response> {
  * POST /api/reserve  { name, phone, date, time, treatment }
  */
 async function handleApiReserve(request: Request, env: Env): Promise<Response> {
+  const allowedOrigin = resolveAllowedOrigin(env, request);
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders(resolveAllowedOrigin(env, request)) });
+    return new Response(null, { status: 204, headers: corsHeaders(allowedOrigin) });
   }
 
   let body: { name?: string; phone?: string; date?: string; time?: string; treatment?: string };
   try {
     body = await request.json() as typeof body;
   } catch {
-    return corsResponse(JSON.stringify({ error: "Invalid JSON" }), resolveAllowedOrigin(env, request), 400);
+    return corsResponse(JSON.stringify({ ok: false, code: "ERR_GENERIC" }), allowedOrigin, 400);
   }
 
   const missing: string[] = [];
@@ -438,15 +482,15 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
   if (!body.treatment) missing.push("treatment");
 
   if (missing.length > 0) {
-    return corsResponse(JSON.stringify({ error: "Missing fields: " + missing.join(", ") }), resolveAllowedOrigin(env, request), 400);
+    return corsResponse(JSON.stringify({ ok: false, code: "ERR_MISSING_FIELDS", fields: missing }), allowedOrigin, 400);
   }
 
   const phoneDigits = body.phone!.replace(/[-\s]/g, "");
   if (!/^\d{10,11}$/.test(phoneDigits)) {
-    return corsResponse(JSON.stringify({ error: "Invalid phone format" }), resolveAllowedOrigin(env, request), 400);
+    return corsResponse(JSON.stringify({ ok: false, code: "ERR_INVALID_PHONE" }), allowedOrigin, 400);
   }
 
-  return forwardToGAS(
+  const gasResponse = await forwardToGAS(
     JSON.stringify({
       action: "create_reservation",
       name: body.name,
@@ -458,6 +502,9 @@ async function handleApiReserve(request: Request, env: Env): Promise<Response> {
     }),
     env,
     "api",
-    resolveAllowedOrigin(env, request)
+    allowedOrigin
   );
+  const gasRespBody = await gasResponse.json().catch(() => null);
+  const normalized = normalizeGasError(gasRespBody, "reserve");
+  return corsResponse(JSON.stringify(normalized), allowedOrigin, normalized.ok ? 200 : 400);
 }

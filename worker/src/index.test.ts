@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { timingSafeEqual, verifyLineSignature, verifyStripeSignature, resolveAllowedOrigin } from "./index";
+import { timingSafeEqual, verifyLineSignature, verifyStripeSignature, resolveAllowedOrigin, normalizeGasError } from "./index";
 import worker from "./index";
 
 // --- timingSafeEqual ---
@@ -233,5 +233,30 @@ describe("forwardToGAS 成功レスポンスの CORS ヘッダ付与", () => {
     const res = await (worker as any).fetch(req, stubEnv(), stubCtx());
     expect(res.status).toBe(400);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://app.example");
+  });
+});
+
+// --- normalizeGasError（APIエラーコード正規化・両handler共通）---
+
+describe("normalizeGasError", () => {
+  it("reserve: GAS が reservation_id を返すと成功を正規化", () => {
+    expect(normalizeGasError({ reservation_id: "R123" }, "reserve")).toEqual({ ok: true, reservation_id: "R123" });
+  });
+  it("reserve: ok:true だが reservation_id 不在なら ERR_RESERVATION_FAILED", () => {
+    expect(normalizeGasError({ ok: true }, "reserve")).toEqual({ ok: false, code: "ERR_RESERVATION_FAILED" });
+  });
+  it("reserve: GAS が満席エラーなら ERR_SLOT_FULL", () => {
+    expect(normalizeGasError({ ok: false, error: "満席" }, "reserve")).toEqual({ ok: false, code: "ERR_SLOT_FULL" });
+  });
+  it("reserve: null/異常なら ERR_GENERIC", () => {
+    expect(normalizeGasError(null, "reserve")).toEqual({ ok: false, code: "ERR_GENERIC" });
+    expect(normalizeGasError("notobj", "reserve")).toEqual({ ok: false, code: "ERR_GENERIC" });
+  });
+  it("availability: GAS が slots を返すと成功を正規化", () => {
+    const slots = [{ time: "10:00", available: true }];
+    expect(normalizeGasError({ slots }, "availability")).toEqual({ ok: true, slots });
+  });
+  it("availability: slots 非配列なら ERR_GENERIC", () => {
+    expect(normalizeGasError({ ok: true }, "availability")).toEqual({ ok: false, code: "ERR_GENERIC" });
   });
 });
