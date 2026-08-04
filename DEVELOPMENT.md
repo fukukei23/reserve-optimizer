@@ -171,6 +171,23 @@ git commit -m "Add: JWT認証" -m "Why: セッション管理の複雑性回避
 
 ---
 
+## テスト実行時の注意（境界ファイル・2026-08-05 追記）
+
+本プロジェクトはテスト2系統が分断されている（構造問題の詳細: `obsidian-ssot/01_DECISIONS/reserve-optimizer/2026-08-05_テスト2系統分断問題の認識.md`）。
+
+- **GAS側**: `npm test`（ルート）= `node tests/run-all.js`（`tests/*.test.js`・約1212テスト）
+- **Web側**: `cd worker && npm test` = `vitest run`（`*.test.ts`・約49テスト）
+- ⚠️ ルート `npm test` は Web側を回さない（`run-all.js` が `.endsWith('.test.js')` でフィルタ）
+
+**境界ファイル**（`worker/src/` 配下だが GAS側テストも `fs.readFileSync` で参照するファイル）:
+- `reserve-page.html`（`e2e-phase3.test.js` が構造アサーションで監視）
+
+**ルール**: 境界ファイル（`reserve-page.html` 等）を変更した時は **両方のテスト**（`npm test` + `cd worker && npm test`）を実行すること。片側だけの確認で完走宣言すると回帰を見逃す（2026-08-04 i18n完走の事故教訓：vitest側のみ確認→GAS側 `e2e-phase3` の innerHTML XSSゲートに引っかかる回帰を見逃した）。
+
+**中期課題**（本ルールは文書ベースで遵守率弱）: vitest側にも同等のXSSゲート追加（両側ゲート二重化）or ESLint(`eslint-plugin-no-inner-html`)/lint-staged での自動検知化を検討。
+
+---
+
 ## テスト実行履歴
 
 ### 2026-07-28: QuickReport機能 実装後 runAllTests 検証

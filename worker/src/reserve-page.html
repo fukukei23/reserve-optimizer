@@ -438,7 +438,7 @@ input:focus{outline:none;border-color:#06c755}
   function renderSwitcher() {
     var sw = document.getElementById("lang-switcher");
     if (!sw) return;
-    // innerHTML 代入でなく removeChild で安全クリア（XSS 回避）
+    // removeChild で子要素を安全クリア（直接DOM操作・XSS 回避）
     while (sw.firstChild) sw.removeChild(sw.firstChild);
     SUPPORTED_KEYS.forEach(function(key) {
       var b = document.createElement("button");
