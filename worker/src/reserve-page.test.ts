@@ -147,3 +147,18 @@ describe("I18N カタログ網羅性", () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe("API error display (tError + fields)", () => {
+  it("code から各言語メッセージを生成", () => {
+    loadPage();
+    const { tError } = (window as any).ReserveI18n;
+    expect(tError("ja", "ERR_SLOT_FULL")).toBe("この時間は満席です。");
+    expect(tError("en", "ERR_SLOT_FULL")).toBe("This time slot is fully booked.");
+    expect(tError("zh", "ERR_SLOT_FULL")).toBe("该时段已满。");
+  });
+  it("未知 code は en→ja→code へフォールバック", () => {
+    loadPage();
+    const { tError } = (window as any).ReserveI18n;
+    expect(tError("ko", "ERR_UNKNOWN_CODE")).toBe("ERR_UNKNOWN_CODE");
+  });
+});
