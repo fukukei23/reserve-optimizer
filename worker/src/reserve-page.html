@@ -28,10 +28,13 @@ input:focus{outline:none;border-color:#06c755}
 .progress{display:flex;justify-content:center;gap:8px;margin:12px 0}
 .dot{width:10px;height:10px;border-radius:50%;background:#ddd}
 .dot.active{background:#06c755}
+#lang-switcher button{padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:.8rem}
+#lang-switcher button[aria-pressed="true"]{background:#06c755;color:#fff;border-color:#06c755}
 </style>
 </head>
 <body>
 <h1 data-i18n="page.title">Web予約</h1>
+<div id="lang-switcher" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:8px 0;"></div>
 <div class="progress" id="progress"></div>
 
 <div class="step active" id="step1">
@@ -187,11 +190,31 @@ input:focus{outline:none;border-color:#06c755}
     currentLang = lang;
     try { localStorage.setItem("reserve_lang", lang); } catch (e) { /* プライベートモード等 */ }
     render();
+    renderSwitcher();
+  }
+
+  var LANG_LABELS = { ja:"日本語", en:"EN", zh:"中文", ko:"한국어", pt:"PT", es:"ES" };
+  function renderSwitcher() {
+    var sw = document.getElementById("lang-switcher");
+    if (!sw) return;
+    // innerHTML 代入でなく removeChild で安全クリア（XSS 回避）
+    while (sw.firstChild) sw.removeChild(sw.firstChild);
+    SUPPORTED_KEYS.forEach(function(key) {
+      var b = document.createElement("button");
+      b.setAttribute("data-lang", key);
+      b.setAttribute("role", "button");
+      b.setAttribute("aria-pressed", String(key === currentLang));
+      b.setAttribute("aria-label", "Language");
+      b.textContent = LANG_LABELS[key];
+      b.addEventListener("click", function() { setLang(key); });
+      sw.appendChild(b);
+    });
   }
 
   __test.setLang = setLang;
   __test.render = render;
   __test.getCurrentLang = function() { return currentLang; };
+  __test.renderSwitcher = renderSwitcher;
 
   var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
@@ -370,6 +393,12 @@ input:focus{outline:none;border-color:#06c755}
     });
   });
 
+  currentLang = detectLang(
+    (function(){ try { return localStorage.getItem("reserve_lang"); } catch(e){ return null; } })(),
+    navigator.languages
+  );
+  render();
+  renderSwitcher();
   updateProgress();
   window.ReserveI18n = __test;
 })();

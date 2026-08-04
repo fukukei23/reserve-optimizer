@@ -110,3 +110,24 @@ describe("render", () => {
     expect(input.value).toBe("テスト太郎");
   });
 });
+
+describe("language switcher UI", () => {
+  it("6つの言語ボタンが描画される", () => {
+    loadPageFresh();
+    const btns = document.querySelectorAll("#lang-switcher button");
+    expect(btns.length).toBe(6);
+  });
+  it("ボタンクリックで currentLang が変わる", () => {
+    loadPageFresh();
+    const btns = document.querySelectorAll("#lang-switcher button");
+    (btns[1] as HTMLElement).click();  // en
+    expect((window as any).ReserveI18n.getCurrentLang()).toBe("en");
+  });
+  it("aria-pressed が選択状態を反映", () => {
+    loadPageFresh();
+    const { setLang } = (window as any).ReserveI18n;
+    setLang("zh");
+    const pressed = document.querySelector("#lang-switcher button[aria-pressed='true']");
+    expect(pressed?.getAttribute("data-lang")).toBe("zh");
+  });
+});
