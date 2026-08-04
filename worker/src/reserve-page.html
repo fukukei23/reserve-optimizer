@@ -78,6 +78,7 @@ input:focus{outline:none;border-color:#06c755}
 
 <script>
 (function() {
+  var __test = {}; // テスト用露出（本番でも無害）
   var treatments = ["初診（30分）", "再診（30分）", "再診（60分）"];
   var selected = { treatment: "", date: "", time: "", name: "", phone: "" };
   var currentStep = 1;
@@ -256,6 +257,7 @@ input:focus{outline:none;border-color:#06c755}
   });
 
   updateProgress();
+  window.ReserveI18n = __test;
 })();
 </script>
 </body>
