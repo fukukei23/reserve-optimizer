@@ -71,9 +71,17 @@
 - **ヘルスチェック再開**: 約3ヶ月ぶりに稼働再開（2026-08-15 18:04 UTC〜）
 - **Config Health Monitor**: 2026-05-05以来停止していたのが再稼働、primaryModel変更を検出
 - **OpenClaw v2026.7.1-2 公開**（2026-08-04 リリース・Fixes込み）
+- **Cronエラー重大**: 47件中27件がエラー状態（2026-08-16 12:00 UTC自己診断発覚）
+  - discord_context_scan_30m: 185回連続エラー
+  - daily-workspace-backup: 146回連続エラー
+  - Weekly OpenClaw Ideas Collector: 68回連続エラー
+  - Long Task Watcher 多数も重複エラー抱合
+  - 原因: Config古い（2026.3.12 / 最終更新2026-04-17）、ジョブ設定・依存周りが放置
+  - → 要: ジョブ定義再評価・不要Long Task Watcher整理
 - **未解決（継続）**:
   - よつば（yotsuba）記憶復元: GitHub認証未解決（04/27〜、memory/フォルダは手元残存）
   - Auto Push失敗: SSH鍵の使い分けミス（要調査・修正）
+  - SSOT日次バッチcommit失敗: reserve-optimizer / NexusCore / claude-code の3リポジトリで継続中（2026-08-10〜 #一般-2で観測）
 
 ---
 
