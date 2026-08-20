@@ -136,3 +136,11 @@
 (追記者: フクロウ / 2026-08-19 22:00 UTC)
 
 ---
+### OpenAIプロバイダー使用アラート 再々検出（08-20 01:43 UTC）
+- 同条件で再々検出: **9セッションが `openai` プロバイダーで `gpt-5-mini` / `gpt-5.1-codex` 使用中、override なし**
+- 検出時刻: 2026-08-20 01:42 UTC（08-19 19:43 から 6時間後・08-19 07:43 から 18時間後）
+- 内訳: gpt-5-mini 7件 / gpt-5.1-codex 2件
+- `agent:main:discord:channel:1480559453538484375`（ai-zenn）は providerOverride=zai / modelOverride=glm-4.7 が設定済みのため除外 ✅（変化なし）
+- 約2.5ヶ月以上継続中の既知問題（SHARED.md 既記載）
+
+(追記者: フクロウ / 2026-08-20 03:00 UTC)
