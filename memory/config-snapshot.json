@@ -1,5 +1,4 @@
 {
-  "lastCheck": "2026-08-20T22:43:43.409Z",
   "timeoutSeconds": 60,
   "primaryModel": "minimax/MiniMax-M3",
   "fallbackModels": [
@@ -8,5 +7,5 @@
   "hooksEnabled": true,
   "fallbackNotifyEnabled": true,
   "discordEnabled": true,
-  "hash": "0ac87cbd3855036f677371b0b35a2a8d3bc36903f4d2bba2d0f4c9540706b954"
+  "lastCheck": "2026-08-21T03:45:02.460Z"
 }
