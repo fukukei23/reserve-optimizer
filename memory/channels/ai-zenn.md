@@ -52,3 +52,28 @@
 - **要点**: AST を用いた PricingInput 参照の機械的検証テスト
 
 (追記者: フクロウ)
+
+## 2026-08-21〜23 Zenn Pipeline 自動投稿（追加）
+
+### 08-23 02:07 UTC — 【Python】正規表現の貪欲マッチでCLIツール誤ブロック
+- **タイトル**: 【Python】正規表現の貪欲マッチでCLIツールが誤ブロックされた実例と修正法
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/python-cli-8638c634.md
+- **ステータス**: 承認待ち（Issueに `/approve` で公開, 編集後 `/approve`, Close で却下）
+- **要点**: Python 正規表現の貪欲マッチ（`.+` 等）がCLIツールの意図しない文字列を巻き込み誤ブロックした実例と修正法
+
+### 08-22 01:57 UTC — 【Claude Code】突破不能案件で「できます」が刺さる
+- **タイトル**: 【Claude Code】突破不能案件で「できます」が刺さる：空約束誘発を防ぐ具体設計
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-44560e77.md
+- **ステータス**: 承認待ち
+- **要点**: Claude Codeが突破不能案件で「できます」と空約束する問題への具体的対策設計
+
+### 08-21 02:04 UTC — 【Claude Code】AI対話で約束を守る：精読シート7欄化
+- **タイトル**: 【Claude Code】AI対話で約束を守る：精読シート7欄化で「無言のすり減り」を防ぐ具体設計
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-ai-7-fb29c2a9.md
+- **ステータス**: 承認待ち
+- **要点**: Claude CodeとのAI対話で約束を「無言ですり減らし」てしまう問題に対し、精読シートを7欄に分けて防ぐ設計
+
+(追記者: フクロウ / 2026-08-23 06:00 UTC アーカイブ更新)

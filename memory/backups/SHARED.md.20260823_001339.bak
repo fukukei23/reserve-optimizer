@@ -483,17 +483,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 （以下は既存内容を保持）
 
 ... (省略: 既存の長いセクションは省略表示していますが、完全版はファイル内に保存されています.)
----
-
-### 【追加 2026-08-23 09:00 UTC】設定ドリフト検出 — fallbackModels の glm-4.7 除去疑い
-- **発見**: Config Health Monitor リフレッシュ時（08-23 06:45 UTC・スナップショット51時間遅延の解消時）
-- **内容**: 現設定 `agents.defaults.model.fallbacks = ["zai/glm-5.1"]` のみ。**MEMORY.md / SHARED.md(08-15) の記載は `["zai/glm-5.1","zai/glm-4.7"]`**
-- **推定**: 08-15〜08-21 の間に glm-4.7 が除去された（意図的か事故かは不明）
-- **影響**: glm-5.1障害時にフォールバック先が1つしかない（MiniMax-M3はprimary・glm-5.1が第1フォールバック）
-- **要対応**: ふくけい確認（意図的なら MEMORY.md 記載を更新、事故なら openclaw.json を復元）
-- **出所**: #openclawヘルスチェック 08-23 06:45 UTC Config Health Monitor 報告
-
-### 【追加 2026-08-23 09:00 UTC】daily-workspace-backup エラー（12時間未更新）
-- Config Health Monitor が検出（08-23 06:45 UTC）: daily-workspace-backup cron が 12h ago error
-- 27件cronエラー群（08-16発覚）の一環・既知。ふくけい無応答継続中のため自動修復は保留
-- **リスク**: 最終バックアップからの経過時間が伸びるほどデータ損失リスク増大

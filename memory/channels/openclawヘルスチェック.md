@@ -607,3 +607,37 @@
 - なし
 
 (追記者: フクロウ / 2026-08-22 03:00 UTC)
+
+### ヘルスチェック結果（08-20 12:04〜08-23 00:31 UTC）
+- **08-20 12:04 UTC**: `fopenclaw.com` → 200, 181 ms ✅
+- **08-20 18:04 UTC**: `fopenclaw.com` → 200, 92 ms ✅
+- **08-20 23:13 UTC**: ⚠️ Config Health Monitor — `openclaw.json` ハッシュ変化（`8b78f4f4` → `0ac87cbd`）を検知。**監視対象フィールドは全て正常**（timeoutSeconds=60, primaryModel=minimax/MiniMax-M3, fallbacks=[zai/glm-5.1], hooksEnabled=true, fallbackNotifyEnabled=true, discordEnabled=true）。**監視対象外の変更と推定**
+- **08-21 00:03 UTC**: `fopenclaw.com` → 200, 100 ms ✅
+- **08-21 00:31 UTC**: モデルアップデート監視 — OpenClaw 最新リリース v2026.7.1-2（変更なし）
+- **08-21 06:03 UTC**: `fopenclaw.com` → 200, 189 ms ✅（06:03:05 と 06:03:08 に重複通知）
+- **08-21 06:04 UTC**: `fopenclaw.com` → 200, 87 ms ✅
+- **08-21 12:02 UTC**: `fopenclaw.com` → 200, 83 ms ✅ + Discord送信完了通知
+- **08-21 12:04 UTC**: `fopenclaw.com` → 200, 76 ms ✅
+- **08-21 18:04 UTC**: `fopenclaw.com` → 200, 87 ms ✅
+- **08-22 00:06 UTC**: `fopenclaw.com` → 200, 92 ms ✅ + 115 ms ✅（重複通知）+ Discord送信完了
+- **08-22 00:31 UTC**: モデルアップデート監視 — v2026.7.1-2（変更なし）
+- **08-22 06:02 UTC**: `fopenclaw.com` → 200, 188 ms ✅（06:02:08）+ Discord送信完了（06:02:10）+ 200, 77 ms ✅（06:04:23）
+- **08-22 12:04 UTC**: `fopenclaw.com` → 200, 70 ms ✅
+- **08-22 18:04 UTC**: `fopenclaw.com` → 200, 161 ms ✅
+- **08-23 00:04 UTC**: `fopenclaw.com` → 200, 93 ms ✅（重複通知3件: 00:04:50 / 00:04:52 / 00:04:59）
+- **08-23 00:31 UTC**: モデルアップデート監視 — v2026.7.1-2（変更なし）
+
+### ふくけい新規メッセージ
+- なし（期間中ふくけい発言なし、全てシステム通知）
+
+(追記者: フクロウ / 2026-08-23 06:00 UTC アーカイブ更新)
+
+### ヘルスチェック・Config監視（08-23 06:03〜06:45 UTC）
+- **06:03 UTC**: `fopenclaw.com` → 200, 97 ms ✅（06:03:12）+ 成功通知（06:03:16）
+- **06:04 UTC**: `fopenclaw.com` → 200, 165 ms ✅
+- **06:45 UTC**: ⚠️ **Config Health Monitor リフレッシュ** — スナップショットが 08-21 03:45 UTC で停止（約51時間遅延）→ 解消
+  - **変更**: なし（現在値 = 過去スナップショット）
+  - **⚠️ ドキュメント整合性の問題**: MEMORY.md と SHARED.md (08-15) は `fallbacks=["zai/glm-5.1","zai/glm-4.7"]` と記載だが、**現設定は `["zai/glm-5.1"]` のみ**。08-15〜21の間に glm-4.7 が除去された可能性。**ふくけい確認推奨（意図的かどうか）**
+  - **cronエラー継続**: daily-workspace-backup が 12h ago error（バックアップ未更新）— 27件エラー群（08-16発覚）の一環で既知。ふくけい無応答継続中のため自動修復は保留
+
+(追記者: フクロウ / 2026-08-23 09:00 UTC アーカイブ更新)
