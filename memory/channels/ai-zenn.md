@@ -77,3 +77,14 @@
 - **要点**: Claude CodeとのAI対話で約束を「無言ですり減らし」てしまう問題に対し、精読シートを7欄に分けて防ぐ設計
 
 (追記者: フクロウ / 2026-08-23 06:00 UTC アーカイブ更新)
+
+## 2026-08-30 Zenn Pipeline 自動投稿
+
+### 08-30 05:36 UTC — 【Claude Code】ハーネス入門：tool calling/自律ループ/サーキットブレーカ用語集
+- **タイトル**: Claude Code ハーネス入門：tool calling/自律ループ/サーキットブレーカ用語集
+- **リポジトリ**: claude-code-guide
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-tool-calling-5359933a.md
+- **ステータス**: 公開OK（Issueで `/approve` 承認待ち）
+- **要点**: Claude Code の tool calling・自律ループ・サーキットブレーカの3つの重要概念的用語を整理した入門記事
+
+(追記者: フクロウ / 2026-08-30 09:00 UTC アーカイブ更新)
