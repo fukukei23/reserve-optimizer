@@ -639,15 +639,8 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
   5. glm-5.3戻し忘れ検知警告ログ観察（P2・due 9/15）
 - **進行中セッション3件**: 3a11/9929/c5ff（他セッション占有・重複着手禁止）
 
-### 【追加 2026-09-02 12:00 UTC】OpenClaw v2026.8.2公開・バージョン5ヶ月遅れ
-- **現行**: 2026.3.12 → **最新**: v2026.8.2（2026-09-01公開・v2026.8.1から約2日で連続リリース）
-- **ハイライト**: Home agent の dock 表示（Cmd/Ctrl+Shift+H）、work-context snapshot のプレビュー/削除
-- **対応要否**: アップグレードにはVPS上での docker compose 再用が必要。ふくけい承認待ち
-- **SHARED.md自動変更検知**: 09-02に計6回変更検知（04:15〜10:15 JST）— cron/heartbeatによる自動更新が推定原因・実害なし
-
 ### 【追加 2026-09-02 09:00 UTC】OpenClaw v2026.8.2 公開
 - **v2026.8.2**（2026-09-01公開・09-02 00:31 UTCに監視が検出）
   - ハイライト: Home agent — Cmd/Ctrl+Shift+H で right/bottom dock 表示、work-context snapshot のプレビュー/削除
   - https://github.com/openclaw/openclaw/releases/tag/v2026.8.2
   - v2026.8.1（08-31公開）から約2日で連続リリース。自動更新の成否確認は前回同様留意
-

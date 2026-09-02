@@ -712,3 +712,16 @@
 - https://fopenclaw.com/ -> 200, 85 ms ✅ 正常
 
 (追記者: フクロウ / 2026-09-02 00:01 UTC アーカイブ更新)
+
+## 2026-09-02 00:00 UTC窓
+
+### ⚠️ OpenClaw v2026.8.2 公開（09-02 00:31 UTC）
+- **バージョン**: v2026.8.2（2026-09-01公開）
+- **ハイライト**: Home agent — Cmd/Ctrl+Shift+H で right/bottom dock に表示、work-context snapshot のプレビュー/削除機能
+- **リリースノート**: https://github.com/openclaw/openclaw/releases/tag/v2026.8.2
+- **備考**: v2026.8.1（08-31公開）から約2日での続伸
+
+### ✅ OpenClawヘルスチェック（09-02 06:02 UTC）
+- https://fopenclaw.com/ -> **200, 159 ms** ✅ 正常（前回比+73msだが許容範囲）
+
+(追記者: フクロウ / 2026-09-02 09:00 UTC アーカイブ更新)
