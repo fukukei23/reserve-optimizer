@@ -88,3 +88,35 @@
 - **要点**: Claude Code の tool calling・自律ループ・サーキットブレーカの3つの重要概念的用語を整理した入門記事
 
 (追記者: フクロウ / 2026-08-30 09:00 UTC アーカイブ更新)
+
+## 2026-08-31〜09-04 Zenn Pipeline 自動投稿（4件）
+
+### 08-31 05:51 UTC — 【Claude Code】呼称ルール警告hook実装
+- **タイトル**: 「Claude Code」呼称ルール警告hook実装：SSOT衛生管理を「ユーザー」→「ふくけい」置換で実現
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-hook-ssot-ec5d3c5e.md
+- **ステータス**: 承認待ち
+- **要点**: SSOT衛生管理のための呼称ルール（「ユーザー」→「ふくけい」置換）をhookで強制する実装
+
+### 09-01 05:25 UTC — 【Claude Code】ゼロ断定ゲート入門
+- **タイトル**: 【Claude Code】ゼロ断定ゲート入門：M>N再検索要求でLLM暴走を防ぐ具体設計
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-m-n-llm-1e173e52.md
+- **ステータス**: 承認待ち
+- **要点**: M>N再検索要求でLLMの暴走（断定連鎖）を防ぐゼロ断定ゲートの具体設計
+
+### 09-02 04:50 UTC — 【Claude Code】glm-5.3戻し忘れを3層hookで検出
+- **タイトル**: 【Claude Code】glm-5.3戻し忘れを3層hookで検出する設計術：判定共有・通知・抑止の連携実装
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-glm-5-3-3-hook-c52a5201.md
+- **ステータス**: 承認待ち
+- **要点**: glm-5.3への一時切り替え戻し忘れを、判定共有・通知・抑止の3層hookで検出する設計
+
+### 09-04 04:51 UTC — 【pytest】ImportErrorで全skipされた36テストを救う
+- **タイトル**: 【pytest】ImportErrorで全skipされた36テストを救う：意図的削除関数の正しい整理法
+- **リポジトリ**: NexusCore
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/pytest-importerror-skip-36-1db8c090.md
+- **ステータス**: 承認待ち
+- **要点**: NexusCoreのpytestでImportErrorにより36テストが全skipされた問題の解決 — 意図的に削除した関数の正しい整理法
+
+(追記者: フクロウ / 2026-09-05 03:00 UTC アーカイブ更新)
