@@ -102,6 +102,7 @@ global.PropertiesService = {
 };
 
 global.Utilities = {
+  getUuid: function() { return 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'; }, // CRMService.js の /^[a-f0-9-]{36}$/ 検証を通る形式
   formatDate: function(d, tz, fmt) {
     if (fmt === 'yyyy/MM/dd') {
       return d.getFullYear() + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2);
@@ -220,7 +221,8 @@ assert('crm.tag.no_show_warn exists', MESSAGES['crm.tag.no_show_warn'] !== undef
 section('CRMService: getOrCreateCustomer');
 
 var c1 = getOrCreateCustomer('09012345678', 'Test Customer', 'U001');
-assert('New customer created', c1.customer_id === '09012345678');
+// customer_id は uuid 形式（CRMService.js:106・モックgetUuidの固定値）
+assert('New customer created', c1.customer_id === 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
 assert('New customer has name', c1.name === 'Test Customer');
 assert('New customer has line_user_id', c1.line_user_id === 'U001');
 assert('New customer visit_count is 0', c1.visit_count === 0);
@@ -229,7 +231,7 @@ assert('New customer tag is new', c1.tags === 'new');
 assert('Customer written to sheet', mockSheetData.customers.rows.length === 1);
 
 var c1again = getOrCreateCustomer('09012345678', 'Test Customer', 'U001');
-assert('Same customer returned on second call', c1again.customer_id === '09012345678');
+assert('Same customer returned on second call', c1again.customer_id === 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
 assert('No duplicate rows in sheet', mockSheetData.customers.rows.length === 1);
 
 section('CRMService: incrementVisitCount');
@@ -255,7 +257,7 @@ assert('Tag changed to vip after 10 visits', c4.tags === 'vip');
 section('CRMService: incrementNoShowCount');
 
 var c5 = getOrCreateCustomer('09099999999', 'NoShow User');
-assert('NoShow user created', c5.customer_id === '09099999999');
+assert('NoShow user created', c5.customer_id === 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d');
 
 incrementNoShowCount('09099999999');
 var c6 = getCustomerByPhone('09099999999');

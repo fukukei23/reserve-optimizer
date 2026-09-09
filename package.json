@@ -27,8 +27,5 @@
   "bugs": {
     "url": "https://github.com/fukukei23/reserve-optimizer/issues"
   },
-  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme",
-  "devDependencies": {
-    "jest": "^30.4.2"
-  }
+  "homepage": "https://github.com/fukukei23/reserve-optimizer#readme"
 }

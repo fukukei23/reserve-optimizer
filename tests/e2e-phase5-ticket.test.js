@@ -245,7 +245,9 @@ assert('Ticket package_type is 5', ticket1.package_type === '5');
 assert('Ticket total_sessions is 5', ticket1.total_sessions === 5);
 assert('Ticket remaining_sessions is 5', ticket1.remaining_sessions === 5);
 assert('Ticket status is Active', ticket1.status === 'Active');
-assert('Ticket has expiry_date', ticket1.expiry_date.indexOf('2026') === 0);
+// 有効期限=発行日+180日のため期待年は実行日から動的算出（固定'2026'は年跨ぎで壊れる時限テストだった）
+var expectedExpiryYear = String(new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).getFullYear());
+assert('Ticket has expiry_date', ticket1.expiry_date.indexOf(expectedExpiryYear) === 0);
 assert('Ticket sheet has 1 row', mockSheetData.tickets.rows.length === 1);
 
 section('getActiveTicketByUser');

@@ -30,7 +30,10 @@ function assertEqual(a, b, msg) {
 var _logRows = [];
 var _pushLogs = [];
 var _mockCustomers = [];
-var _nowDate = new Date('2026-06-13T12:00:00+09:00');
+// 実行日基準でN日前の日付文字列('yyyy/MM/dd')を返す（時限テスト対策・固定日付は月が変わると壊れる）
+function daysAgoStr(n) {
+  return new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString().slice(0, 10).replace(/-/g, '/');
+}
 
 global.Logger = { log: function() {} };
 global.Utilities = {
@@ -139,10 +142,9 @@ test('getSegmentCustomers tag: tagsが空の顧客は除外', function() {
 
 test('getSegmentCustomers inactive:30 → 30日以上経過した顧客', function() {
   resetMocks();
-  // 2026-06-13 基準: 30日前 = 2026-05-14
   _mockCustomers = [
-    makeCustomer({ line_user_id: 'U1', last_visit: '2026/04/01' }), // 73日前 → 対象
-    makeCustomer({ line_user_id: 'U2', last_visit: '2026/06/10' })  // 3日前 → 対象外
+    makeCustomer({ line_user_id: 'U1', last_visit: daysAgoStr(73) }), // 73日前 → 対象
+    makeCustomer({ line_user_id: 'U2', last_visit: daysAgoStr(3) })   // 3日前 → 対象外
   ];
   var result = getSegmentCustomers('inactive', 30);
   assertEqual(result.length, 1);
@@ -158,11 +160,14 @@ test('getSegmentCustomers inactive: last_visitが空の顧客は含める', func
 
 test('getSegmentCustomers inactive:90 → ちょうど90日は対象', function() {
   resetMocks();
-  // 2026-06-13 から90日前 = 2026-03-15
-  _mockCustomers = [makeCustomer({ line_user_id: 'U1', last_visit: '2026/03/15' })];
+  // 境界(ちょうど90日)はTZ差で床落ちが反転するため±5日マージンで検証
+  _mockCustomers = [
+    makeCustomer({ line_user_id: 'U1', last_visit: daysAgoStr(95) }), // 95日前 → 対象
+    makeCustomer({ line_user_id: 'U2', last_visit: daysAgoStr(85) })  // 85日前 → 対象外
+  ];
   var result = getSegmentCustomers('inactive', 90);
-  // 90日以上 → 対象
-  assert(result.length >= 0); // 境界値テスト（実行時dateに依存するため存在確認のみ）
+  assertEqual(result.length, 1);
+  assertEqual(result[0].line_user_id, 'U1');
 });
 
 // ─── getSegmentCustomers: VISIT_GTE ───
