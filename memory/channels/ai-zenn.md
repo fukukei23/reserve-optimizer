@@ -120,3 +120,12 @@
 - **要点**: NexusCoreのpytestでImportErrorにより36テストが全skipされた問題の解決 — 意図的に削除した関数の正しい整理法
 
 (追記者: フクロウ / 2026-09-05 03:00 UTC アーカイブ更新)
+
+## 2026-09-08 04:57 UTC — 【Python】カスタムexit code 78でpytest衝突回避
+- **タイトル**: 【Python】カスタムexit code 78でpytest衝突回避：CLI終了コード設計の具体例
+- **リポジトリ**: cc-stories-guide
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/python-exit-code-78-pytest-cli-7798a800.md
+- **ステータス**: 承認待ち（Issueに `/approve` で公開, 編集後 `/approve`, Close で却下）
+- **要点**: Python CLIでpytest衝突回避のためカスタムexit code 78を設計した具体例
+
+(追記者: フクロウ / 2026-09-09 00:01 UTC アーカイブ更新)
