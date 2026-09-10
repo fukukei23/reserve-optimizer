@@ -695,3 +695,9 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 現行稼働中: **v2026.3.12**（約6ヶ月遅れ • 変更なし）
 - **ヘルスチェック応答遅延**（09-09 00:04 UTC）: 220ms（通常94-98ms • 約2.3倍）。サービス停止ではないが応答遅延傾向。注意監視が必要
 - **ふくけい無応答**: 08-21 08:00 JST以降継続（約20日目）
+
+### 【追加 2026-09-10 00:03 UTC】OpenRouter free候補回復継続 / paid_fallback警告2日連続なし
+- **OpenRouter pick**（09-09 22:48 UTC）: blacklist昇格1件（nemotron-3-ultra-550b-a55b:free・死亡スモーク）/ 新規free候補追加2件（nex-agi/nex-n2.5-pro:free・nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free）/ スキップ3件（liquid lfm-2.5・thinkingmachines inkling-small/inkling・smoke不合格）
+- **週1再受験合格**: dots-studio/dots-3-note-preview:free
+- **paid_fallback警告2日連続なし**: 09-08 22:47（消滅）→ 09-09 22:48（再発なし）。nex-agi/nex-n2.5-miniに加え nex-n2.5-pro・nemotron-nano-omni の追加で free候補プールが回復傾向。09-02以来の有料フォールバック頻発期は事実上終息の可能性高（継続観察）
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約20日目）
