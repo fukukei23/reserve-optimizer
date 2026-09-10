@@ -64,6 +64,7 @@
 1. **`validateDateForBooking`（実装）は実時刻と比較する**（過去日拒否・MAX_BOOKING_DAYS_AHEAD・当日カットオフ）。現テストは全員 stub/frozen で安全だが、**この関数を通す新規 e2e テストを書く時は必ず stub するか日付を動的生成すること**。
 2. **観察（未検証のimpl疑義）**: `ValidationUtils.validateDateForBooking` 内の `parsedDate < todayStr` は文字列比較で、呼び出し側の日期形式（'yyyy/MM/dd' か 'yyyy-MM-dd' か）によっては比較が成立しない可能性。本オーディット（テスト側）では影響なし・impl側の形式契約は要確認とする。
 3. unit-stamp-card-service の fixture 日付は作成時刻の記録にのみ使われる（比較なし・実装 :38/:109 確認）。
+4. CI timeout（r2レビュー指摘・2026-09-10）: job timeout-minutes:10 はキャップとして機能するが、テスト数増加やハング系テスト追加時は現実測49s→上限接近に注意。対処は test.yml の timeout-minutes 引上げ+run-all.js per-file timeout の2箇所。
 
 ## 運用ルール（新規テスト作成時）
 
