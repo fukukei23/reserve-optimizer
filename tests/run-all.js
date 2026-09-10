@@ -21,7 +21,7 @@ console.log('=== reserve-optimizer テスト実行 ===\n');
 files.forEach(function(file) {
   var filePath = path.join(testDir, file);
   try {
-    var output = execFileSync('node', [filePath], { encoding: 'utf8', timeout: 30000 });
+    var output = execFileSync('node', [filePath], { encoding: 'utf8', timeout: 120000 }); // 30s→120s: テスト増加時のflake予防（MLR起票⑤・2026-09-10）
     var match = output.match(/Passed:\s*(\d+)\s+Failed:\s*(\d+)/);
     if (!match) {
       // Alternate format: "PASS: 33\nFAIL: 0"

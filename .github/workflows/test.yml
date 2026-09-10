@@ -10,6 +10,7 @@ jobs:
   root-test:
     name: Root Unit/E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # テスト増加時のインフラタイムアウトflake予防（MLR起票⑤・2026-09-10）
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +30,7 @@ jobs:
   worker-test:
     name: Worker Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
