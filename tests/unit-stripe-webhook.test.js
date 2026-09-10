@@ -134,7 +134,14 @@ test('署名欠落ヘッダーは Missing signature で拒否される', functio
 test('不正なv1署名は Invalid signature で拒否される', function() {
   resetStubs();
   var ts = Math.floor(Date.now() / 1000);
-  var badHeader = 't=' + ts + ',v1=' + Array(65).join('a'); // 64文字の誤署名
+  // 誤署名は「別ペイロードの正規計算結果」を使い（固定文字列の偶然一致を排除・r2レビュー採用）
+  // 本物の署名と一致しないことを前提条件として明示assertする
+  var wrongSig = pseudoHmac(ts + '.' + BODY + 'tampered', SECRET).map(function(b) {
+    return ('0' + (b & 0xff).toString(16)).slice(-2);
+  }).join('');
+  var correctSig = makeSigHeader(BODY, SECRET, ts).split(',v1=')[1];
+  assert(wrongSig !== correctSig, '前提: 誤署名は正規署名と異なるはず');
+  var badHeader = 't=' + ts + ',v1=' + wrongSig;
   var resp = responseOf(dispatch(BODY, { 'x-stripe-signature': badHeader }));
   assert(resp.status === 'error', 'status should be error');
   assert(resp.message === 'Invalid signature', 'message=' + resp.message);
@@ -144,7 +151,7 @@ test('不正なv1署名は Invalid signature で拒否される', function() {
 // ─── ③ タイムスタンプ期限切れ（5分許容の外側） → 拒否 ───
 test('5分より古いタイムスタンプの署名は拒否される', function() {
   resetStubs();
-  var oldTs = Math.floor(Date.now() / 1000) - 301; // 許容300秒の外側
+  var oldTs = Math.floor(Date.now() / 1000) - 310; // 許容300秒の外側（±10sマージン・impl は >300 で拒否・r2レビュー採用で301→310）
   var resp = responseOf(dispatch(BODY, { 'x-stripe-signature': makeSigHeader(BODY, SECRET, oldTs) }));
   assert(resp.status === 'error', 'status should be error');
   assert(resp.message === 'Invalid signature', 'message=' + resp.message);
@@ -180,7 +187,7 @@ test('カンマ無しの署名形式は Invalid signature で拒否される', f
 // ─── ⑦ 許容境界の内側（5分ちょうど-1秒） → 通過 ───
 test('タイムスタンプが許容300秒の内側なら通過する', function() {
   resetStubs();
-  var nearTs = Math.floor(Date.now() / 1000) - 299;
+  var nearTs = Math.floor(Date.now() / 1000) - 290; // 許容の内側（±10sマージン・r2レビュー採用で299→290）
   var resp = responseOf(dispatch(BODY, { 'x-stripe-signature': makeSigHeader(BODY, SECRET, nearTs) }));
   assert(resp.status === 'success', 'status should be success, got ' + JSON.stringify(resp));
 });
