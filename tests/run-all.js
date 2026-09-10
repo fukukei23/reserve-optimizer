@@ -31,6 +31,14 @@ files.forEach(function(file) {
     }
     var passed = match ? parseInt(match[1]) : 0;
     var failed = match ? parseInt(match[2]) : 0;
+    // sanity check（2026-09-10・MLR起票③）: 出力形式不一致（match=null）や
+    // assert 0件（Passed:0 Failed:0）を「緑」と数えると偽緑になるため fail 扱いにする
+    if (!match || (passed === 0 && failed === 0)) {
+      totalFailed += 1;
+      results.push({ file: file, passed: passed, failed: failed, ok: false, detail: output });
+      console.log('[FAIL] ' + file + ' (sanity: 出力形式不一致 or assert 0件・偽緑防止)');
+      return;
+    }
     totalPassed += passed;
     totalFailed += failed;
     results.push({ file: file, passed: passed, failed: failed, ok: true });
