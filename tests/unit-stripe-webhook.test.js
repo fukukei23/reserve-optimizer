@@ -2,7 +2,7 @@
  * Unit Tests - Stripe Webhook 署名検証（WebhookRouter._dispatchStripeWebhook）
  *
  * 2026-09-10 新設（3機MLR採用指摘・バックログP2）: 金銭経路の署名検証分岐の無検証を解消。
- * 対象分岐: ①signature欠落拒否 ②不正署名拒否 ③タイムスタンプ期限切れ拒否 ④有効署名で通過 ⑤secret未設定時のfail-open ⑥形式不正拒否
+ * 対象分岐: ①signature欠落拒否 ②不正署名拒否 ③タイムスタンプ期限切れ拒否 ④有効署名で通過 ⑤secret未設定時はfail-closed拒否（2026-09-10にfail-openから変更） ⑥形式不正拒否
  *
  * Run: node tests/unit-stripe-webhook.test.js
  *
@@ -167,13 +167,14 @@ test('有効な署名は通過し下流dispatchに到達する', function() {
     'type=refund(harness) が dispatch されるはず・got ' + JSON.stringify(_dispatched));
 });
 
-// ─── ⑤ secret 未設定 → 署名なしでも処理される（現行 fail-open の文書化テスト） ───
-test('secret未設定時は署名なしでも処理される(fail-open・現行仕様)', function() {
+// ─── ⑤ secret 未設定 → fail-closed で拒否（2026-09-10 挙動変更・旧fail-openを修正） ───
+test('secret未設定時は fail-closed で拒否される', function() {
   resetStubs();
   _stripeSecret = null;
   var resp = responseOf(dispatch(BODY, {}));
-  assert(resp.status === 'success', 'status should be success, got ' + JSON.stringify(resp));
-  assert(_dispatched.length === 1, '下流dispatchは呼ばれるはず');
+  assert(resp.status === 'error', 'status should be error, got ' + JSON.stringify(resp));
+  assert(resp.message === 'Stripe webhook secret not configured', 'message=' + resp.message);
+  assert(_dispatched.length === 0, '下流dispatchは呼ばれないはず');
 });
 
 // ─── ⑥ 形式不正（カンマ無し） → 拒否 ───

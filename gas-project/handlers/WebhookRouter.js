@@ -146,17 +146,23 @@ function _dispatchLineWebhook(body) {
 function _dispatchStripeWebhook(body, headers) {
   appendLogRow('STRIPE', 'Webhook received: body=' + body.substring(0, 300));
 
-  // Verify Stripe webhook signature (mandatory)
+  // Verify Stripe webhook signature (mandatory・fail-closed: secret未設定時は拒否する)
+  // 2026-09-10 変更: 旧実装は secret 未設定時に検証をスキップして無署名リクエストを受理していた（fail-open）
+  // → 金銭経路のため未設定時は拒否に変更（r2レビュー Gemini critical+MiniMax high の2機独立指摘を採用）
+  // ⚠️ デプロイ前に STRIPE_WEBHOOK_SECRET が Script Properties に設定されていることを必須確認
   var webhookSecret = getStripeWebhookSecret();
-  if (webhookSecret) {
-    var sigParam = (headers && headers['x-stripe-signature']) || '';
-    if (!sigParam) {
-      appendLogRow('ERROR', '[Stripe] No signature provided — rejecting');
-      return _jsonResponse('error', 'Missing signature', 400);
-    } else if (!verifyStripeSignature(body, sigParam, webhookSecret)) {
-      appendLogRow('ERROR', '[Stripe] Signature verification failed');
-      return _jsonResponse('error', 'Invalid signature');
-    }
+  if (!webhookSecret) {
+    appendLogRow('ERROR', '[Stripe] STRIPE_WEBHOOK_SECRET not configured — rejecting webhook (fail-closed)');
+    return _jsonResponse('error', 'Stripe webhook secret not configured', 500);
+  }
+  var sigParam = (headers && headers['x-stripe-signature']) || '';
+  if (!sigParam) {
+    appendLogRow('ERROR', '[Stripe] No signature provided — rejecting');
+    return _jsonResponse('error', 'Missing signature', 400);
+  }
+  if (!verifyStripeSignature(body, sigParam, webhookSecret)) {
+    appendLogRow('ERROR', '[Stripe] Signature verification failed');
+    return _jsonResponse('error', 'Invalid signature');
   }
 
   var payload = JSON.parse(body);
