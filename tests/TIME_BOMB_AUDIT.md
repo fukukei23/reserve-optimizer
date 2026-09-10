@@ -44,7 +44,6 @@
 | unit-review-handler.test.js | ✅ | ルーティング |
 | unit-script-properties.test.js | ✅ | プロパティ |
 | unit-segment-broadcast-service.test.js | 🔄 | 修正済み（上表） |
-| unit-sheet-service.test.js | ✅ | （重複掲載なし・上記参照） |
 | unit-stamp-card-service.test.js | ✅/👀 | fixture '2026/06/12'・実装側 `new Date()` は作成時刻記録のみで比較なし（:38/:109確認） |
 | unit-state-handler.test.js | ✅ | 状態遷移 |
 | unit-subscription-service.test.js | 🔒 | formatDate モックが固定 '2026/06/13' を返す |
