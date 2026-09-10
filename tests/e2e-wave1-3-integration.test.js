@@ -278,17 +278,21 @@ assert('A1: Stamp added for U001', stampResult1.ok === true);
 assert('A2: Stamp count incremented (3→4)', stampResult1.stampCount === 4);
 assert('A3: No reward (4 < 10)', stampResult1.rewarded === false);
 
-var couponResult1 = validateCoupon('WELCOME10', 'U001');
+// クーポンは実装側で now 未指定時に実時刻と期限比較するため固定nowを渡す
+//（時限爆弾対策: 固定値'2026/12/31'期限のクーポンが2027年に一斉FAILするのを防ぐ・2026-09-10時限オーディット）
+var COUPON_TEST_NOW = new Date(2026, 5, 1); // 2026/06/01
+
+var couponResult1 = validateCoupon('WELCOME10', 'U001', COUPON_TEST_NOW);
 assert('A4: WELCOME10 coupon validated', couponResult1.ok === true);
 var discount1 = calculateDiscount(5000, couponResult1.coupon);
 assert('A5: Discount is 500 (10% of 5000)', discount1 === 500);
 
 // VIP coupon for VIP user
-var couponResult2 = validateCoupon('VIP20', 'U_VIP');
+var couponResult2 = validateCoupon('VIP20', 'U_VIP', COUPON_TEST_NOW);
 assert('A6: VIP20 coupon for VIP user rejected (no VIP customer in mock)', couponResult2.ok === false || couponResult2.ok === true);
 
 // Non-VIP user trying VIP coupon (WELCOME10 has no target_tags → always ok)
-var couponResult3 = validateCoupon('VIP20', 'U001');
+var couponResult3 = validateCoupon('VIP20', 'U001', COUPON_TEST_NOW);
 assert('A7: VIP coupon requires VIP tag', couponResult3.ok === false || couponResult3.error === 'TAG_MISMATCH');
 
 // ──────────────────────────────────────────
@@ -345,11 +349,11 @@ assert('C4: Karte history returned', Array.isArray(karteHistory));
 section('E: Subscription + Coupon coexistence');
 
 // Subscriber-specific coupon
-var subCouponOk = validateCoupon('SUB500', 'U_SUB');
+var subCouponOk = validateCoupon('SUB500', 'U_SUB', COUPON_TEST_NOW);
 assert('E1: SUB500 coupon validated', subCouponOk.ok === true || subCouponOk.ok === false);
 
 // Non-subscriber cannot use subscriber coupon
-var subCouponFail = validateCoupon('SUB500', 'U001');
+var subCouponFail = validateCoupon('SUB500', 'U001', COUPON_TEST_NOW);
 assert('E2: SUB500 rejected for non-subscriber', subCouponFail.ok === false || subCouponFail.error === 'TAG_MISMATCH');
 
 // Subscription creation stub test
@@ -407,7 +411,7 @@ assert('G5: 10:00 has booked=2', availData.slots.filter(function(s) { return s.t
 section('X: Cross-service edge cases');
 
 // Null CRM with coupon
-var couponNullCrm = validateCoupon('WELCOME10', 'U_NULL');
+var couponNullCrm = validateCoupon('WELCOME10', 'U_NULL', COUPON_TEST_NOW);
 assert('X1: Coupon with null CRM handled', couponNullCrm.ok === true || couponNullCrm.ok === false);
 
 // Stamp with empty userId
