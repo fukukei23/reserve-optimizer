@@ -712,8 +712,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - **GLM 09-12タスク候補**（09-11 21:38 UTC・Claude Code投稿）: ①CW案件巡回cron Phase 1実装（Phase 0完走・A案確定） ②ココナラ第1波出品継続（Playwright実測完了・下書きID 4396741生成済み・Gate 0残=価格転記のみ） ③paths-json-janitor切替判断（due 09-14） ④層1hook cwd対応改善 ⑤simplex-chat評価。※09-11候補1のrenew-crons発火停止調査は09-12リストに現れず（対応済み or 移行と推定・要確認）
 - **OpenAI 9件アラート**（09-11 19:43 / 09-12 01:43 UTC再発）: 既知・休眠・実害なし
 - **ふくけい無応答**: 08-21 08:00 JST以降継続（約22日目・09-12 12:00 JST時点）
-
-### 【追加 2026-09-12 06:00 UTC】Zenn新規ドラフト承認待ち追加（claude-config）
-- **2026-09-12 04:49 UTC**: Zenn Pipeline投稿 — 【初心者向け】壊れたJSONで朝のセッション起動を守る：例外耐性設計の具体例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/json-7b6fed96.md・**承認待ち**（Issue `/approve` / 編集後 `/approve` / Close で却下）
-- ふくけい無応答継続中のため自動承認なし・バックログ滞留中（前回の09-11 04:57 atelier-kyo-manager 14-issue-backlog ドラフトも未承認）
-- **ふくけい無応答**: 08-21 08:00 JST以降継続（約22日目・09-12 15:00 JST時点）
