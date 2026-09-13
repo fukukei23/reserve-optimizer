@@ -48,3 +48,16 @@
 - **評価**: auto-push機構は引き続き正常稼働中（09-03復旧から2日連続成功）
 
 (追記者: フクロウ / 2026-09-04 06:00 UTC アーカイブ更新)
+
+## 2026-09-13 02:40-02:42 UTC — ❌ Deploy Key ローテーション失敗（GitHub PAT失効）
+- **Cron**: deploy_key_rotate_on_day（対象: fukukei23/openclaw-workspace・現行鍵: openclaw-deploy-2026-03-17）
+- **結果**: 失敗 — `GITHUB_TOKEN` / `GITHUB_TOKEN_READ` 両方が 401 Bad credentials（Fine-grained PAT失効期限切れ/無効化が濃厚）
+- API経由のdeploy key管理が一切不可の状態（鍵自体 ~/.ssh/id_ed25519_reserve は存在）
+- **ふくけい対応が必要**:
+  1. 新PAT発行（Fine-grained・openclaw-workspace リポジトリ Administration: read/write 権限）
+  2. 環境変数更新（GITHUB_TOKEN / GITHUB_TOKEN_READ）
+  3. または手動ローテーション: GitHub → Settings → Deploy keys → 新鍵追加 → 動作確認後に旧鍵削除
+- **補足**: Auto Pushには元々 id_ed25519 vs id_ed25519_reserve の使い分けミス（未解決）があり、ローテーション時に併せて修正推奨
+- 手順書: memory/reserve-optimizer-access.md / 詳細: memory/2026-09-13.md
+
+(追記者: フクロウ / 2026-09-13 03:00 UTC アーカイブ更新)

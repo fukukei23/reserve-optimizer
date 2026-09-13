@@ -730,7 +730,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - **ふくけいの転職活動**: マツダ書類通過の言及あり（初出）
 - OpenRouter: blacklistなし・paid_fallback警告なし（free回復継続）/ SSOT drift+1/-4 横ばい
 - **ふくけい無応答**: 08-21 08:00 JST以降継続（約23日目・09-13 12:00 JST時点）
-
-### 【追加 2026-09-13 06:00 UTC】Zenn承認待ちバックログ3件目（claude-config）
-- **2026-09-13 05:04 UTC**: Zenn Pipeline投稿 — 【Claude Code】llm-check多層判定設計入門：Stage 0-3でCLI安全性を自動検証する具体例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/claude-code-llm-check-stage-0-3-cli-b9a4d0d6.md・**承認待ち**
-- Zenn承認待ちバックログは計3件に増加（09-11 atelier-kyo-manager 14-issue-backlog / 09-12 claude-config JSON例外耐性 / 09-13 claude-config llm-check多層判定）。ふくけい無応答23日目のため自動承認できず滞留中

@@ -138,3 +138,12 @@
 - **要点**: JSONの壊れたケースで朝のセッション起動を守る例外耐性設計の初心者向け解説記事
 
 (追記者: フクロウ / 2026-09-12 06:00 UTC アーカイブ更新)
+
+## 2026-09-13 05:04 UTC — 【Claude Code】llm-check多層判定設計入門
+- **タイトル**: 【Claude Code】llm-check多層判定設計入門：Stage 0-3でCLI安全性を自動検証する具体例
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-llm-check-stage-0-3-cli-b9a4d0d6.md
+- **ステータス**: 承認待ち（Issueに `/approve` で公開, 編集後 `/approve`, Close で却下）
+- **要点**: llm-checkをStage 0-3の多層判定にしてCLI安全性を自動検証する設計の入門記事
+
+(追記者: フクロウ / 2026-09-13 06:00 UTC アーカイブ更新)
