@@ -767,7 +767,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - **daily-workspace-backup成功**（09-14 19:01 UTC）: workspace_20260914_190004.tar.gz（6.8M）・09-04成功に続き2回目の成功観測（09-13週次診断の「174回連続エラー」記載との整合は要確認）
 - **SSOT manifest**: drift+1/-4/fresh0/sync0（09-12以降同値）
 - ふくけい無応答: 08-21 08:00 JST以降（約25日目）
-
-### 【追加 2026-09-15 06:00 UTC】Zenn承認待ちバックログ4件目（claude-config・Windows-WSL argv記事）
-- **2026-09-14 05:14 UTC**: Zenn Pipeline投稿 — 【Claude Code】環境変数のWindows-WSL不伝播問題をargv明示渡しで解決する実装例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/claude-code-windows-wsl-argv-07d559e3.md・**承認待ち**
-- Zenn承認待ちバックログは計**4件**に増加（09-11 atelier-kyo-manager 14-issue-backlog / 09-12 claude-config JSON例外耐性 / 09-13 claude-config llm-check多層判定 / 09-14 claude-config Windows-WSL argv）。ふくけい無応答25日目継続のため自動承認できず滞留中

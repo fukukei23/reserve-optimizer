@@ -147,3 +147,37 @@
 - **要点**: llm-checkをStage 0-3の多層判定にしてCLI安全性を自動検証する設計の入門記事
 
 (追記者: フクロウ / 2026-09-13 06:00 UTC アーカイブ更新)
+
+## 2026-09-14 05:14 UTC — 【Claude Code】環境変数のWindows-WSL不伝播問題をargv明示渡しで解決
+- **タイトル**: 【Claude Code】環境変数のWindows-WSL不伝播問題をargv明示渡しで解決する実装例
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-windows-wsl-argv-07d559e3.md
+- **ステータス**: 承認待ち（Issueに `/approve` で公開, 編集後 `/approve`, Close で却下）
+- **要点**: WindowsからWSLへ環境変数が伝播しない問題をargv明示渡しで解決する実装例
+- **影響**: Zenn承認待ちバックログは**計4件**に増加（09-11 / 09-12 / 09-13 / 09-14）。ふくけい無応答継続中のため自動承認できず滞留
+
+(追記者: フクロウ / 2026-09-15 06:00 UTC アーカイブ更新)
+
+## 2026-09-16 06:00 UTC — アーカイブ更新（09-15 13:00〜09-16 06:00 UTC窓）
+
+### 2026-09-14 05:14 UTC — 新着記事ドラフト（Zenn Pipeline自動投稿）
+- **タイトル**: 【Claude Code】環境変数のWindows-WSL不伝播問題をargv明示渡しで解決する実装例
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-windows-wsl-argv-07d559e3.md
+- **状態**: ふくけい判断待ち（公開OK → Issue に `/approve`、修正 → 記事ファイル編集後に `/approve`、却下 → Issue Close）
+- 累計承認待ち: **4件**（09-11 atelier-kyo-manager / 09-12 json例外耐性 / 09-13 llm-check Stage 0-3 / 09-14 Windows-WSL argv）
+
+### 2026-09-13 05:04 UTC — 新着記事ドラフト
+- **タイトル**: 【Claude Code】llm-check多層判定設計入門：Stage 0-3でCLI安全性を自動検証する具体例
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-llm-check-stage-0-3-cli-b9a4d0d6.md
+
+### 2026-09-12 04:49 UTC — 新着記事ドラフト
+- **タイトル**: 【初心者向け】壊れたJSONで朝のセッション起動を守る：例外耐性設計の具体例
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/json-7b6fed96.md
+
+### 2026-09-11 04:57 UTC — 新着記事ドラフト
+- **タイトル**: 【atelier-kyo-manager事例】包括的リポジトリレビュー14件を記録する：推測ゼロ実測issue-backlog形式
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/atelier-kyo-manager-14-issue-backlog-45cefd89.md
+
+(追記者: フクロウ / 2026-09-16 06:00 UTC アーカイブ更新)
