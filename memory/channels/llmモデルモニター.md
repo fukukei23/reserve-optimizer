@@ -604,3 +604,47 @@
 - 結論: 09-17中も新たな惣化はなく>#記憶と記録への通知は見送り
 
 (追記者: フクロウ / 2026-09-17 03:00 UTC アーカイブ更新)
+
+## 2026-09-18 00:01 UTC — アーカイブ更新（09-17 01:43〜09-18 00:01 UTC窓）
+
+### 2026-09-17 22:01 UTC — daily_memory_cleanup 完了 ✅（2026-09-18 JST分）
+- 対象: `memory/2026-09-18.md`（651バイト・定期スキャン1件のみ）
+- 整理結果: 解決済み/重複/不要ログ → **削除対象ゼロ**
+- 構造化抽出した「未解決問題リスト」7件（全て既知滞留の再掲・新規なし）:
+  - 豆腐|NS事後分析3点TODO（期限切れ失効）
+  - GLM override 9件（休眠セッション）
+  - よつばGitHub認証
+  - GitHub PAT失効
+  - memory_search 401（OpenAI embedding API）
+  - Config fallbacks不整合
+  - repo-index drift
+- 報告判定: 特筆すべき新規未解決問題なし → #記憶と記録 へ送信見送り（手順通り）
+- コスト: 入力45k / 出力13k（キャッシュ73%）→ $0.06（約9.6円）
+
+### 2026-09-17 19:44 UTC — OpenAIアラート再発（既知・6時間周期定時）
+- 9セッション GLMオーバーライド未設定（gpt-5-mini 6件 + gpt-5.1-codex 2件 + 未特定1件）
+- 確認済: `agent:main:discord:channel:1480559453538484375` → `providerOverride=zai, modelOverride=glm-4.7` 設定済み
+- 全て2026-03時点更新の休眠セッション → 実害なし
+- **新規観察**: openclaw-deploy / skill-agent / claw5速報 / 未特定1 の4件がテーブルに継続表示 — 2026-03以降新規セッション作成は停止している可能性を示唆
+
+(追記者: フクロウ / 2026-09-18 00:01 UTC アーカイブ更新)
+
+## 2026-09-18 06:00 UTC — アーカイブ更新（09-18 00:01〜09-18 06:00 UTC窓）
+
+### 2026-09-18 01:43 UTC — OpenAIアラート再発（10件に増加）
+- **gpt-5-mini セッション（7件）**:
+  - `agent:main:cron:7a371d42-837c-446c-a885-9a6904df6b02` (2026-03-18 19:27)
+  - `agent:main:cron:09ded1ad-540b-4a33-acd1-bf8535f5574c` (2026-03-18 19:08)
+  - `agent:main:discord:channel:1482990699363307591` (reserve-optimizer, 2026-03-18 03:50)
+  - `agent:main:discord:channel:1483293897282031697` (openclaw-deploy, 2026-03-17 04:09)
+  - `agent:main:discord:channel:1482875560660045977` (skill-agent, 2026-03-16 05:57)
+  - 他2件
+- **gpt-5.1-codex セッション（2件）**:
+  - `agent:main:cron:b3e30cb5-0a95-43dd-8539-2135fd558391` (2026-03-14 12:00)
+  - `agent:main:cron:77824934-c7ee-4af6-9b57-a4bd54e0cd37` (2026-03-07 15:10)
+- **合計: 10件**（前回09-17 19:44の9件から**+1件増加**）・約6ヶ月継続
+- 確認済（オーバーライド済み）: `agent:main:discord:channel:1480559453538484375`（ai-zenn）→ `modelOverride=glm-4.7, providerOverride=zai` ✅
+- 全て2026-03月時点更新の**休眠セッション** → 実害なし
+- ※ 対応が必要なら各セッション/cronに `modelOverride` / `providerOverride` を設定
+
+(追記者: フクロウ / 2026-09-18 06:00 UTC アーカイブ更新)

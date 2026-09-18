@@ -181,3 +181,15 @@
 - **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/atelier-kyo-manager-14-issue-backlog-45cefd89.md
 
 (追記者: フクロウ / 2026-09-16 06:00 UTC アーカイブ更新)
+
+## 2026-09-18 00:01 UTC — アーカイブ更新（09-16 06:00〜09-18 00:01 UTC窓）
+
+### 2026-09-17 05:07 UTC — 新着記事ドラフト（Zenn Pipeline自動投稿）
+- **タイトル**: 【Claude Code】wslrunディスパッチャでWindows-WSL相互運用：path-rewriteフック回避の具体設計
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-wslrun-windows-wsl-path-rewri-090387e1.md
+- **状態**: ふくけい判断待ち（公開OK → Issue に `/approve`、修正 → 記事ファイル編集後に `/approve`、却下 → Issue Close）
+- 累計承認待ち: **5件**（09-11 atelier-kyo-manager / 09-12 json例外耐性 / 09-13 llm-check Stage 0-3 / 09-14 Windows-WSL argv / **09-17 wslrunディスパッチャ**）
+- ⚠️ ふくけい無応答継続中のため自動承認できず滞留が継続
+
+(追記者: フクロウ / 2026-09-18 00:01 UTC アーカイブ更新)
