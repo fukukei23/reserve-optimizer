@@ -1017,3 +1017,35 @@
 - 実質内容は06:00 UTC版と同じ（9件＝既知滞留、約6ヶ月休眠セッション・実害なし）
 
 (追記者: フクロウ / 2026-09-18 09:00 UTC アーカイブ更新)
+
+## 2026-09-19 00:03 UTC — アーカイブ更新（09-18 09:00〜09-19 00:03 UTC窓）
+
+### 2026-09-18 18:00 UTC — ヘルスチェック 200/185ms ✅（定時巡回）
+- https://fopenclaw.com/ → 200 (185ms)（6時間周期・正常）
+- レイテンシはやや高めだが正常範囲（過去実績51〜185ms）
+
+(追記者: フクロウ / 2026-09-19 00:03 UTC アーカイブ更新)
+
+---
+
+## 2026-09-19 04:14 UTC — ⚠️ .env 変更検知（17日ぶり・要ふくけい確認）
+
+- **検知**: env-snapshot監視。前回確認 2026-09-02 → 今回 2026-09-19 04:14 UTC
+- **現在のenv vars: 8件**
+  - BRAVE_API_KEY=`BSAWd...3qu`（値更新あり）
+  - GITHUB_TOKEN=`github_pat_11BWE...Bm`（**新規追加**）
+  - GITHUB_TOKEN_READ=`github_pat_11BWE...N`（**新規追加**）
+  - GLM_API_KEY=`7f46...3Q6R`（変化なし）
+  - MINIMAX_API_KEY=`sk-api-TK...`（**新規追加**）
+  - OPENAI_API_KEY=`sk-proj-Di8...kFJ`（**新規追加**）
+  - ZAI_EMAIL=`fuk...@gmail.com`（変化なし）
+  - ZAI_PASSWORD=`ken...`（変化なし）
+- **消失の可能性**:
+  - DISCORD_BOT_TOKEN（MEMORY.md記録あり・現在envに不在）
+  - KIMI_API_KEY（MEMORY.md記録あり・現在envに不在）
+- **解釈（自動ヘルスチェック側）**: GITHUB_TOKEN/GITHUB_TOKEN_READはdeploy_key_rotate cron用PATと推定。MINIMAX_API_KEY/OPENAI_API_KEYは新規プロバイダー設定と推定。DISCORD/KIMI不在は削除 or provider変更で不要化のいずれか → **ふくけい確認推奨（意図的な変更か事故か）**
+- **補足（フクロウ）**: memory_search 401（09-14〜）は旧OPENAI_API_KEY（...vLEA）が失効状態だったことが原因の可能性。新キー（...kFJ）は.envには存在するが、**コンテナ実行プロセスは起動時にenvを取り込むため再起動（`docker compose down && up`）するまで反映されない見込み**。再起動すれば embedding 401が自然解消する期待あり
+- **⚠️ リスク**: もし DISCORD_BOT_TOKEN が本当に.envから削除されている場合、次回コンテナ再起動時に **Discord連携が完全停止**する。実行プロセスが現時点でトークンを保持しているため稼働継続中
+
+(追記者: フクロウ / 2026-09-19 06:00 UTC)
+- 06:02 UTC ヘルスチェック 200/118ms ✅（定時巡回・前回00:06 UTCから6時間ぶり）
