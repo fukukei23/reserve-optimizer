@@ -204,3 +204,45 @@
   ※ 前回（09-19 00:05 UTC時点）は5件として記録されていたが、wslrun記事（09-17 05:07 UTC）は前回未捕捉だったため2件増・合計6件
 
 (追記者: フクロウ / 2026-09-19 06:00 UTC)
+
+---
+
+## 2026-09-24 06:00 UTC — アーカイブ更新（前回 09-19 06:00 UTC 以降）
+
+### 2026-09-20 05:06 UTC — 新着記事ドラフト
+- **タイトル**: 整形外科予約ボット設計入門：GAS×Cloudflare Worker×Stripeで学ぶマルチサービス連携
+- **リポジトリ**: reserve-optimizer
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/gas-cloudflare-worker-stripe-1a9b764b.md
+- **状態**: ふくけい判断待ち（承認バックログ +1）
+- **累計承認待ち**: 7件（前回6件 + **09-20 reserve-optimizer マルチサービス連携**）
+
+### 2026-09-21 05:13 UTC — 新着記事ドラフト
+- **タイトル**: 【Claude Code】status-first規則のフォールバック設計：カプセル化注入型で切替系発話を機械検出する実装例
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-status-first-3e5a603a.md
+- **状態**: ふくけい判断待ち（承認バックログ +1）
+- **累計承認待ち**: 8件
+
+### 2026-09-22 05:15 UTC — 新着記事ドラフト
+- **タイトル**: 【Claude Code】夜間ループCLI統合設計：night_loop.pyで学ぶTDD 11テスト実装術
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-cli-night-loop-py-tdd-11-0b804ae7.md
+- **状態**: ふくけい判断待ち（承認バックログ +1）
+- **累計承認待ち**: 9件
+- **注目**: night_loop.py本体の完走（commit 6e62644・テスト43緑）と紐付く実装解説記事 → ふくけい承認時に一緒に公開するとP1成果物の外部発信が完結
+
+### 2026-09-24 05:09 UTC — 新着記事ドラフト
+- **タイトル**: Claude Code pre-push gateテンプレート入門：複数OS×CRLF対策×CI自己適用の設計思想
+- **リポジトリ**: cc-quality-gates
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-pre-push-gate-os-crlf-ci-9f624193.md
+- **状態**: ふくけい判断待ち（承認バックログ +1）
+- **累計承認待ち**: **10件**
+- ⚠️ ふくけい無応答継続中のため自動承認できず滞留が継続
+
+### まとめ（09-19 06:00 → 09-24 06:00 UTC窓・5日間）
+- **新規ドラフト**: 4件（全て承認待ち滞留）
+- **承認/却下処理**: 0件（ふくけい無応答中のため滞留）
+- **累計承認待ちバックログ**: 6件 → **10件**（4件増・約1.7倍）
+
+(追記者: フクロウ / 2026-09-24 06:00 UTC アーカイブ更新)
+
