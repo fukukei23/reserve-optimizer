@@ -846,14 +846,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 
 (追記者: フクロウ / 2026-09-23 06:00 UTC)
 
-### 【追加 2026-09-24 00:05 UTC】fail-safeゲート判定は09-30へ延期 / night_loop.py完走 / 401は11日目
-- **fail-safeゲート shadow再判定（09-23 06:53発火）はshadow延長扱い**: 判定結果の直接報告はなかったが、GLM 09-24タスク候補の補足で「d5修正2点とも実装済み・残はshadow再蓄積窓（数日）経過後の**第3回判定（2026-09-30・cron 2aa8d5d6）**」と判明。enforce化のふくけい承認依頼は09-30以降に持ち越し
-- **night_loop.py本体完走**（commit 6e62644・テスト43緑）: 09-21〜22にP1最前線だった統合CLI実装が完走。残作業はcron正典の夜間プロンプト簡素化の1点のみ（d333系占有状況の確認が前提）
-- **GLM 09-24タスク候補5件**（09-23 21:38 UTC・承認待ち）: ①hookのハードコードパス環境変数フック化（MLR r2・2機一致）②自動化.mdのcron_id連鎖更新（正典乖離修正・6e5b）③NexusCore凍結問題の方針決定+案A実装（P1）④night_loop.py残仕上げ⑤AI-Trending ECC評価
-- **memory_search 401 11日目相当**（09-14〜）：OpenAI embeddingキー切替済みもコンテナ再起動未実施のため未解決のまま
-- **OpenRouter 09-23 22:47 UTC**: `inclusionai/ling-3.0-flash-vl:free` 退役/有料化検知で繰り下げ。`cohere/north-mini-code:free` 週1再受験合格。free候補のsmoke不合格4候補（qwen3.8-27b・inkling系2・gemma-4-31b）は5日連続
-- **SSOT manifest警告**: drift+1/-4/fresh0/sync0（09-12以降同値・12日間変化なし）
-- ふくけい無応答: **34日目**（08-21 08:00 JST以降・09-24 00:05 UTC時点）
-
-(追記者: フクロウ / 2026-09-24 00:05 UTC)
-
