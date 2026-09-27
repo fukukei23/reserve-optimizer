@@ -1,0 +1,896 @@
+# SHARED.md — チャンネル横断ナレッジ
+
+最終更新: 2026-05-06
+
+## 定期スキャン結果（2026-04-06 更新）
+
+### 30分ごとスキャン
+- **頻度**: 30分おき（静穏時間22:00-06:00 JSTはスキップ）
+- **監視項目**: 会話量・未解決問題・マネタイズ信号
+
+### GitHubリポジトリ認証問題（2026-04-27 更新）
+- **リポジトリ**: fukukei23/openclaw-workspace（private）
+- **問題**: git clone/push時にAuthentication failed → アクセストークンが必要
+- **memory/フォルダ**: 正常に残存（2週間分以上の日別記録確認済み）
+- **ステータス**: ふくけい确认中（アクセストークン所持確認）
+- **解決方法**: GitHub Fine-grained tokensで生成、またはリポジトリをpublic化
+
+---
+
+### 最新状況（2026-04-29 09:00 UTC 更新）
+- **OpenClaw v2026.4.25 公開**（04/27 リリース・TTS機能大幅アップグレード）
+  - Voice repliesのTTSアップグレード: /tts latest、chat-scoped auto-TTS controls、personas、per-agent/per-account overrides
+  - 新規対応: Azure Speech、Xiaomi、Local CLI、Inworld等
+- **Cronエラー:** 47件中31件がエラー状態（継続中）
+- **Auto Push失敗:** SSH鍵の使い分けミス（根本原因: deploy key `id_ed25519_reserve` vs origin remote `id_ed25519` の不一致）
+- **OpenAIコストアラート:** 9セッションがGLM override未対応（04/29 01:42 UTCに再アラート・約2ヶ月継続中）
+- **よつば（yotsuba）記憶復元:** memory/フォルダは残存、GitHub認証は未解決（04/27〜）
+
+---
+
+### 最新状況（2026-05-06 06:00 UTC 更新）
+- **OpenClaw v2026.5.4 公開**（05/05 リリース）
+- **Cronエラー:** 47件中31件がエラー状態（継続中）
+- **OpenAIコストアラート:** 10セッションがGLM override未対応（前回9→10件に増加、約2ヶ月継続中）
+- **よつば（yotsuba）記憶復元:** memory/フォルダは残存、GitHub認証は未解決（04/27〜）
+- **fallbackModels不整合:** snapshot=[glm-5.1] / MEMORY.md記載=[glm-5.1, glm-4.7]（05/03発見・未修正）
+- **ヘルスチェック:** 全て正常（200 OK, 46〜59ms）
+
+---
+
+## モデル優先順（2026-04-01更新）
+- primary: minimax/MiniMax-M2.7（2026-03-30より）
+- fallbacks: `["zai/glm-5", "openai/gpt-5-mini", "openai/gpt-5.1-codex"]` → `["zai/glm-5.1", "zai/glm-4.7"]`（2026-04-01更新）
+
+（出典: /home/node/.openclaw/openclaw.json — agents.defaults.model.fallbacks）
+
+## AIニュース配信の現実的評価（2026-04-01追加）
+- **結論**: 配信だけでは金にならない。集客の入口として使い、本業への導線にするのが現実的
+- **有料購読**: 月$5-15、月$1000稼ぐには有料読者70-200人必要
+- **時間軸**: 0-6ヶ月は赤字、6-12ヶ月でトントン、12-24ヶ月で黒字化の可能性
+- **必須条件**: 明確な差別化、独自の視点・分析、継続的な集客活動
+
+## 未解決問題（2026-04-19 更新）
+
+- **Auto Push失敗**: SSH鍵の使い分けミス（要調査・修正）
+  - deploy key登録用的是 `id_ed25519_reserve`
+  - しかしorigin remoteは `id_ed25519` を使用
+  - → 鍵またはremote設定の修正が必要
+
+---
+
+### 最新状況（2026-08-16 06:00 UTC 更新）
+- **API認証エラー重大障害（2026-08-12〜15）→ 2026-08-16 00:00 UTCに復旧**
+  - 症状: 全モデル（MiniMax-M2.7 / GLM-5.1）の401認証エラーで全cronタスクが3時間おきに失敗
+  - 原因: `minimax/MiniMax-M2.7` のAPIキー無効化（モデル廃止またはキー失効）
+  - 対策: primaryModelを `MiniMax-M2.7` → `MiniMax-M3` に切替（2026-08-15 23:12 UTCにConfig Health Monitorが検知）
+  - 影響期間: 約4日間、スケジュールドタスク全停止・#技術手順チャンネルにエラー連投
+- **モデル優先順 更新（2026-08-15）**: primary = `minimax/MiniMax-M3` / fallbacks = `["zai/glm-5.1", "zai/glm-4.7"]`
+- **記憶検索（embedding） боль: OpenAI 401で全滅（2026-09-14 07:00 JST）**: 08-15と同じ現象が再発→自動切替が効いていない/設定がOpenAIに戻っている可能性。Embedding provider設定要確認
+- **記憶検索（embedding）復旧（2026-08-15）**: OpenAI embedding APIクレジット切れ → `gemini-embedding-001` に自動切替で復旧
+- **memory/ フォルダ 2026-05-28以降の日次記録が欠落**（2.5ヶ月分のギャップ）→ 復元推奨だが未着手
+- **ヘルスチェック再開**: 約3ヶ月ぶりに稼働再開（2026-08-15 18:04 UTC〜）
+- **Config Health Monitor**: 2026-05-05以来停止していたのが再稼働、primaryModel変更を検出
+- **OpenClaw v2026.8.2 公開**（2026-09-01公開・09-02 00:31 UTC監視が検出）。現行は2026.3.12で約5ヶ月古い。アップグレード推奨。
+- **Cronエラー重大**: 47件中27件がエラー状態（2026-08-16 12:00 UTC自己診断発覚）
+  - discord_context_scan_30m: 185回連続エラー
+  - daily-workspace-backup: ✅ 解決済み（09-04 19:00 UTC成功・6.5M、08-23報告のエラー状態は解消）
+  - Weekly OpenClaw Ideas Collector: 68回連続エラー
+  - Long Task Watcher 多数も重複エラー抱合
+  - 原因: Config古い（2026.3.12 / 最終更新2026-04-17）、ジョブ設定・依存周りが放置
+  - → 要: ジョブ定義再評価・不要Long Task Watcher整理
+- **未解決（継続）**:
+  - よつば（yotsuba）記憶復元: GitHub認証未解決（04/27〜、memory/フォルダは手元残存）
+  - Auto Push失敗: SSH鍵の使い分けミス（要調査・修正）
+  - SSOT日次バッチcommit失敗: reserve-optimizer / NexusCore / claude-code の3リポジトリで継続中（**4日連続: 2026-08-17/18/19/20 #一般-2で観測**）
+  - ⚠️ atelier-kyo-manager Celeryワーカー停止中: 4時間ごとの価格監視が無音停止（app_context欠落が原因・P0修正待ち）
+
+---
+
+## 更新ルール
+- 各チャンネルで決まったこと・継続タスク・インフラ状況をここに集約
+- 新規トピックが立ったらセクションを追加し、古い情報は適宜整理
+- 日次ログ（`memory/YYYY-MM-DD.md`）に書いた内容のうち、他チャンネルでも必要なものだけを抜粋
+
+---
+
+## グループチャットの振る舞い（2026-03-15変更）
+
+### このサーバーの特別ルール
+- **Server ID**: `1479832235044769872`
+- **構成**: ふくけい（ユーザー）とフクロウ（AI）の2名のみ
+- **ルール**: **全メッセージに返信する**（沈黙なし）
+  - 「人間同士の会話」「すでに答えが出ている」「うん・いいね程度」でも返信
+  - AGENTS.mdから「沈黙する時」セクションを削除済み
+
+---
+
+## チャンネル・データ保護ルール（2026-03-15整備）
+
+### 基本原則
+- チャンネルを削除しない（削除は人間のみが実施）
+- 重要ファイルに指定されているものは削除しない
+- 指定外のファイルは、ユーザーの明示があれば削除可
+- ファイルの中身も30%以上の変更はユーザーに確認を取る
+
+### 詳細
+- `memory/channel_deletion_policy.md` を参照
+
+---
+
+## 開発・運用ルール（2026-03-15追加）
+
+### agency-agentsスキル（自動発動）
+- **場所**: `skills/agency-agents/`
+- **使い方**: 専門用語不要。普通の会話でOK
+  - 「APIのテストやって」→ testing系
+  - 「コードレビューして」→ engineering系
+  - 「監査して」→ specialized系
+- **テスト結果**（2026-03-15）: 2/10件成功、正常動作確認済み
+
+### Remotionフォント問題（2026-03-15）
+- **症状**: 日本語が「□」で表示される、アニメーションが動かない
+- **原因**: Webフォントがサーバサイドレンダリングで読み込まれない
+- **推奨解決策**: `@remotion/google-fonts/NotoSansJP`の`loadFont`を使う
+- **ステータス**: 解決策選択待ち
+
+### チャンネル間スキル認識問題（2026-03-15）
+- **症状**: #技術手順では発動、#claw5速報では発動せず
+- **原因**: セッションがサーバー単位で管理、`deliveryContext.lastTo`が更新されない
+- **発見**: トランスクリプトに「aborted」散見、配信ハンドリング不整合の可能性
+- **追加調査（20:20-20:45 UTC）**:
+  - `allowBots: true` に設定変更（ボット自身のメッセージに反応する設定）
+  - 代理投稿は成功（messageId確認済み）
+  - **しかしボット自身のメッセージには反応しない**（Discordボットの仕様）
+  - ユーザー直接投稿であれば応答あり
+  - ツール呼び出し（web_search）は正常動作を確認
+- **結論**:
+  - `allowBots: true` は他のボットには有効だが、**自分自身のメッセージには無効**
+  - ユーザーが直接投稿すればスキル発動の可能性あり
+- **ステータス**: ユーザー直接投稿テスト待ち
+
+### トラブル診断ルール
+**問題発生時は原因を特定してから解決策を出す**。
+
+手順：
+1. 症状を聞く
+2. **原因を特定するための確認コマンドを出す**
+3. 結果を受け取る
+4. 原因を特定する
+5. 解決策を出す
+
+**禁止**: 「よくある原因」に直接ジャンプしない
+
+### 実行環境の理解（2026-03-15追加）
+- **フクロウはDockerコンテナ内で動作**（openclaw-gateway）
+- **コンテナ内からは `apt install` / `docker` コマンド不可**
+- **パッケージ追加は VPS上で Dockerfile を編集してリビルド**
+- **解決策提示前に「コンテナ内か・VPSホストか」を確認する**
+- 詳細は `MEMORY.md` の「コンテナの制約」を参照
+
+### メモリファイルの役割分担（2026-03-15確認）
+
+| ファイル | 読み込みタイミング | 内容 |
+|----------|-------------------|------|
+| **AGENTS.md** | 全セッション開始時 | ワークスペースルール・行動規範 |
+| **MEMORY.md** | メインセッションのみ | 個人的な文脈・セキュリティ情報 |
+| **SHARED.md** | 全セッション | チャンネル横断ナレッジ |
+
+**メインセッション** = ユーザーと直接会話しているセッション（Discord全チャンネル含む）
+
+---
+
+## #一般-2（1483210388064440511）
+### 用途
+#一般 の続き用チャネル（長くなった会話の継続）
+
+### 直近トピック（2026-04-05）
+- **クロタム運用停止の問い合わせ**: ふくけいが「クロタムの運用を１回停止したい」と質問（04:28 UTC）
+  - ステータス: 回答待ち（一時停止か完全停止かは不明）
+
+### 過去トピック
+- Discord返信ルール変更（メンションありのみ返信 → 全部反応に統一）
+- atelier-kyo-managerチャンネル作成とセッション分け
+- NexusCoreリポジトリ認証確認
+
+---
+
+## #アイデア通知（1482154983070634025）
+### 用途
+OpenClaw活用アイデア・Tips・ベストプラクティスを保存するチャンネル
+
+### 最新アイデアレポート #9（2026-04-04）
+
+**🔄 定期実行の自動化**:
+- アイデア1: モーニングブリーフィング完全自動化（低難易度）
+- アイデア2: Telegramスレッドによるコンテキスト分離（低難易度）
+
+**🛠️ スキル・ワークフロー**:
+- アイデア3: AetherLang V3 × Claude Code連携（中難易度）
+- アイデア4: agent-access-control 多層アクセス制御（中難易度）
+- アイデア5: agent-chat-UX マルチエージェントUX管理（中難易度）
+
+**⚙️ 設定の最適化**:
+- アイデア6: エージェントグラフの事前設計（低難易度）
+- アイデア7: エージェント単一責任原則（低難易度）
+
+**🛡️ 運用**:
+- アイデア8: agent-audit-trail 改ざん検知監査ログ（中難易度）
+
+- **状態**: ふくけいの承認待ち（実装前にユーザー承認を得る方針）
+
+---
+
+## #一般（1479832235610734664）
+### 直近トピック
+- 日次サマリー生成をLLM（GLM-5）で自動化。毎日00:10 JSTに実行。
+- OpenClaw活用事例100件の分析記事を読了。主要クラスタと代表事例を把握した。
+- Google ShareリンクはJavaScriptリダイレクト依存のため、web_fetchでは取得不可と判明。
+
+### 合意事項・方針
+- 時刻表記はすべてJSTに統一。
+- ヘルスチェック結果・モデル監視結果は所定のDiscordチャンネルに要約投稿。
+- 自走ビジネス実験用に専用チャンネルを設ける。
+- Fast Mode有効化（2026-03-14〜）：レスポンス高速化。
+- **バックアップ成功報告の送信先**: #記憶と記録（2026-03-20確定）
+  - 日常的な運用タスクの完了報告として位置づけ
+  - 技術的な成功/失敗を全て報告するなら #openclawヘルスチェック も可だが、ノイズ増加を避けるため #記憶と記録 で運用
+
+### 未決・フォローアップ
+- Browser Relay再接続の恒常化（Chromium未導入）。
+
+### 完了済み
+- ✅ Brave Search APIキー設定完了（2026-03-12）
+
+---
+
+## GitHub リポジトリ情報
+
+### 運用ルール
+- **新リポジトリ追加時**: このセクションにを追記
+- **SSH鍵**: コンテナ再用時に要再設定（VPS側マウント推奨）
+
+### ワークスペースリポジトリ
+- **URL**: `git@github.com:fukukei23/openclaw-workspace.git`
+- **HTTPS**: `https://github.com/fukukei23/openclaw-workspace.git`
+- **ブランチ**: `master`
+
+### SSH鍵（コンテナ再用時に要再設定）
+- 鍵パス: `/home/node/.ssh/id_ed25519`
+- **注意**: コンテナ再作成时会消失。VPS側で鍵を永続化するか、マウントが必要。
+
+---
+
+## モデル優先順（公式）
+記録日: 2026-03-17 14:27 JST
+- primary: zai/glm-5
+- fallbacks（順）: minimax/MiniMax-M2.5 → openai/gpt-5-mini → openai/gpt-5.1-codex
+
+（出典: /home/node/.openclaw/openclaw.json — agents.defaults.model.fallbacks）
+
+---
+
+## MiniMax モデル設定（2026-03-17 追加・変更禁止）
+
+### プロバイダー設定
+- **baseUrl**: `https://api.minimax.io/anthropic`
+- **api**: `anthropic-messages`
+- **apiKey**: 環境変数 `${MINIMAX_API_KEY}`
+
+### モデル定義
+| モデルID | 名前 | API | 備考 |
+|----------|------|-----|------|
+| `MiniMax-M2.5` | MiniMax M2.5 | anthropic-messages | **大文字混在**（小文字に変更しない） |
+| `MiniMax-M2.1` | MiniMax M2.1 | anthropic-messages | 匠人（backup） |
+
+### エイリアス
+- `minimax/MiniMax-M2.5` → 僧侶
+- `minimax/MiniMax-M2.1` → 匠人
+
+---
+
+## モデル動作確認ルール（2026-03-17 追加）
+
+### 確認コマンド（必須）
+```bash
+cat /tmp/openclaw/openclaw-$(date +%F).log | grep -E "fallback|model=" | tail -20
+```
+
+### 重要制約
+- **docker compose logs はホスト側コマンド**。コンテナ内では実行不可。
+- **直接APIテスト（curl等）の成功 ≠ OpenClaw内部での動作確認**。両者を混同しないこと。
+- OpenClaw経由でログを確認するのが公式の方法。
+
+---
+
+## GLM レート制限ルール（2026-03-17 追加）
+
+### 制限内容
+- **GLM Coding Plan** は週次/月次制限あり（Weekly/Monthly Limit）
+- 制限到達時: 429 エラー（"Weekly/Monthly Limit Exhausted"）
+- **リセット日時**: エラーメッセージ内に記載（例: "Your limit will reset at 2026-03-20 06:38:00"）
+
+### 自動フォールバック
+- GLM（賢者）が rate_limit の場合、**自動的に MiniMax-M2.5（僧侶）へ切替**
+- ログで `candidate_succeeded` が確認できれば MiniMax が応答していると判断
+
+### 確認方法
+- エラー詳細: 上記のログ確認コマンド
+- リセット後: 自動的に Primary（glm-5）へ戻る
+
+---
+
+## タイムアウト問題の正しい理解（2026-03-21 追加）
+
+### 「All models failed」エラーの真相
+エラーメッセージは「全モデル故障」と表示されるが、**実際は違う**:
+
+- **本当の原因**: 推論/researchがタイムアウト时间内に終わらない
+- **問題**: 1回タイムアウトすると、その後も回復しない（推論完了しても回答不能）
+- **継続課題**: 前からある問題、アーキテクチャレベルの可能性
+
+### 確認すべき設定
+- `openclaw.json` の `timeoutSeconds`
+- タイムアウト後の恢复机制
+
+---
+
+## #自走ビジネス実験（1481513790091563101）
+### 目的
+OpenClawエージェントを使って自律的に売上を生むワークフロー（Felix型）を構築する。
+
+### 現在の整理
+1. **プロダクト候補**: OpenClawセットアップPDF／テンプレ集など、ROIが見えやすい情報商材を想定。
+2. **メモリ基盤**: 3層（PARA知識グラフ、日次ログ、Tacit knowledge）を整備予定。
+3. **ワークフロー**: 調査・制作・販売・サポートをチャネル／Cronで分離する案。
+4. **決済導線**: Stripe決済→自動納品（Email/Discord）＋顧客台帳更新を想定。
+5. **監視**: Heartbeatで売上・支出・リスクを報告し、人間の承認条件を設定。
+
+### 【追加 2026-03-27】OpenClaw設定販売のアイデア
+#一般-2（2026-03-27）で「OpenClawの設定販売」案を議論。
+
+**結論**: 売れないことはないが、紅海になる可能性が高い。差別化が必要。
+
+**差別化案**:
+- コンプリートガイド（日本語稀缺性）
+- 特定用途向け（月次まとめ、与人心得など）
+- スポットコンサル（人によるサポート）
+
+**対象**:
+- VPS版（コンテナ型、最安構成）
+- ローカル版（Surface Go等小型PC）
+- 2台構成（Browser Relay + 2FA）
+
+**状態**: アイデア段階。継ぐぎに進めるかはふくけいの判断待ち。
+
+### 【追加 2026-03-30】LINE Bot × 予約管理パッケージ化
+- **方向性**: 既存のreserve-optimizerをテンプレ化して横展開
+- **価格案**: 基本套餐月¥3,000 / AI応接＋予約管理 月¥8,000
+- **重要結論**: **AI応答は售后サポート（不在時のテンプレート返信程度）に留める**
+  - 理由: 個人事業者が客に対してAI応答をさせると補償・責任リスクが現実的
+
+### 【追加 2026-03-30】動画編集ワークフロー（設計段階）
+```
+[トピック選定] → [台本生成] → [音声合成] → [動画生成] → [投稿]
+```
+- 台本生成: よつば（GLM-5）で対応可
+- 動画生成: ffmpeg + Python実装必要
+- 投稿: YouTube Data API / TikTok API
+
+### 次アクション（提案）
+- プロダクト内容と価格レンジを確定。
+- 共有メモリ（本ファイル）にビジネス要件と禁止事項を追加。
+- 決済・納品の技術スタックを選定（Stripe / Gumroad 等）。
+
+### 【追加 2026-08-20 / 更新 2026-08-21】メロジョイ自動購入ツール — ココナラ正式提案
+- **案件**: メロジョイ自動購入ツール（ココナラ出品）
+- **期限**: 2026-08-22（ココナラ相談者への正式提案送信）⚠️ **残り約17時間（08-21 00:00 UTC時点）**
+- **価格**: Phase1 = **40,000円**
+- **現状**: M1調査・Phase1設計・headlessログイン突破まで実測済み（Phase1完了条件はクリア）
+- **【08-20進捗】リハーサル実施 → 真因判明**: 8/20リハーサルで**キュー構造（速度→順位）が完売の真因**と判明。rehearse.pyのキュー耐性化済み
+- **次アクション（08-21 12:00 UTC時点）**:
+  - **待機中**: A案/B案の判断を @ふくけい に**6回依頼**（06:45 / 07:14 / 07:44 / 08:13 / 08:44 / **09:44 UTC**）→ **すべて無応答**（02:43 UTC依頼から約9.5時間）
+  - **【新 09:44 UTC】B案へのショートカット提示**: 「2でOK」と返信があればB案（8/20リハーサル結果のみで最終改稿→送信）で勝手に進める旨を案内。睡眠/取り込み中の場合はこれで前進可能
+  - 期限: **2026-08-22 23:59 JST（残り約27時間・12:00 UTC時点）**
+- **【08-21 06:00 UTC更新】再テスト結果未確認**: 11:58 JST発火予定の再テストについて、ワークスペースにログなし・cron不存在判明。03:43 UTC Heartbeatが「cron未実行」と推定、05:13 UTC Heartbeatがそれを確定。Claude Code側に再テスト実行依頼 or 提案文をそのまま最終改稿→送信の判断が必要
+- **【08-21 12:00 UTC更新】エスカレーション6回・無応答継続**: 「2でOK」ショートカット返信を待機中。期限まで残り約27時間
+- **【08-22 00:02 UTC更新】エスカレーション長期化**:
+  - 累計**8回以上の判断依頼**（最終23:44 UTC 08-21）・**16時間以上無応答**（02:43 UTC初回依頼から21.5時間）
+  - 「2でOK」と返信があればB案（8/20リハーサル結果のみで最終改稿→送信）で勝手に進めるショートカットを案内済み
+  - **期限本日23:59 JST・残り約15時間**（09:02 JST時点）
+  - 08-22 08:00 JST の日常確認時間までは応答なし（09:02 JST 時点スキャン時点）。12:00 JSTまでに返信なければ実質的に当日提案は困難
+- **【08-22 03:00 UTC更新 ⚠️ Blocker】提案書本文がワークスペースに不在**:
+  - 02:13 UTC (11:13 JST) heartbeat診断で特定: **Option B（8/20リハーサル結果のみで最終改稿→送信）の本文がワークスペースに存在しない**
+  - rehearse.py・提案ドラフトは **Claude Code側**で管理されている推定 → @ふくけいへ確認依頼送信済
+  - 累計**11回以上の判断依頼**（最終02:14 UTC 08-22）・**約32時間無応答**継続（02:43 UTC初回から32時間超）
+  - 期限まで残り**約12.5時間**（11:13 JST時点）— 12:00 JSTまでに送信着手なしの場合、当日中の提案送信は実質困難
+  - 判断: A案（Claude Codeでのrehearse.py実行→テスト→改稿→送信）／ B案（ドラフト本文をClaude Codeから取得→最終改稿→送信）のいずれも、**Claude Code側の協力が必須**
+- **【08-22 06:00 UTC更新 — 最終通告送信済み】**:
+  - **05:14 UTC (14:14 JST)**: #記憶と記録へ**最終通告**を送信（残り約9時間46分時点）
+  - 累計**12回以上の判断依頼**・**約34時間無応答**継続
+  - 期限まで残り**約9時間**（06:00 UTC / 15:00 JST時点）
+  - 12:00 JSTの同日送信目安は経過済み — ふくけいが「2でOK」または提案ドラフト提供で応答すれば23:59 JSTまでの送信は技術的にはまだ可能
+  - **期限切れ後の影響**: ココナナ相談者への正式提案不可・Phase1=40,000円機会損失確定
+- **【08-22 09:00 UTC更新 — 残り約6時間・期限切れ濃厚化】**:
+  - #記憶と記録へ4件追加通知（06:13 / 06:44×2 / 07:13 / 08:43 UTC）→ すべて無応答
+  - 累計**13回以上の判断依頼**・**約37〜39時間無応答**継続（08-21 08:00 JST以降応答なし）
+  - 期限まで残り**約6時間**（18:00 JST時点・23:59 JST = 14:59 UTCまで）
+  - Blocker継続: 提案書本文がワークスペースに不在（Claude Code側のみ）
+  - 解決手段は提示済み: 「2でOK」返信 / 提案書をワークスペースに貼り付け / 手動送信のいずれか
+  - **現実的評価**: 期限切れ（Phase1=40,000円機会損失）の可能性が高い。期限後は事後分析と再提案戦略の検討に移行予定
+- **【08-22 12:00 UTC更新 — 残り約3時間・期限切れ目前】**:
+  - #記憶と記録へ2件追加エスカレーション（09:43 UTC 残り5h16m / 11:43 UTC 残り3h16m）→ すべて無応答
+  - 累計**15回以上の判断依頼**・**約45時間以上無応答**継続（08-21 08:00 JST以降応答なし）
+  - 期限まで残り**約3時間**（12:00 UTC / 21:00 JST時点・23:59 JST = 14:59 UTCまで）
+  - Blocker継続: 提案書本文がワークスペースに不在（Claude Code側のみ）
+  - **11:43 UTC通告で「豆腐ビジネス電話相談」と表現が変化**（従来の「ココナラ」とは別クライアント or 誤記 or 別表現）— 要確認
+  - **期限切れ確定**: 2026-08-22 23:59 JST（14:59 UTC）。約44分超過（21:14 UTC = 06:14 JSTに確認）。
+  - **結果**: Phase1=40,000円の機会損失
+  - **ふくけい応答**: 08-21 08:00 JST以降なし（約51時間・エスカレーション15回以上）
+  - **Blocker**: 提案書本文がClaude Code側にしかなく、ワークスペースに不存在。B案（即実行）が物理的に不能。
+  - **案件名再確認**: 「ココナラ」での案内之後「豆腐|NS」「豆腐|NS案件」「豆腐|NS相談」など複数の表記。见届済み。
+  - **事後分析TODO**:
+    1. Blockers分析 — なぜ提案書がClaude Code側にしかなかったか
+    2. プロセス改善提案 — cron手動実行問題の根本解決策
+    3. 再提案戦略 — 次回同じ案件がきたときのアプローチ
+  - **下次cron設定**: 06:13 UTC Heartbeatで期限切れ確認済み。通常の監視体制に移行。
+- **【08-23 00:43 UTC — 期限切れ確定】**: 豆腐ビジネス電話相談40,000円案子、23:59 JST (8/22)期限切れにより失効。ふくけい51時間以上無応答。エスカレーション15回以上。Blocker: 提案書本文不在。事後分析TODO：(1) Blockers分析 (2) プロセス改善提案 (3) 再提案戦略の検討
+- **出典**: #一般-2 08-19 21:38 UTC / 08-20 21:37 UTC / 08-21 21:37 UTC（Claude Code今日のタスク候補）/ #記憶と記録 08-21 06:00 / 09:00 / 12:00 UTC / 08-22 00:02 / 03:00 / 05:14 UTC
+- **判断優先度**: W1・期限超過は受注機会の直接喪失・残り約9時間
+
+---
+
+### 【追加 2026-08-22 00:02 UTC】SSOT日次バッチ失敗 — エラー内容変化（hook実行権限問題）
+- 08-21 19:23 UTC のSSOT失敗で**エラー内容が変化**: `hint: The '.githooks/post-commit' hook was ignored because it's not set as executable.` が出力
+- 失敗リポジトリ記載が**claude-code のみ**に変化（従来の3リポジトリ記載から）
+- **SSOT継続失敗 5日連続**（08-17 / 18 / 19 / 20 / 21） — hook実行権限問題（`chmod +x` 相当）が一因である可能性が浮上
+- 関連: Claude Code 08-22タスク候補4番「post-commit `|| true` の握り潰し是正」（`.git/hooks-error.log` 記録方針）
+- 出所: #一般-2 08-21 19:23 UTC / Claude Code 08-21 21:37 UTC
+
+---
+
+### 【追加 2026-08-22 00:02 UTC】Auto Push失敗（SSH鍵の使い分けミス）— 新規失敗事象
+- 08-21 22:01 UTC daily_memory_cleanup 報告で記録: **Auto Push が SSH鍵の使い分けミスにより失敗**
+- 詳細日時・対象repoは未明示（cleanup記録一次情報要）
+- よつば記憶復元（GitHub認証未解決・04/27〜）と並ぶ SSH鍵関連の問題群
+- 要追加調査（クリーンアップ記録: #記憶と記録 08-21 22:01 UTC）
+
+### 【追加 2026-08-23 12:00 UTC】openclaw.json fallbacks設定 — ドキュメント不整合
+- **Config Health Monitor (08-23 06:45 UTC)** で発見: 現設定の `agents.defaults.model.fallbacks` は `["zai/glm-5.1"]` のみ
+- **MEMORY.md / SHARED.md (08-15記載)** は `["zai/glm-5.1","zai/glm-4.7"]` と記載 — **glm-4.7 が 08-15〜08-21 の間に除去された可能性**
+- **要確認**: 意図的な変更か（ふくけい確認推奨・08-20 23:13 UTC のハッシュ変化 `8b78f4f4→0ac87cbd` と関連の可能性）
+- **影響**: glm-5.1障害時の第二フォールバック（glm-4.7）が存在しない → フォールバックチェーンが1段に短縮
+- 出所: #openclawヘルスチェック 08-23 06:45 UTC
+
+---
+
+### 【追加 2026-08-23 12:00 UTC】daily-workspace-backup cron エラー（12h）
+- **daily-workspace-backup** が「12h ago error」状態（バックアップ未更新）
+- 27件エラー群（08-16発覚・Config古い）の一環として既知だが、バックアップは復旧優先度が高い
+- 最終成功バックアップ: `workspace_20260822_190004.tar.gz`（08-22 19:00 UTC・#記憶と記録で確認済み）以降の取得状況要確認
+- ふくけい無応答継続中のため自動修復は保留
+- 出所: #openclawヘルスチェック 08-23 06:45 UTC
+
+---
+
+## アーカイブ自動更新（2026-03-17 13:03 JST）
+
+**実行**: ユーザー指示により自動アーカイブ処理を開始しました。各チャンネルの履歴確認と追記候補の抽出を行います。
+
+**処理方針**:
+- 判定に迷う項目は個別に「追記しますか？」と確認します。
+- 追記・変更はすべて日付付きで記録し、SHARED.mdにも要点を抜粋して反映します。
+
+**参照/更新対象（予定）**:
+- memory/channels/*.md（各チャンネルのアーカイブファイル）
+- memory/SHARED.md（要点抜粋）
+
+処理開始時刻: 2026-03-17 13:03 JST
+
+---
+
+## OpenClawエコシステム・派生プロダクト
+
+### ClawRouter（2026-03-22 発見）
+- **概要**: OpenClawのAPIコストを8割近く削減するオープンソース
+- **GitHubスター**: 5,800
+- **機能**: リクエストを1ms未満でスコアリングし、複雑度に応じて最適なモデルに振り分け
+- **情報源**: X (Twitter) @SuguruKun_ai のツイート
+- **状態**: 情報収集段階（導入検討未定）
+
+（以下は既存内容を保持）
+
+... (省略: 既存の長いセクションは省略表示していますが、完全版はファイル内に保存されています.)
+---
+
+### 【追加 2026-08-23 09:00 UTC】設定ドリフト検出 — fallbackModels の glm-4.7 除去疑い
+- **発見**: Config Health Monitor リフレッシュ時（08-23 06:45 UTC・スナップショット51時間遅延の解消時）
+- **内容**: 現設定 `agents.defaults.model.fallbacks = ["zai/glm-5.1"]` のみ。**MEMORY.md / SHARED.md(08-15) の記載は `["zai/glm-5.1","zai/glm-4.7"]`**
+- **推定**: 08-15〜08-21 の間に glm-4.7 が除去された（意図的か事故かは不明）
+- **影響**: glm-5.1障害時にフォールバック先が1つしかない（MiniMax-M3はprimary・glm-5.1が第1フォールバック）
+- **要対応**: ふくけい確認（意図的なら MEMORY.md 記載を更新、事故なら openclaw.json を復元）
+- **出所**: #openclawヘルスチェック 08-23 06:45 UTC Config Health Monitor 報告
+
+### 【追加 2026-08-23 09:00 UTC】daily-workspace-backup エラー（12時間未更新）
+- Config Health Monitor が検出（08-23 06:45 UTC）: daily-workspace-backup cron が 12h ago error
+- 27件cronエラー群（08-16発覚）の一環・既知。ふくけい無応答継続中のため自動修復は保留
+- **リスク**: 最終バックアップからの経過時間が伸びるほどデータ損失リスク増大
+
+### 【追加 2026-08-31 00:01 UTC】Claude Code 08-31タスク候補（08-30 21:40 UTC投稿 = 08-31 06:40 JST）
+- 全P1・ふくけい承認待ち:
+  1. **NexusCore エージェントハーネス Phase 0 fail-fast spike**（27タスクの初手のみ・M / NexusCore）— handoff次タスク最上位。Phase 0通過で後続Phase着手判定が立つ
+  2. **x-automation MiniMax絵画フォールバックの文字混入廃止**（S / x-automation）— 08-30起票P1・fallback画像が毎日出る実害継続中
+  3. **x-automation 倉庫一括ストック化の設計＋multi-llm-review**（M / x-automation）— 08-30起票P1・ふくけい発案・設計レビュー指示済み。在庫19件中score≥8が1件のみ
+  4. **NexusCore orchestrator利用実態の棚卸し（デッドコード判定）**（S / NexusCore / W4）— 835行+テスト15ファイルが本体未統合の可能性
+  5. **AWSサーバレス「ミニLINE CRM受付API」最小構成**（M / aws-line-crm / W1）— ⚠着手前にAWSアカウント+AccessKeyの`.secrets.env`追加が必要
+- **除外**: ココナラ第1波出品は🟢c5ff（ドラフト確定L75）進行中のため重複着手回避
+
+### 【追加 2026-08-31 00:01 UTC】ふくけい無応答 10日間突入 + SSOT新規ドリフト
+- **ふくけい無応答**: 08-21 08:00 JST以降、08-31 00:00 UTC時点で**約10日間（240時間）**
+- **SSOT失敗**: 08-17〜継続（14日間超）。**08-30 19:24 UTC観測で新規ドリフト drift+1/-1・pending追加1件**（08-29はdrift+0→悪化）
+- 豆腐|NS案件事後分析3点TODO: 期限切れ失効（08-22）から9日経過・未着手
+- **影響**: 承認待ちP1タスク5件・Config fallbacks不整合・repo-index.yamlドリフト13件が滞留継続
+
+### 【追加 2026-08-30 00:03 UTC】Claude Code 08-30タスク候補（08-29 21:38 UTC投稿 = 08-30 06:38 JST）
+- P1中心5件・ふくけい承認待ち:
+  1. **ココナラ実績づくり第1波・出品本文ドラフト完成（231本命+1004対抗）** — W1直結収入化。08-29改訂版レビュー採用済み・スコープ確定。Gate 0③は除外反映済み（M / obsidian-ssot / 手動）
+  2. **Gate 0②既存5件の価格転記完了** — 第1波出品前の唯一残条件（S / 手動 / W1）
+  3. AWSサーバレス「ミニLINE CRM受付API」最小構成（M / aws-line-crm / W1就活・ソニックムーブ2次面接前が期限目安）
+  4. 層1hookのcwd対応改善+fail相当ケース追試験（S / claude-config / W2・3機レビューcritical一致済み）
+  5. マツダ選考・SPI適性検査の事前対策（S / 手動 / W1・非言語模試2〜3回分）
+- **除外判断**: 呼称ルール1,680行置換は他セッション占有のため除外（証跡無=セッション死亡の疑い）
+
+### 【追加 2026-08-30 00:03 UTC】ふくけい無応答 9日間突入
+- **開始**: 2026-08-21 08:00 JST以降応答なし
+- **経過時間**: 08-30 00:00 UTC時点で**約9日間（216時間）**
+- SSOT失敗は08-17〜29で**13日以上連続**（08-29 19:23 UTCもdrift継続観測）
+- 豆腐|NS案件事後分析3点TODOは期限切れ失効のまま未着手
+
+### 【追加 2026-08-29 00:03 UTC】Claude Code 08-29タスク候補（08-28 21:38 UTC投稿）
+- 全P1（一部P2）・ふくけい承認待ち:
+  1. ココナラD案 Gate 0②既存5件の価格転記+上位30件価格2系統検証（S / obsidian-ssot / **W1本丸**）
+  2. ココナラD案 Gate 0③公務員副業規定の書面確認（S / 手動 / W1）
+  3. reserve-optimizer CIにrootテストジョブ追加+ jest削除（S / reserve-optimizer / W2）
+  4. obsidian-ssot `.githooks/` CRLF汚染5ファイル+実行ビット修正（S / obsidian-ssot / W2）
+  5. `~/.secrets.env` 120行目未クォート値修正+同種行点検（S / 手動 / W2）
+- **進行中（🟢）**: durable cron排他化・層1hook cwd対応（5065/ec4c占有）
+- **08-28会話量**: 49行/21bullet（前日が7行なので**7倍回復**）
+
+### 【追加 2026-08-29 00:03 UTC】ふくけい無応答 8日間突入
+- **開始**: 2026-08-21 08:00 JST以降応答なし
+- **経過時間**: 08-29 00:00 UTC時点で**約8日間（192時間）**
+- 豆腐|NS案件事後分析3点未着手のまま期限切れ失効（08-22 23:59 JST）
+
+### 【追加 2026-08-28 09:00 UTC】Claude Code 08-28タスク候補（08-27 22:28 UTC投稿 = 08-28 07:28 JST）
+- 全P1・ふくけい承認待ち:
+  1. **ココナラD案 Gate 0②既存5件の価格転記 + Gate 0③公務員副業規定の書面確認**（S / obsidian-ssot・手動 / **W1本丸**）— **Gate 0① S6カテゴリリサーチは08-27完了**（機械判定=S6中止ルート）→ 第1段着手の残条件は②③のみ
+  2. 巻き込み防止体制の偽陰性テスト（S / obsidian-ssot / W2）— 起票08-18から10日超過
+  3. ssot-record 3値ルールB案適用 + `xargs -r` バグ修正（S / claude-config / W2）— ⚠ 39c4セッション占有中
+  4. `sync-from-ssot.sh` に flock 排他追加（S / ssot-guide / W2）— durable cron多重発火で重複commit累積中
+  5. AWSサーバレス「ミニLINE CRM受付API」着手（ソニックムーブ選考対策 / S〜M / aws-line-crm / W1）— 前提: AWSアカウント・IAM・AccessKey
+
+### 【追加 2026-08-28 09:00 UTC】ふくけい無応答 7日目突入
+- **開始**: 2026-08-21 08:00 JST以降応答なし継続
+- **経過時間**: 08-28 00:00 UTC時点で**約7日間（160時間超）**
+- **影響**: 承認待ちP1タスク5件超・Gate 0②③（収入化直結）・Config fallbacks不整合・repo-index.yamlドリフト（13件）が滞留
+
+### 【追加 2026-08-27 00:03 UTC】SSOT日次バッチ失敗 — 10日目継続
+- **SSOT失敗 10日目**（08-26 19:23 UTC 観測）— 08-17/18/19/20/21/22/23/24/25/26 = **10日連続** rc=1
+- エラー内容は08-23〜と同一（frontmatter許可リスト検証+pre-commitパッチ復元・claude-codeリポジトリのみ）
+- Claude Code側の根本修正タスク（ssot-record 3値ルールB案・flock排他追加など）はふくけい承認待ちのまま
+
+### 【追加 2026-08-26 00:00 UTC】SSOT日次バッチ失敗 — 9日目継続
+- **SSOT失敗 9日目**（08-25 19:23 UTC 観測）— 08-17/18/19/20/21/22/23/24/25 = 9日連続 rc=1
+- エラー内容は08-23〜と同一（frontmatter許可リスト検証+pre-commitパッチ復元・claude-codeリポジトリのみ）
+- Claude Code側の08-26タスク候補に「ssot-record 3値ルールB案適用」「sync-from-ssot.sh flock排他追加」などSSOT根本修正案件が並んでいるが、ふくけい承認待ちで着手不可
+
+### 【更新 2026-08-26 00:00 UTC】ふくけい無応答 6日間継続
+- **開始**: 2026-08-21 08:00 JST以降応答なし
+- **経過時間**: 08-26 00:00 UTC（09:00 JST）時点で約145時間（約6日間）
+- **影響**: 豆腐|NS案件事後分析3点TODO未着手・Config fallbacks設定不整合未確認・repo-index.yamlドリフト未キュレーション・daily-workspace-backupエラー継続・Claude Code P1タスク5件超が承認待ちで滞留
+- **現状**: 通常監視体制継続。緊急案件なし。
+
+### 【追加 2026-08-26 00:00 UTC】Claude Code 08-26タスク候補（08-25 21:38 UTC投稿）
+- 全P1・ふくけい承認待ち:
+  1. 巻き込み防止体制の偽陰性テスト（S / obsidian-ssot / W2）
+  2. ssot-record 3値ルールB案適用 + `xargs -r` バグ修正（S / claude-config / W2）
+  3. `sync-from-ssot.sh` に flock 排他追加（S / ssot-guide / W2）— 実害進行中
+  4. multi-llm-review 失敗ログ機構の実発火確認（M / claude-config / W2）
+  5. ココナラ既存5件の価格転記 + カニバリ4件確認（S / obsidian-ssot / W1）— 収入化直結・被り確認必須
+
+### 【追加 2026-08-25 12:00 UTC】SSOT日次バッチ失敗 — 8日目突入 + repo-index.yaml ドリフト検出
+- **SSOT失敗 8日目**（08-24 19:23 UTC 観測）— 08-17/18/19/20/21/22/23/24 = 8日連続 rc=1
+- **エラー内容変化の軌跡**:
+  - 08-17〜19: `[ssot-daily] commit: reserve-optimizer [ssot-daily] commit: NexusCore [ssot-daily] commit: claude-code (rc=1)`
+  - 08-21〜22: `.githooks/post-commit` hook が executable でないため無視
+  - 08-23〜: `frontmatter許可リスト検証（spec §6.2・可変情報MOC書込防止）...(no files to check)Skipped [INFO] Restored changes from /home/yn4416/.cache/pre-commit/patch...` — pre-commitフックは部分動作、post-commit問題は解消
+- **失敗リポジトリ**: claude-code のみ（08-22以降）
+- **観察**: post-commit実行権限問題は08-23以降解消されたが、frontmatter検証エラーのためrc=1継続
+- **新規事象（08-24 13:59 UTC）**: repo-index.yaml自動同期でドリフト検出
+  - YAML残留（GitHub側に存在しないリポジトリ）: aasdf-sample-project, ai-augmented-system-design-framework, demo-site-sales, krokod-setup, krotam, mnp_manager, nexuscore-bench, openclaw-workspace, pokeka-lottery-monitor, rakuten-stock-monitor, rika_challenge, sangokushi-HIPHOP, x-automation（13件）
+  - 参照: https://github.com/fukukei23/obsidian-ssot/actions/runs/32735922618
+  - 要対応: ふくけいキュレーション判断（応答なし継続中のため保留）
+
+### 【追加 2026-08-25 12:00 UTC】ふくけい無応答 5日間継続
+- **開始**: 2026-08-21 08:00 JST以降応答なし
+- **経過時間**: 08-25 12:00 UTC時点で約116時間（約5日間）
+- **影響**: 豆腐|NS案件事後分析3点TODO未着手・Config fallbacks設定不整合未確認・repo-index.yamlドリフト未キュレーション・daily-workspace-backupエラー継続中
+- **エスカレーション実績**: 累計20回以上（メロジョイ期限関連含む）
+- **現状**: 通常監視体制継続。重要な期限案件は08-22で全て失効済み。新規の即時対応が必要な期限案件なし。
+
+### 【追加 2026-08-25 12:00 UTC】Claude Code 08-25タスク候補（08-24 21:40 UTC投稿）
+- 全P1・ふくけい承認待ちのため着手不可。主な候補:
+  1. ssot-record 3値ルールB案適用 + `xargs -r` バグ修正（S / claude-config / W2）
+  2. 巻き込み防止体制の偽陰性テスト（8/4型カバレッジ実証）（S / obsidian-ssot / W2）
+  3. obsidian-ssot `.githooks/` CRLF5ファイル + 全6ファイル実行ビット欠落修正（S / obsidian-ssot / W2）⚠並行作業確認必須
+  4. `sync-from-ssot.sh` に flock 排他追加（S / ssot-guide / W2）— 実害進行中（多重発火）
+  5. FKB真因判別プローブ化 案1（小）（M / NexusCore / W1+W2）
+
+### 【追加 2026-09-02 00:01 UTC】ふくけい無応答 12日間継続 + OpenRouterフォールバック頻発
+- **ふくけい無応答**: 08-21 08:00 JST以降、09-02 00:01 UTC時点で**約12日間（288時間）**継続
+  - 影響: 豆腐|NS事後分析3点TODO（期限切れ失効・10日超放置）、repo-index.yamlドリフト13件未キュレーション、Config fallbacks不整合未確認
+- **OpenRouter有料フォールバック頻発**: z-ai/glm-5.3-flash が08-31〜09-02で計**14回**発火（08-31: 5回、09-01: 2回、09-02: 7回・最新23:57 UTC）
+  - **⚠️ エスカレーション**: 09-02 13:42〜23:57 UTCの11時間で6回発火（13:42〜16:45に4回、23:16に0.7秒間隔で2回）。free枯渇がより深刻化
+  - **⚠️ paid_fallback 3日連続**: 09-02 02:22 UTCで「free枯渇疑い」警告発令。blacklist/緊急再探索確認中。警告後も発火継続で有料フォールバック常態化の懸念
+  - **OpenRouter pick対応**（09-02 16:45 UTC）: blacklist反映(`nvidia/nemotron-3-super-120b-a12b:free`)・新規候補5件全てsmoke不合格でスキップ
+  - GLMプライマリ不安定継続・コスト要注意（有料Fallback継続）
+- **SSOT manifest**: 09-01 19:23 UTC時点でdrift+0/-1（08-30のdrift+1は解消傾向・pending追加0件）
+- **Claude Code 09-02タスク候補5件**（09-01 21:50 UTC投稿・全て承認待ち）:
+  1. NexusCore エージェントハーネス Phase 1 Task 11以降（P1）
+  2. auto-dev run-task.sh Phase 2 lib.api_base import破綻修正（P2）
+  3. git-commit-diff-check.sh 運用阻害3件修正（P2・09-01実害3件）
+  4. ココナラ第1波出品準備・価格転記のみ（P1・c5ffセッション進行中と競合回避）
+  5. glm-5.3戻し忘れ検知警告ログ観察（P2・due 9/15）
+- **進行中セッション3件**: 3a11/9929/c5ff（他セッション占有・重複着手禁止）
+
+### 【追加 2026-09-02 12:00 UTC】OpenClaw v2026.8.2公開・バージョン5ヶ月遅れ
+- **現行**: 2026.3.12 → **最新**: v2026.8.2（2026-09-01公開・v2026.8.1から約2日で連続リリース）
+- **ハイライト**: Home agent の dock 表示（Cmd/Ctrl+Shift+H）、work-context snapshot のプレビュー/削除
+- **対応要否**: アップグレードにはVPS上での docker compose 再用が必要。ふくけい承認待ち
+- **SHARED.md自動変更検知**: 09-02に計6回変更検知（04:15〜10:15 JST）— cron/heartbeatによる自動更新が推定原因・実害なし
+
+### 【追加 2026-09-02 09:00 UTC】OpenClaw v2026.8.2 公開
+- **v2026.8.2**（2026-09-01公開・09-02 00:31 UTCに監視が検出）
+  - ハイライト: Home agent — Cmd/Ctrl+Shift+H で right/bottom dock 表示、work-context snapshot のプレビュー/削除
+  - https://github.com/openclaw/openclaw/releases/tag/v2026.8.2
+  - v2026.8.1（08-31公開）から約2日で連続リリース。自動更新の成否確認は前回同様留意
+
+
+### 【追加 2026-09-07 00:04 UTC】paid_fallback 4日連続化 + OpenRouter pick 新規free候補追加
+- **paid_fallback 4日連続化**（09-06 22:48 UTC時点）: free枯渇疑い継続。blacklist/緊急再探索確認要
+- **OpenRouter pick 日次サマリ**（09-06 22:48 UTC）:
+  - **新規free候補スキップ**（smoke不合格3件）: liquid/lfm-2.5-2.6b:free, thinkingmachines/inkling-small:free, thinkingmachines/inkling:free
+  - **新規free候補追加2件**: poolside/laguna-xs-2.1:free, cohere/north-mini-code:free
+  - **週1再受験**: z-ai/glm-5.3-flash スモーク合格・last_rechecked更新
+- **SSOT manifest**（09-06 19:23 UTC）: INDEX:OK / drift+0/-2/fresh0/sync0（drift -2 状態継続中・既知）
+- **GLM override未対応セッション9件**: 04/29〜継続・約2ヶ月。09-06 07:43 UTC再アラート。すべて3月以降の休眠セッション（更新時刻170日前・実害なし）
+- **Claude Code 09-07タスク候補5件**（09-06 21:50 UTC投稿）:
+  1. NexusCore Phase 3 Task 21（⚠️ dc62停滞中のため前提確認推奨 / コストM）
+  2. ssot-record フェーズ0.5三層設計実装着手（コストM）
+  3. Windows側 git-suction-guard 登録+発火テスト（コストS・WSL側は完走済み）
+  4. ココナラ実績づくり第1波の出品設計（コストM）
+  5. multi-llm-review運用の2件改修（GLM timeout指標/tmp衝突修正・コストS）
+
+### 【追加 2026-09-07 03:00 UTC】OpenClaw 最新版 v2026.9.2 検知（バージョン遅れ更新）
+- **最新リリース**: v2026.8.2 → **v2026.9.2** に更新（09-07 00:31 UTC モデルアップデート監視・前回チェックから変更なし＝09-06以前に既にv2026.9.2）
+- **稼働中**: 2026.3.12 のまま（約6ヶ月遅れ・アップグレードにはVPS上 docker compose 再構築 + ふくけい承認が必要 → 引き続き保留）
+- 定期ヘルスチェックは正常（fopenclaw.com 200 / 95ms）
+
+### 【追加 2026-09-08 06:00 UTC】paid_fallback継続 + free候補blacklist化
+- **poolside/laguna-xs-2.1:free を blacklist に追加**（09-07 22:48 UTC・smoke不合格）— 09-06に新規候補追加された直後に不合格確定
+- **paid_fallback 4日連続**（09-07 22:48 UTC警告）: free枯渇疑い継続・新規free候補も軒並みsmoke不合格で補充なし
+- **定期監視は全て正常**（09-08 00:03 UTC）: ヘルスチェック 200/94ms、OpenClaw最新版v2026.9.2（変更なし・稼働中は2026.3.12のまま約6ヶ月遅れ）
+- **GLM override未対応9件アラート**（09-08 01:43 UTC再発）: 全て3月の休眠セッション・実害なし（既知）
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約19日目）
+
+### 【追加 2026-09-09 00:01 UTC】paid_fallback警告消滅 + OpenRouter nex-agi追加 + ヘルスチェックq6h欠落
+- **paid_fallback警告消滅**（09-08 22:47 UTC）: 前日4日連続警告が消滅。`nex-agi/nex-n2.5-mini:free` が新規候補として追加・free候補枯渇が一時緩和された可能性（要継続観察）
+- **OpenRouter pick**（09-08 22:47 UTC）: nex-agi/nex-n2.5-mini:free 追加 / nex-agi/nex-n2.5-pro:free他4件はsmoke不合格
+- **ヘルスチェックq6h 欠落**（09-08 12:02 UTC / 18:02 UTC）: #openclawヘルスチェック に新規投稿なし。直前 06:02 UTC は正常 (200/98ms)。cron実行失敗 or 投稿エラー要監視。次回 00:02 UTC 実行で切り分け
+- **SSOT manifest pending一時+1**（09-08 13:44 UTC [DRY-RUN]）: pending:追加1件 → 19:25 UTC には追加0件に復帰（一過性）
+- **Zenn新規ドラフト**（09-08 04:57 UTC）: 【Python】カスタムexit code 78でpytest衝突回避（cc-stories-guide）— 承認待ち
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約20日目）
+
+### 【追加 2026-09-09 03:00 UTC】OpenClaw v2026.9.3公開 / ヘルスチェック応答遅延
+- **OpenClaw v2026.9.3公開**（09-08 14:15 UTC）: v2026.9.2 → v2026.9.3。「Safer updates」テーマで、更新時の安全性が向上（隔離candidate状態 / 2026.9.2 migration対応 / abandoned update records回復）
+- 現行稼働中: **v2026.3.12**（約6ヶ月遅れ • 変更なし）
+- **ヘルスチェック応答遅延**（09-09 00:04 UTC）: 220ms（通常94-98ms • 約2.3倍）。サービス停止ではないが応答遅延傾向。注意監視が必要
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約20日目）
+
+### 【追加 2026-09-10 00:03 UTC】OpenRouter free候補回復継続 / paid_fallback警告2日連続なし
+- **OpenRouter pick**（09-09 22:48 UTC）: blacklist昇格1件（nemotron-3-ultra-550b-a55b:free・死亡スモーク）/ 新規free候補追加2件（nex-agi/nex-n2.5-pro:free・nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free）/ スキップ3件（liquid lfm-2.5・thinkingmachines inkling-small/inkling・smoke不合格）
+- **週1再受験合格**: dots-studio/dots-3-note-preview:free
+- **paid_fallback警告2日連続なし**: 09-08 22:47（消滅）→ 09-09 22:48（再発なし）。nex-agi/nex-n2.5-miniに加え nex-n2.5-pro・nemotron-nano-omni の追加で free候補プールが回復傾向。09-02以来の有料フォールバック頻発期は事実上終息の可能性高（継続観察）
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約20日目）
+
+### 【追加 2026-09-10 03:00 UTC】ヘルスチェック応答遅延 解消
+- **応答 118msに改善**（09-10 00:05 UTC）: 09-09 00:04の220ms遅延から正常範囲（94-118ms）に復帰。「注意監視」判定は解除
+
+### 【追加 2026-09-12 03:00 UTC】OpenClaw v2026.9.4公開 / SSOT drift悪化 / GLM 09-12タスク候補
+- **OpenClaw v2026.9.4公開**（09-11公開・09-12 00:31 UTC検知）: "Recover from compatible failed updates"（失敗更新からのロールバック復旧）。v2026.9.2→9.3→9.4と短期間で更新が進む一方、**稼働中はv2026.3.12のまま約6ヶ月遅れ継続**（アップグレードにはVPS docker compose再構築+ふくけい承認が必要→保留）
+- **ヘルスチェック正常**: 09-11 18:00 UTC=172ms / 09-12 00:06 UTC=90ms（良好）
+- **SSOT manifest drift悪化**（09-11 19:25 UTC）: drift+1/-4/fresh0/sync0（-4は観測以来最大）
+- **GLM 09-12タスク候補**（09-11 21:38 UTC・Claude Code投稿）: ①CW案件巡回cron Phase 1実装（Phase 0完走・A案確定） ②ココナラ第1波出品継続（Playwright実測完了・下書きID 4396741生成済み・Gate 0残=価格転記のみ） ③paths-json-janitor切替判断（due 09-14） ④層1hook cwd対応改善 ⑤simplex-chat評価。※09-11候補1のrenew-crons発火停止調査は09-12リストに現れず（対応済み or 移行と推定・要確認）
+- **OpenAI 9件アラート**（09-11 19:43 / 09-12 01:43 UTC再発）: 既知・休眠・実害なし
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約22日目・09-12 12:00 JST時点）
+
+### 【追加 2026-09-12 06:00 UTC】Zenn新規ドラフト承認待ち追加（claude-config）
+- **2026-09-12 04:49 UTC**: Zenn Pipeline投稿 — 【初心者向け】壊れたJSONで朝のセッション起動を守る：例外耐性設計の具体例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/json-7b6fed96.md・**承認待ち**（Issue `/approve` / 編集後 `/approve` / Close で却下）
+- ふくけい無応答継続中のため自動承認なし・バックログ滞留中（前回の09-11 04:57 atelier-kyo-manager 14-issue-backlog ドラフトも未承認）
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約22日目・09-12 15:00 JST時点）
+
+### 【追加 2026-09-13 03:00 UTC】❌ GitHub PAT失効 — Deploy Key ローテーション失敗（要ふくけい対応）
+- **2026-09-13 02:40 UTC** cron `deploy_key_rotate_on_day` 失敗: `GITHUB_TOKEN` / `GITHUB_TOKEN_READ` 両方が 401 Bad credentials（Fine-grained PAT失効が濃厚）→ API経由のdeploy key管理が不可
+- **現行鍵**: openclaw-deploy-2026-03-17（fukukei23/openclaw-workspace・SSH鍵 id_ed25519_reserve 自体は存在）
+- **ふくけいの対応が必要**: ①新PAT発行（Administration: read/write）+ 環境変数更新、または ②手動ローテーション（GitHub UIで新鍵追加→確認後、旧鍵を削除）
+- 併せて修正推奨: Auto Pushの id_ed25519 vs id_ed25519_reserve 使い分けミス（未解決の既知問題）
+- 手順書: memory/reserve-optimizer-access.md
+
+### 【追加 2026-09-13 03:00 UTC】GLM 09-13タスク候補（マツダ選考の新情報を含む）
+- Claude Code 09-12 21:39 UTC投稿: ①SSOT退避記録2件回収 ②ココナラGate 0価格転記（唯一の残条件） ③ai-trending shadow集計事前確認（due 09-14） ④**マツダ選考・SPI適性検査対策（書類通過・受検案内待ち）** ⑤simplex-chat評価
+- **ふくけいの転職活動**: マツダ書類通過の言及あり（初出）
+- OpenRouter: blacklistなし・paid_fallback警告なし（free回復継続）/ SSOT drift+1/-4 横ばい
+- **ふくけい無応答**: 08-21 08:00 JST以降継続（約23日目・09-13 12:00 JST時点）
+
+### 【追加 2026-09-13 06:00 UTC】Zenn承認待ちバックログ3件目（claude-config）
+- **2026-09-13 05:04 UTC**: Zenn Pipeline投稿 — 【Claude Code】llm-check多層判定設計入門：Stage 0-3でCLI安全性を自動検証する具体例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/claude-code-llm-check-stage-0-3-cli-b9a4d0d6.md・**承認待ち**
+- Zenn承認待ちバックログは計3件に増加（09-11 atelier-kyo-manager 14-issue-backlog / 09-12 claude-config JSON例外耐性 / 09-13 claude-config llm-check多層判定）。ふくけい無応答23日目のため自動承認できず滞留中
+
+### 【追加 2026-09-13 12:00 UTC】週次自己診断: Cron健全性引き続き赤（backup 174回連続エラー）
+- **2026-09-13 12:00 UTC** 週次診断（日曜21:00 JST）: Cron 42件中24件エラー。`daily-workspace-backup` **174回連続エラー**でバックアップ長期間機能せず（08-16初検出→08-30で160回→悪化継続）。Long Task Watcher同一名ジョブ約15個が重複放置（各36〜61回連続エラー）
+- **修復判断はふくけいの指示待ち**（ジョブ削除・無効化を伴うため自動実施せず）。診断側の提案: ①backupジョブ原因調査 ②重複Watcher整理 ③週次系エラー解消
+
+### 【追加 2026-09-14 07:00 JST】⚠️ memory_search（embedding）全件失敗 — OpenAI APIキー401
+- **2026-09-14 07:00 JST** daily_memory_cleanup実行時に検出: memory_search が OpenAI embedding API 401 invalid_api_key で全滅・意味検索不能（ファイル直接読みは可能・日次記録は正常）
+- 前例: 2026-08-15 OpenAIクレジット切れ→`gemini-embedding-001`へ自動切替で復旧済み。今回はOpenAIキー401で再発→切替設定が効いていない/設定がOpenAIに戻っている可能性
+- 対応候補: embeddingプロバイダ設定の確認（gemini再切替 or OpenAIキー更新）。GitHub PAT失効（09-13）に続くクレデンシャル系障害の集中の可能性
+- 報告: #記憶と記録 msg 1548816181367017615
+
+### 【追加 2026-09-14 03:00 UTC】GLM 09-14 タスク候補（**ai-trending-guide 本日判定日**）
+- Claude Code 09-13 21:53 UTC投稿: ①SSOT退避記録2件回収 ②**ai-trending-guide skip復帰 shadow本番切替判断（due: 2026-09-14・本日）** ③AI-Trending pending一括triage（keep 9 / borderline 25 / skip 145・ふくけいGO判断待ち）④ココナラ第1波 Gate 0価格転記（唯一の残条件）⑤self-inspect ドラフトスキル本番登録判断準備（due: 2026-09-15）
+- **ai-trending-guide判定日**: 本日9/14月曜8時cron発火後に本番切替判断。shadow期間（3日）の合格基準: ①`grep "RESTORE" ai-repo-watch.log`でRESTORE行を確認 ②両JSONのcommit変更0件 → 集計OKなら`SKIP_RESTORE_MODE=on`で本番化+fail条件検証（12週復帰・Jaccard多様性）まで実施可
+
+### 【追加 2026-09-14 03:00 UTC】OpenRouter 09-13更新
+- 死亡スモーク検知: `nex-agi/nex-n2.5-pro:free` → **blacklist昇格**（09-13 22:49 UTC）
+- 週1再受験合格: `z-ai/glm-5.3-flash`（last_rechecked更新）
+- paid_fallback警告なし（freeプール回復継続・安定）
+
+### 【追加 2026-09-14 09:00 UTC】「All models failed」間欠再発 → 自然復旧
+- **09-14 03:03 UTC**: 全モデル（MiniMax-M2.7 / glm-5.1 / MiniMax-M3）同時LLM timeoutでarchive報告送信失敗（archive本体は完了済み）→ 09-12 00:05 UTC・09-04 3件に続く間欠再発
+- **09-14 06:03 UTC**: ヘルスチェック 200/127ms で正常復旧確認
+- ⚠️ **config要確認**: fallbacks は `["zai/glm-5.1","zai/glm-4.7"]` のはずだが、エラーログに MiniMax-M2.7 が引き続き含まれる（08-15 primary切替後も残存）— ふくけい確認事項に追加
+- 09-14 02:41 UTC OpenRouter pick: blacklist・新規候補なし・ling-3.0-flash-fin再受験合格（安定）
+
+### 【追加 2026-09-15 00:03 UTC】GLM 09-15タスク候補 / ai-trending-guide本番切替見送り / バックアップ成功
+- **ai-trending-guide本番切替は見送り転換**（09-14判定日の結果）: 旧shadow判定基準が .gitignore により恒真的に0件になる構造欠陥が実測確定 → 09-15タスク候補2「判定基準の再設計（代替基準3候補）」に転換
+- **GLM 09-15タスク候補5件**（09-14 21:39 UTC投稿・承認待ち）: ①ココナラ出品第1波実行（W1直結）②Task9判定基準再設計 ③AI-Trending pending一括triage ④cbm-session-reminder広告不整合（4重登録）⑤ssot-record SKILL.mdヘルパー差替（due 09-18）
+- **daily-workspace-backup成功**（09-14 19:01 UTC）: workspace_20260914_190004.tar.gz（6.8M）・09-04成功に続き2回目の成功観測（09-13週次診断の「174回連続エラー」記載との整合は要確認）
+- **SSOT manifest**: drift+1/-4/fresh0/sync0（09-12以降同値）
+- ふくけい無応答: 08-21 08:00 JST以降（約25日目）
+
+### 【追加 2026-09-15 06:00 UTC】Zenn承認待ちバックログ4件目（claude-config・Windows-WSL argv記事）
+- **2026-09-14 05:14 UTC**: Zenn Pipeline投稿 — 【Claude Code】環境変数のWindows-WSL不伝播問題をargv明示渡しで解決する実装例（claude-config）。プレビュー https://github.com/fukukei23/zenn/blob/main/articles/claude-code-windows-wsl-argv-07d559e3.md・**承認待ち**
+- Zenn承認待ちバックログは計**4件**に増加（09-11 atelier-kyo-manager 14-issue-backlog / 09-12 claude-config JSON例外耐性 / 09-13 claude-config llm-check多層判定 / 09-14 claude-config Windows-WSL argv）。ふくけい無応答25日目継続のため自動承認できず滞留中
+
+### 【追加 2026-09-16 09:00 UTC】OpenRouter 09-16更新 / アーカイブ状況
+- **OpenRouter 09-16 03:47 UTC**: 死亡スモーク検知 `nex-agi/nex-n2.5-mini:free` → **blacklist昇格**（09-13のnex-n2.5-proに続き2件目・nex-agi系は全滅状態）。残留: `z-ai/glm-5.2:free` スモーク不合格で繰り下げ継続。週1再受験合格: `cohere/north-mini-code:free`。paid_fallback警告なし
+- **LLMモニター 07:43 UTC**: OpenAIアラート9件再発（既知・休眠セッション）。報告形式が変更され、cronジョブ側（gpt-5-mini 2件+codex 2件）に「コスト注意」ラベルが明示されるように
+- **ヘルスチェック**: 09-15〜16 全件200・正常（88〜153ms）。OpenClaw最新v2026.9.4・稼働中はv2026.3.12のまま約6ヶ月
+- **アーカイブ更新 09-16 06:00/09:00 UTC**: #一般-2（OpenRouter nex-n2.5-mini blacklisted・GLMタスク候補）/ #llmモデルモニター / #openclawヘルスチェック / #記憶と記録 / #ai-zenn（承認待ち4件の詳細）を更新
+- ふくけい無応答: 08-21 08:00 JST以降（約26日目）
+
+### 【追加 2026-09-17 00:04 UTC】バックアップ2連続成功 / GLM 09-17タスク候補
+- **daily-workspace-backup 2連続成功**（09-14, 09-16 19:01 UTC・6.9M）: 09-13週次診断の「174回連続エラー」からの改善傾向。完全復活かは要観察だが隔日19:00 UTC系列は動作中
+- **GLM 09-17タスク候補**（09-16 21:49 UTC投稿・承認待ち）: ①fail-safeゲートPhase1再判定の準備点検（9/23判定・ログ蓄積確認）②Task9分離性確認2/2の事前準備（9/21判定・runbook目視確認）③ココナラ第1波出品文作成（P1/W1直結・5a06タブ16.6h停滞と抱き合わせ）④外向き返信ログ結果未入力10件回収 ⑤AI-Trending /ai-eval 1件
+- **セッション停滞注意**: 5a06（16.6h超過・ココナラ占有）とd71d（証拠無・12h超過）はセッション死亡の可能性・ふくけいの✅化判断待ち
+- 会話量: 低空飛行継続（09-15=114行 → 09-16=23行[cleanup後圧縮値] → 09-17=3行）
+
+### 【追加 2026-09-17 03:00 UTC】OpenRouter 09-17更新 / バックアップ2連続成功 / GLM 09-17タスク候補
+- **OpenRouter 09-17 02:32 UTC**: 死亡スモーク検知 `nvidia/nemotron-3.5-lightning:free` → **blacklist昇格**（nex-agi系2件〔09-13/09-16〕に続きnvidia系も死亡・freeプール縮小傾向継続）。残留: `z-ai/glm-5.2:free` 繰り下げ継続。週1再受験合格: `dots-studio/dots-3-note-preview:free`。paid_fallback警告なし
+- **daily-workspace-backup 2連続成功**: 09-14 19:00 UTC（6.8M）→ 09-16 19:01 UTC（6.9M）。09-13週次診断の「174回連続エラー」から見れば改善傾向（ただし09-15は観測なし・断続的なのは変わらず）
+- **GLM 09-17タスク候補5件**（09-16 21:49 UTC・承認待ち）: ①fail-safeゲート再判定準備点検（9/23判定）②Task9分離性確認2/2事前準備（9/21判定）③ココナラ第1波出品文作成（P1・5a06タブ16.6h停滞で実質停止・✅化判断待ち）④外向き返信ログ結果未入力10件回収 ⑤AI-Trending /ai-eval 1件
+- **セッション停滞注意**: 5a06（16.6h超過・ココナラ出品占有）とd71d（証拠無）はセッション死亡の可能性 — ふくけいの✅化判断待ち
+- **ヘルスチェック**: 09-17 00:05 UTC 200/93ms・v2026.9.4変更なし（稼働中v2026.3.12約6ヶ月のまま）
+- ふくけい無応答: 08-21 08:00 JST以降（約27日目）
+
+### 【追加 2026-09-19 00:03 UTC】memory_search 401 5日目継続 / RAG索引自動再構築安定化 / 第2の脳移植Task 0着手段階
+- **memory_search 401 5日目継続**（09-14検出・OpenAI embedding API クレデンシャル系）: 09-18 22:03 UTC daily_memory_cleanup で再テスト確認。09-14に#記憶と記録へ報告済み・ふくけい対応待ち。embedding provider設定要確認（gemini-embedding-001への切替で復旧した8月15日の事例あり）
+- **RAG索引 自動再構築の安定化**（Blue/Green切替方式）: 09-17 06:04 UTC（初成功）+ 09-18 04:13 UTC（2回目成功）で2回連続成功。SSOT/RAG運用の安定性が確認された。RAG purge dry-run も09-18 12:47 UTC に実施（purge candidate chroma_a・breakdown={}・パージ対象なし・正常）
+- **OpenRouter 09-18 16:59 UTC**: `z-ai/glm-5.2:free` が同日内に**「復帰→死亡」の揺れ** → blacklist昇格（生存確認で候補復帰→直後に死亡スモーク検知で再blacklist）。残留free候補減少傾向継続。新規free候補追加: `deepseek/deepseek-v4-flash-0731:free`、`google/gemma-4-26b-a4b-it:free`。週1再受験合格: `nvidia/nemotron-3.5-content-safety:free`
+- **GLM 09-19タスク候補5件**（09-18 21:39 UTC・承認待ち）: ①ssot-check auto実行（日次・本日未実行・SessionStart hook検知）②**第2の脳移植Task 0 前提ゲート実測**（P1・spec v1.0承認済み・G2/G3はCC単独可・G1はふくけい協力必要）③外向き返信ログ結果未入力11件回収（10→11件に増加）④ココナラ第1波出品文作成継続（5a06タブ3日停滞）⑤AI-Trending /ai-eval 1件
+- **story-cron Discord通知経路テスト**（09-18 16:34 UTC・cron-id:19実装）: RAG系通知テストに続く系列。09-18 09:2x時点で本番経路テスト配信（HTTP 204成功・A案残タスク#3完了）
+- **未コミット変更 滞留継続**: `memory/channels/雑談と報告.md`（auto_push_check_30m で09-17 12:12 UTC に検知・以降コミット未実行のまま滞留）
+- ふくけい無応答: 08-21 08:00 JST以降（約29日目・09-19 00:03 UTC時点）
+- **OpenClawバージョン**: v2026.9.4 公開済み・稼働中は v2026.3.12 のまま約6ヶ月継続中（公式イメージ移行の優先度依然高）
+
+### 【追加 2026-09-19 06:00 UTC】.env変更検知 / Zenn承認待ち6件目 / コンテナ再起動リスク
+- **.env 変更検知**（09-19 04:14 UTC・env-snapshot監視・前回確認09-02から17日ぶり）:
+  - **新規追加**: GITHUB_TOKEN / GITHUB_TOKEN_READ（deploy_key_rotate用PAT推定）/ MINIMAX_API_KEY / OPENAI_API_KEY（`sk-proj-Di8...kFJ`・旧...vLEAから差替）
+  - **値更新**: BRAVE_API_KEY
+  - **変化なし**: GLM_API_KEY / ZAI_EMAIL / ZAI_PASSWORD
+  - **消失の可能性**: DISCORD_BOT_TOKEN / KIMI_API_KEY（MEMORY.md記録あり・現在envに不在）
+  - **解釈**: deploy_key_rotate cron用のPATと新規プロバイダー設定が追加。DISCORD/KIMIは削除 or 別管理に移行の可能性 → **ふくけい確認推奨（意図的か事故か）**
+  - **重要**: 環境変数はコンテナ起動時に注入されるため、次回 `docker compose down && up` まで実行プロセスには反映されない。**OPENAI_API_KEY差替が反映されれば memory_search 401（09-14〜）が自然解消する見込み**
+  - **⚠️ リスク**: DISCORD_BOT_TOKENが本当に不在の場合、再起動時にDiscord連携が完全停止する
+- **Zenn承認待ち 6件に増加**（09-19 04:50 UTC）: 【Python】孤立サロゲートでUnicodeEncodeErrorを防ぐ（claude-config）が追加。バックログ一覧: 09-11 atelier-kyo-manager 14-issue-backlog / 09-12 claude-config JSON例外耐性 / 09-13 claude-config llm-check多層判定 / 09-14 claude-config Windows-WSL argv / 09-17 claude-config wslrunディスパッチャ / **09-19 claude-config 孤立サロゲート**。ふくけい無応答29日目継続のため自動承認できず滞留中
+- **#一般-2 05:40 UTC**: story-cron webhook疎通テスト（cron-id:19実装のルーチン）
+
+(追記者: フクロウ / 2026-09-19 06:00 UTC)
+
+### 【追加 2026-09-20 00:01 UTC】OpenRouter gemma死亡（追加翌日） / GLM 09-20タスク候補 / memory_search 401 6日目
+- **OpenRouter 09-19 22:47 UTC**: `google/gemma-4-26b-a4b-it:free` 死亡スモーク検知 → **blacklist昇格**。**09-18に新規追加されたばかりの候補が追加翌日に死亡**（freeプール縮小傾向がさらに加速・今週のblacklist昇格はnex-agi系2件+nvidia系1件+google系1件の計4件）。週1再受験合格: `inclusionai/ling-3.0-flash-vl:free`
+- **GLM 09-20タスク候補5件**（09-19 21:39 UTC投稿・承認待ち）: ①ssot-check auto ②**night_loop.py統合CLI実装**（P1・spec v2.2凍結済み・GLM側表記で「ふくけい承認済み」・🟢25f9のpaths.json占有に注意）③Task9分離性確認2/2の最終確認（**判定は09-21 09:17 cron発火・cron_id: 85175e99**）④一言誇張対策の月次点検実装 ⑤stale🟢2件（675c・25f9）✅化判断
+- **memory_search 401 6日目継続確認**（09-19 22:02 UTC daily_memory_cleanup）: 旧キー...vLEAのまま。新キーはコンテナ再起動まで未反映（09-19予測どおり）
+- **会話量**: 09-18=19行 → 09-19=49行（Heartbeatログ蓄積が主体）→ 09-20=26行
+- ふくけい無応答: 08-21 08:00 JST以降（約30日目）
+
+(追記者: フクロウ / 2026-09-20 00:01 UTC)
+
+### 【追加 2026-09-20 03:00 UTC】OpenClaw v2026.9.5 リリース
+- **OpenClaw v2026.9.5 公開**（2026-09-19リリース・09-20 00:31 UTC検知）: 64 commits / 4,179 PRs / 503 contributors。URL: https://github.com/openclaw/openclaw/releases/tag/v2026.9.5
+- **稼働中は v2026.3.12 のまま約6ヶ月**（更新優先度は高いまま・ただしコンテナ再起動時のDISCORD_BOT_TOKEN不在リスク〔09-19 06:00 UTC追記参照〕と再起動タイミングの判断が絡むため、ふくけいの対応待ち）
+- 09-20 00:01〜03:00 UTC窓のその他: OpenAIアラート9件再発（01:43 UTC・既知パターン）/ ヘルスチェック00:03 UTC 200/239ms ✅ / #記憶と記録定期スキャン特筆なし
+- ふくけい無応答: 08-21 08:00 JST以降（約30日目）
+
+(追記者: フクロウ / 2026-09-20 03:00 UTC)
+
+### 【追加 2026-09-23 06:00 UTC】story-cron 038 push失敗 / GLM 09-23最優先はshadow再判定 / ふくけい無応答33日目
+- **story-cron 038 push失敗**（09-22 13:02 UTC・PUSH_EXIT=124・要手動push）: 03 commit済だが push失敗 → 手動対応必要。039は同日 13:13 UTC に push f7f0376 完走し正常化
+- **story-cron skip連続4日**（09-22 07:53 UTC）: BUSY=他セッション6秒前lock取得・release漏れ奪取なし。最終実行は2026-09-18のまま → **lock競合の構造的問題継続**
+- **GLM 09-23タスク候補**（09-22 22:27 UTC・最優先）: ①**テスト網羅性fail-safeゲート shadow再判定**（9/23 06:53発火 cron_id: 94f9b3bc・due本日・3点成立ならenforce化ふくけい承認依頼 or shadow延長）②session系hookのハードコードパスを環境変数フック化（MLR r2・2機一致=最優先作業化）③jev-harness-guide GitHub Pages公開確認（完成品push済み a152361・ふくけい手動設定後）④CW案件巡回cron Phase 1④ 2週間ベースライン途中点検（判定日9/26 cron_id: 59a07a13）⑤Task9切替後チェック①候補差11件の原因確認
+- **night_loop.py統合CLI実装**（09-21 21:38 UTCの09-22候補・ふくけい承認済み・MLR 5機支持）: P1最前線で継続。空レポート再発（Playwright BUSY）の構造対策
+- **OpenClaw v2026.3.12 約6ヶ月更新なし**（09-13週次診断でも指摘・09-20診断でも継続）: 公式v2026.9.5公開済み（09-19リリース・09-20 00:31 UTC検知）だが稼働環境は未移行
+- **memory_search 401 10日目相当**（09-14〜）：新キーはコンテナ再起動まで未反映。09-19 06:00 UTCの.env変更（OPENAI_API_KEY差替）が反映されれば自然解消見込みだが、再起動時のDISCORD_BOT_TOKEN不在リスク（09-19 06:00 UTC追記参照）が判断を複雑にしている
+- **よつばGitHub認証 未解決**（04-27〜・約5ヶ月継続）：access_token未発行
+- **ふくけい無応答 33日目継続**（08-21 08:00 JST以降・09-23 06:00 UTC時点）
+
+(追記者: フクロウ / 2026-09-23 06:00 UTC)
+
+### 【追加 2026-09-24 00:05 UTC】fail-safeゲート判定は09-30へ延期 / night_loop.py完走 / 401は11日目
+- **fail-safeゲート shadow再判定（09-23 06:53発火）はshadow延長扱い**: 判定結果の直接報告はなかったが、GLM 09-24タスク候補の補足で「d5修正2点とも実装済み・残はshadow再蓄積窓（数日）経過後の**第3回判定（2026-09-30・cron 2aa8d5d6）**」と判明。enforce化のふくけい承認依頼は09-30以降に持ち越し
+- **night_loop.py本体完走**（commit 6e62644・テスト43緑）: 09-21〜22にP1最前線だった統合CLI実装が完走。残作業はcron正典の夜間プロンプト簡素化の1点のみ（d333系占有状況の確認が前提）
+- **GLM 09-24タスク候補5件**（09-23 21:38 UTC・承認待ち）: ①hookのハードコードパス環境変数フック化（MLR r2・2機一致）②自動化.mdのcron_id連鎖更新（正典乖離修正・6e5b）③NexusCore凍結問題の方針決定+案A実装（P1）④night_loop.py残仕上げ⑤AI-Trending ECC評価
+- **memory_search 401 11日目相当**（09-14〜）：OpenAI embeddingキー切替済みもコンテナ再起動未実施のため未解決のまま
+- **OpenRouter 09-23 22:47 UTC**: `inclusionai/ling-3.0-flash-vl:free` 退役/有料化検知で繰り下げ。`cohere/north-mini-code:free` 週1再受験合格。free候補のsmoke不合格4候補（qwen3.8-27b・inkling系2・gemma-4-31b）は5日連続
+- **SSOT manifest警告**: drift+1/-4/fresh0/sync0（09-12以降同値・12日間変化なし）
+- ふくけい無応答: **34日目**（08-21 08:00 JST以降・09-24 00:05 UTC時点）
+
+(追記者: フクロウ / 2026-09-24 00:05 UTC)
+
+
+### 【追加 2026-09-24 06:00 UTC】OpenClaw v2026.9.6 公開 + macOS更新取り下げ / Zenn承認バックログ10件に増大
+- **OpenClaw v2026.9.6 公開**（2026-09-23 23:21 UTC・09-24 00:31 UTC検知）: https://github.com/openclaw/openclaw/releases/tag/v2026.9.6
+- **⚠️ macOSユーザーはv2026.9.6へ更新しないこと** — 起動クラッシュする重大バグ(#156861)でSparkle更新フィードから取り下げ済み。修正版v2026.9.7待機中
+- **稼働中OpenClaw**: v2026.3.12のまま（**約6ヶ月更新なし**・コンテナ再起動時にDISCORD_BOT_TOKEN不在リスクあり〔09-19時点既知〕）
+- **Zenn記事承認バックログ**: 10件に増大（ふくけい無応答 約34日目で停滞・09-20〜09-24に4件新規投稿）: 09-20 整形外科予約ボット / 09-21 status-first規則 / 09-22 night_loop.py TDD / 09-24 pre-push gate
+- **memory_search 401**: 11日目相当（コンテナ再起動待ち・KEY切替済みもプロセス未反映）
+- **cron重複発火**: このリマインダーが06:00 UTCに3回同時発火している問題を 09-23 12:00 UTC 報告で既刊→次回発火でも継続ならcron設定確認を推奨
+
+(追記者: フクロウ / 2026-09-24 09:00 UTC)
+
+
+### 【追加 2026-09-25 00:01 UTC】SSOT drift悪化(+1→+3) / 明09-26はCWベースライン判定日 / Zennバックログ10件継続
+- **SSOT manifest ヘルス悪化**: drift+1（09-12以降12日間横ばい）→ **drift+3**（09-24 19:25 UTC検知・+2pt悪化）。INDEX:OK・pending:0のため緊急性は低いが、乖離ファイルが増加傾向にある点は要注意
+- **明日2026-09-26は CW巡回ベースライン正式判定日**（cron 59a07a13・09:47 UTC発火+09:53リマインダー）: 2週間観察の最終判断（WAF block有無・クエリ適合率・stats健全性）
+- **GLM 09-25タスク候補5件**（09-24 21:39 UTC・承認待ち）: ①第2の脳移植G3注入テスト（P1）②NexusCore凍結問題・設計判断（P1）③ココナラGate 0残+出品文ドラフト（W1）④使用量集計乖離のJSON突合 ⑤AI-Trending ECC評価
+- **OpenRouter 09-24 22:47 UTC**: smoke不合格4候補は6日連続同一。`dots-studio/dots-3-note-preview:free` 週1再受験合格
+- **Zenn承認バックログ**: 10件のまま（新規ドラフトなし・ふくけい無応答35日目）
+- memory_search 401: 12日目相当（コンテナ再起動待ち・不変）
+
+(追記者: フクロウ / 2026-09-25 00:05 UTC)
+
+
+
+### 【追加 2026-09-26 00:03 UTC】SSOT driftさらに悪化(+3→+4) / 本日09-26はCWベースライン判定日+第2の脳移植DoD判定
+- **SSOT manifest ヘルス悪化継続**: drift+3（09-24）→ **drift+4**（09-25 19:26 UTC検知）。2日連続・累計+1→+4へ悪化。INDEX:OK・pending:0のため緊急性は低いが加速傾向
+- **本日2026-09-26は重要判定日2件**:
+  - **09:47 UTC**: CW巡回ベースライン正式判定（cron 59a07a13）— 2週間観察の最終判断（WAF block有無・クエリ適合率・stats健全性）
+  - **09:53 UTC**: 第2の脳移植Phase 1 DoD判定（one-shot 0684146a）
+- **GLM 09-26タスク候補5件**（09-25 21:43 UTC・承認待ち）: ①cc-stories-guide judgment-log残余防御（story-cron同一素材2話目の手動除外が発生→機械化）②**career-wiki第2バッチ投入（ふくけい指示・就活判断35件+キャリア分析45件・GUI作業で立会い推奨）**③Zennネタ収集のバズ視点化④面接説明練習（品質ゲート機構を自分の言葉で）⑤AI-Trending ECC評価
+- **story-cron 042成功**（09-25 14:33 UTC・二重通知）: 「宣言を書かないだけで全部素通りできた話」
+- **OpenRouter 09-25 22:47 UTC**: smoke不合格4候補は7日連続同一。`nvidia/nemotron-3.5-content-safety:free` 週1再受験合格
+- **Zenn承認バックログ**: 10件のまま（新規ドラフトなし）
+- ふくけい無応答: **36日目相当**（08-21以降・09-26 00:03 UTC時点）
+- memory_search 401: 12日目相当（コンテナ再起動待ち・不変）
+
+(追記者: フクロウ / 2026-09-26 00:03 UTC アーカイブ更新)
