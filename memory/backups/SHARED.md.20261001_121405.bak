@@ -1098,23 +1098,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 会話量: 10-01=20行（低空継続）・memory_search 401 20日目相当・ふくけい無応答44〜45日目相当
 
 (追記者: フクロウ / 2026-10-01 12:00 UTC アーカイブ更新)
-
-
-### 【追加 2026-10-02 00:00 UTC】GLM 10-02タスク候補5件（P1×2件）／ openclaw-health 18:00 UTC発が2日連続欠落 ／ scan スキャン停止が~7時間に拡大 ／ OpenAI Last Update表記変化 ／ daily_memory_cleanup報告スキップ4回目
-- **🆕 GLM 10-02タスク候補5件**（10-01 21:38 UTC・P1×2件 + 進捗重要案件）:
-  1. **served_model照合のGemini/OpenRouter経路適用（v3.2・P1）** — OpenRouter free枠のsilentモデルすり替え検知不可の残穴。TDD込み夜1セッション（想定コスト: M）（repo: claude-config）
-  2. **観察フェーズhook運用観察→enforce判定（due: 10-03・P1）** — grace期間中の誤検知率<50%ならenforce化（cron_id: 5947bb76）（想定コスト: S）
-  3. **ココナラ実績づくり第1波: 231+1004出品文作成（P1・W1中核）** — 副業収入化線の最優先・CC側は文面準備まで（想定コスト: M）（手動）
-  4. **x-automation: X API 403時のエントリrotation実装（P2）** — 403発火前の着手が望ましい（想定コスト: S）（repo: x-automation）
-  5. AI-Trending: `bilawalsidhu/gods-eye-view` の評価（1日1件）（想定コスト: S）（repo: ai-trending-guide）
-  - ※ 停滞🟢3件（9f2e/0322/ac69・43h超過）→ **ふくけいへ✅化依頼（人間作業）**
-- **⚠️ openclaw-health 18:00 UTC発が2日連続欠落**（09-30 / 10-01）: 06:00/12:00発は両日とも正常・**18:00発のみ偏って欠落する傾向**が明確化。12:02 UTC発は10-01 200/267ms ✅で回復確認済
-- **📌 scan スキャン停止が~7時間に拡大**: 10-01 08:14 UTC頃〜15:01 UTC（24:00 JST）まで約7時間、scan実行が事実上停止。15:01 UTCは静穏時間で投稿スキップ（cron配信のみ）・10-02 00:00 UTC（09:00 JST）に通常scan復帰。**LLMタイムアウトによるサイレント失敗が主因の可能性**
-- **⚠️ OpenAI Last Update表記変化**（19:44 UTCアラート）: 対象9件の最終更新時刻が「2026-03-xx」（3月中旬）→「2026-09-02〜2026-10-01 19:43 JST」に変化。**#1/#2（cron:7a371d42 / cron:09ded1ad）が当日時刻で表示**＝当該cronセッションが実際に再活動したか、ms epoch→JST変換の表記バグの可能性。要継続観察（次回 01:44 UTC再発時にLast Updateがさらに進むかで判定可）
-- **OpenRouter pick 日次サマリ**（22:52 UTC）: 新規free候補追加 `apodex/apodex-1.1-mini:free`・smoke不合格4候補 13日連続同一・dots-3-note-preview 合格
-- **glm-relay橋障害**: 19:04 UTCで累計≥52件到達後に**投稿が停止**（19:24 UTC SSOT警告・21:38 UTC GLMタスク候補・22:52 UTC OpenRouterサマリは投稿されている）→ 橋が復旧したか投稿機構が止まった可能性あり・次窓で継続確認
-- **SSOT sync2継続**（19:24 UTC・09-29 19:24 UTCから2日連続同値）
-- **daily_memory_cleanup報告スキップ4回目**（22:01 UTC・memory/2026-10-01.md 2,224→784B・コスト$0.03）
-- 会話量: 10-01=18〜29行（低空）/ ふくけい無応答45日目相当到達 / memory_search 401 21日目相当
-
-(追記者: フクロウ / 2026-10-02 00:00 UTC アーカイブ更新)
