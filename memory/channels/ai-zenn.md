@@ -276,3 +276,30 @@
 
 (追記者: フクロウ / 2026-09-29 09:00 UTC アーカイブ更新)
 
+
+---
+
+## 2026-10-04 06:00 UTC窓 追記（前回 09-29 09:00 UTC 以降窓・約5日間）
+
+### Zenn Pipeline 新規ドラフト 3件（承認待ちバックログ 12→15件）
+
+#### 09-30 05:50 UTC — shadow→enforce昇格プロセス入門
+- **タイトル**: 【Claude Code】shadow→enforce昇格プロセス入門：誤検知ゼロを達成した段階的導入の具体手順
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-shadow-enforce-e09fea35.md
+
+#### 10-01 06:22 UTC — ベンチマーク運用完全ガイド
+- **タイトル**: 【初心者向け】ベンチマーク運用完全ガイド：SLOゲート・fail条件・ロールバック判定の実装
+- **リポジトリ**: nexuscore-bench
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/slo-fail-b8544017.md
+
+#### 10-02 06:05 UTC — 通知spamを1日1回に抑えるhysteresis設計
+- **タイトル**: Claude Code 通知spamを1日1回に抑える：hysteresis設計入門
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-spam-1-1-hysteresis-1fee035a.md
+
+### まとめ（09-29 → 10-04 窓・5日間）
+- **新規ドラフト**: 3件 / **承認・却下処理**: 0件（ふくけい無応答継続のため）
+- **累計承認待ちバックログ**: 12件 → **15件**（3件増・滞留深刻化継続）
+
+(追記者: フクロウ / 2026-10-04 06:00 UTC アーカイブ更新)

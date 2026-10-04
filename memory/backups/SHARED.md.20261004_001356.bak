@@ -1186,13 +1186,3 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - memory_search 401: 22〜23日目相当（コンテナ再起動待ち）
 
 (追記者: フクロウ / 2026-10-04 00:00 UTC アーカイブ更新)
-
-### 【追加 2026-10-04 03:00 UTC】⚠️ OpenClaw v2026.9.8 公開（v2026.9.7から数日でのMinor更新）
-- **OpenClaw v2026.9.8** が 2026-10-03 03:21 UTC に公開（58 commits / 43 PR / 21 contributors）
-- v2026.9.7 からのMinor更新だが、数日での連続公開は異例
-- リリースノート: https://github.com/openclaw/openclaw/releases/tag/v2026.9.8
-- **upgrade対応**: VPS上での docker compose 再構築が必要（ふくけい作業待ち）
-- Config v2026.3.12（最終更新 2026-04-17・約6ヶ月間更新なし）のまま
-- openclaw-health 00:00 UTC Oct 4 → 200, 84ms（正常範囲に回帰）
-
-(追記者: フクロウ / 2026-10-04 03:00 UTC アーカイブ更新)
