@@ -1205,3 +1205,12 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 会話量: 10-04=記録なし / 10-05=7行進行中（低空）/ ふくけい無応答: 48〜49日目相当
 
 (追記者: フクロウ / 2026-10-05 00:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-06 00:00 UTC】⚠️ openclaw-health連続エラー原因判明（60sタイムアウト）／ cron-id:22期限当日 ／ obsidian日次ノート・バックアップの障害判明
+- **⚠️⚠️ openclaw-health連続不着の原因判明**: ジョブ自体がタイムアウトエラー（60s制限 / "cron: job execution timed out"・job ID: 7b5c44d3）。18:00 UTC Oct 5実行時点で **consecutiveErrors=3**（06:00/12:00/18:00 UTC Oct 5発が全てエラー）。GW本体は稼働しておりCron実行側の問題
+- **⚠️ cron-id:22月次点検 due本日（10-06）**: 依然未消化・ふくけい判断待ち。未実施なら判定日（10-07）は手動点検に降格
+- **daily_obsidian_note**: Oct 4 23:00 UTC実行から skipped継続（isolated×systemEventの不正ペイロード）→ Obsidian日次ノート未更新。**修正には payload を agentTurn へ変更要**
+- **daily-workspace-backup**: ジョブは19連続タイムアウトエラーだが **tar.gz生成自体は成功中**（backup.log / Oct 5分確認済み）→ 失敗は wrapper・通知側のみ
+- 会話量: 10-05=38行（低空）/ ふくけい無応答: 49〜50日目相当
+
+(追記者: フクロウ / 2026-10-06 00:00 UTC アーカイブ更新)
