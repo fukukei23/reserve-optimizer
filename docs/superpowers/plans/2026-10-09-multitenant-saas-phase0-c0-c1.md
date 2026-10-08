@@ -6,7 +6,7 @@
 
 **Architecture:** 既存GAS予約Bot（無変更流用・定数のみ外部化）に対し、①定数インベントリ自動生成スクリプト（C0）②KPI集計サービス（Phase 0・additive）③中央のテナント登録簿+ハートビート受け（Workers+D1・C1軽量版）を追加。データプレーン（予約処理ロジック）は一切変更しない。
 
-**Tech Stack:** Google Apps Script（既存テストランナー=関数が `Array<{name, passed, message}>` を返す方式）・Cloudflare Workers（TypeScript+vitest・既存 `worker/`）・D1（SQLite）・pytest（定数スキャナ）
+**Tech Stack:** Google Apps Script（既存テストランナー=関数が `Array<{name, passed, message}>` を返す方式・GAS実行は `gas-run.sh deploy <functionName>` でWeb App経由〔2026-10-09実測確認済み〕）・Cloudflare Workers（TypeScript+vitest・既存 `worker/`）・D1（SQLite）・pytest（定数スキャナ）
 
 **スコープ外（この計画に含めない）:** C2（sandboxテナント実機検証）、C3（Stripe課金・ライセンス）、営業資材。これらは C0成果物（定数インベントリ）と Phase 0実測値に依存するため、C1ゲート通過後に別計画として作成する。Phase 0の人間タスク（兼業確認・模擬面接・メトリクス2〜4週記録・適法性チェック）はコードでないため本計画末尾の「人間タスク チェックリスト」に記載するのみ。
 
@@ -265,8 +265,8 @@ function testKpiLogService() {
 
 - [ ] **Step 3: テストが失敗することを確認**
 
-Run: `bash gas-project/gas-run.sh testKpiLogService 2>&1 | tail -20; echo "EXIT=$?"`
-Expected: FAIL（`KpiLogService is not defined`）※ gas-run.shの引数形式が異なる場合は `gas-project/gas-run.sh --help` を先に確認し、同名関数をローカル実行できる引数を使う
+Run: `bash gas-project/gas-run.sh deploy testKpiLogService 2>&1 | tail -20; echo "EXIT=$?"`
+Expected: FAIL（テスト結果に `KpiLogService is not defined` のpassed:false行が含まれる）※ gas-run.shはWeb App経由で実行するため、テスト追加済みコードのdeploy+実行が必要（実測仕様・2026-10-09自己点検）
 
 - [ ] **Step 4: KpiLogServiceを実装**
 
@@ -342,7 +342,7 @@ var KpiLogService = (function() {
 
 - [ ] **Step 6: テストが通ることを確認**
 
-Run: `bash gas-project/gas-run.sh testKpiLogService 2>&1 | tail -10; echo "EXIT=$?"`
+Run: `bash gas-project/gas-run.sh deploy testKpiLogService 2>&1 | tail -10; echo "EXIT=$?"`
 Expected: 全テストPASS（exit 0）
 
 - [ ] **Step 7: E2E回帰（データプレーン無変更の確認）**
@@ -708,8 +708,8 @@ Task 3 Step 2と同様に `results.tests = results.tests.concat(testHeartbeatSer
 
 - [ ] **Step 3: テストが失敗することを確認**
 
-Run: `bash gas-project/gas-run.sh testHeartbeatService 2>&1 | tail -10; echo "EXIT=$?"`
-Expected: FAIL（`HeartbeatService is not defined`）
+Run: `bash gas-project/gas-run.sh deploy testHeartbeatService 2>&1 | tail -10; echo "EXIT=$?"`
+Expected: FAIL（テスト結果に `HeartbeatService is not defined` のpassed:false行）
 
 - [ ] **Step 4: HeartbeatServiceを実装**
 
@@ -761,7 +761,7 @@ var HeartbeatService = (function() {
 
 - [ ] **Step 5: テストが通ることを確認**
 
-Run: `bash gas-project/gas-run.sh testHeartbeatService 2>&1 | tail -10; echo "EXIT=$?"`
+Run: `bash gas-project/gas-run.sh deploy testHeartbeatService 2>&1 | tail -10; echo "EXIT=$?"`
 Expected: 全テストPASS
 
 - [ ] **Step 6: E2E回帰**
