@@ -29,8 +29,8 @@ from pathlib import Path
 from scripts.tenant_constant_scan import scan_file, scan_repo, write_tsv
 
 FIXTURE = """
-var SHEET_ID = '1AbC_sheetid_1234567890';
-var CHANNEL_ID = 'U1234567890abcdef123456';
+var SHEET_ID = '1AbCdEfGhIjKlMnOpQrStUvWx12345'; // Sheet master
+var CHANNEL_ID = 'U1234567890abcdef1234567890abcdef';
 var BASE_URL = 'https://script.google.com/macros/s/AKfycbXYZ/exec';
 var RETRY_MAX = 3; // 共通設定・テナント固有でない
 """
@@ -266,7 +266,7 @@ function testKpiLogService() {
 - [ ] **Step 3: テストが失敗することを確認**
 
 Run: `bash gas-project/gas-run.sh deploy testKpiLogService 2>&1 | tail -20; echo "EXIT=$?"`
-Expected: FAIL（テスト結果に `KpiLogService is not defined` のpassed:false行が含まれる）※ gas-run.shはWeb App経由で実行するため、テスト追加済みコードのdeploy+実行が必要（実測仕様・2026-10-09自己点検）
+Expected: FAIL（テスト結果に `KpiLogService is not defined` のpassed:false行が含まれる）。**判別条件: passed:false行が出た=RED成立・404/HTMLが返った=デプロイ失敗でありREDではない**（r5 MiniMax#1反映）※ gas-run.shはWeb App経由
 
 - [ ] **Step 4: KpiLogServiceを実装**
 
@@ -333,12 +333,15 @@ var KpiLogService = (function() {
 
 ```javascript
   // 成功パスの return 直前:
-  try { KpiLogService.logReservationEvent('success', 'T0001', requestId || '', 'system'); } catch (e) { /* KPIは予約を止めない */ }
+  try {
+    KpiLogService.logReservationEvent('success', 'T0001', requestId || '', 'system');
+    PropertiesService.getScriptProperties().setProperty('LAST_RESERVATION_AT', Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss'));
+  } catch (e) { /* KPI・ハートビートとも予約を止めない（r5・3機一致指摘で追加） */ }
   // 失敗パス（catch節内）:
   try { KpiLogService.logReservationEvent('failure', 'T0001', requestId || '', 'system'); } catch (e) { /* KPIは予約を止めない */ }
 ```
 
-注: `requestId` 変数が当該スコープに無い場合は空文字 `''` を渡す（一意性はKPI集計に必須でない）。tenant_id は現行単一院のため `'T0001'` 固定（spec §4 C1どおり）。
+注: シート名 `KPI_LOG` は全院共通設定のため C0スキャナ対象外（common判定相当）をここに明記する（r5 MiniMax#2反映）。`requestId` は実装時に ReservationHandler.js 内の実変数名を実測して使用（無ければ空文字 `''`・r5 OR1#1反映）。LAST_RESERVATION_AT 更新は Task 6 のハートビート `last_reservation_at` を生きさせる必須ペア（無いと恒久nullになる・r5 Gemini#1/GLM#5/MiniMax#9の3機一致）。tenant_id は現行単一院のため `'T0001'` 固定（spec §4 C1どおり）。
 
 - [ ] **Step 6: テストが通ることを確認**
 
@@ -372,7 +375,7 @@ CREATE TABLE IF NOT EXISTS tenants (
   tenant_id TEXT PRIMARY KEY,          -- 例: T0001
   clinic_name TEXT NOT NULL,
   line_channel_id TEXT NOT NULL,       -- 検証用（自己診断照合）
-  heartbeat_token TEXT NOT NULL,       -- ハートビート認証用（各院GASのScript Propertiesとペア）
+  heartbeat_token TEXT NOT NULL UNIQUE, -- ハートビート認証用（UNIQUE=トークン衝突で別院上書きを防ぐ・r5 MiniMax#4）
   gas_deploy_url TEXT NOT NULL,
   stripe_customer_id TEXT,             -- C3で使用（C1ではNULL許容）
   status TEXT NOT NULL DEFAULT 'active',  -- active|warning|stopped|unknown
@@ -625,7 +628,7 @@ if (
 }
 ```
 
-注: 既存index.tsに同名の `/health` ルートが既にある場合は、既存側を削除せず本ブロックを優先配置（先にマッチさせると既存に影響しない）。`env as never` は既存Env型と型が競合しないための一時措置で、既存Envへ `DB: D1Database` を足せば `as never` は削除してよい。
+注: 実装前に既存 index.ts の `/health` ルート有無を必ず実測する。ある場合は応答契約（JSON形式）を比較し、一致するなら本モジュールに統合・不一致なら既存を優先して本ブロックの `/health` を `/registry/health` へ変更。pathname判定は**完全一致 `===` のみ**（startsWith/正規表現は禁止・LINE webhook経路の誤飲防止・r5 GLM#3/OR1#3/MiniMax#5反映）。`env as never` は既存Env型と型が競合しないための一時措置で、既存Envへ `DB: D1Database` を足せば `as never` は削除してよい。
 
 - [ ] **Step 6: 全テスト（既存含む）が通ることを確認**
 
@@ -820,21 +823,23 @@ git commit -m "docs(c1): uptime probe runbook (spec §4 C1)"
 - [ ] **Step 1: 全回帰を実行**
 
 Run: `cd /home/yn4416/projects/reserve-optimizer && node tests/run-all.js 2>&1 | tail -3; echo "E2E_EXIT=$?" && cd worker && npx vitest run 2>&1 | tail -5; echo "VITEST_EXIT=$?"`
-Expected: E2E 36/36 green・vitest全PASS・両方EXIT=0
+Expected: E2E green（**件数が36+新規テスト分増えていることを出力で確認=concat追加漏れの検知・r5 MiniMax#7反映**）・vitest全PASS・両方EXIT=0
 
 - [ ] **Step 2: ゲートチェックリストを書く（C1ゲート=spec §4・MLRとKPI基準値は別途）**
 
 ```markdown
 # C1ゲート チェックリスト（spec §4 C1）
 
-- [x] E2E36本全緑（実施日・EXIT=0を添付）
-- [x] worker vitest 全緑
-- [x] ハートビート源=日次定期トリガー方式の検証
-  - 合格基準（spec §4）: T0001で7日連続トリガー発火確認+発火失敗時の外部再作成手順の動作確認
-  - 判定: 「7日連続発火」は実機運用待ち（開始日: ____ / 判定日: 開始日+7日）
-- [x] 中央死活の外部プローブ設定済み（docs/runbooks/uptime-probe.md）
-- [ ] KPI基準値確定（Phase 0の2〜4週メトリクス記録後に記入）
-- [ ] MLR（C1成果物に対する3機レビュー）
+| 項目 | チェック | ステータス |
+|---|---|---|
+| E2E36本全緑（EXIT=0添付） | [ ] | 実装完了時に入力 |
+| worker vitest 全緑 | [ ] | 実装完了時に入力 |
+| ハートビート源=日次定期トリガー7日連続発火（合格基準=T0001で7日+外部再作成手順の動作確認） | [ ] | 実機運用待ち（開始日: ____ / 判定日: +7日） |
+| 中央死活の外部プローブ設定済み | [ ] | Task 7完了時に入力 |
+| KPI基準値確定 | [ ] | Phase 0メトリクス記録後 |
+| MLR（C1成果物に対する3機レビュー） | [ ] | 別回実施 |
+
+**本チェックリストの完了は「実装完了」を示すものでC1ゲート通過（C1-go）を含意しない**（r5 MiniMax#6反映・C1-goは7日連続発火+MLR+KPI基準値の3点セット）。
 
 ※ 「7日連続発火」と「KPI基準値」が未達の間、C1は**ゲート通過でなく実装完了**と呼ぶ（spec §4のゲート判定はこのチェックリスト全項目完了で確定）。
 ```
@@ -870,8 +875,8 @@ Expected: コード実行系API（eval等）の使用=0件が理想・Secret類�
 
 - [ ] **Step 3: 要対応項目を0件または起票済みにして完了**
 
-Run: `grep -c "要対応" docs/c0-security-review.md; echo "EXIT=$?"`
-Expected: 要対応0件（または全件が `docs/tenant-constants.tsv` 判定またはバックグ起票済み）
+Run: `grep -c "要対応: 有" docs/c0-security-review.md; echo "EXIT=$?"`
+Expected: `0`（表の要対応列は「要対応: 有/なし」の固定形式で記入する・r5 OR1#6反映）
 
 - [ ] **Step 4: Commit**
 
@@ -894,3 +899,19 @@ git commit -m "docs(c0): security self-review (OWASP view + stack-specific threa
 ## 完了条件
 
 Task 1〜8の全チェックボックス完了+人間タスクのうち「兼業確認」以外は並行進行可。C1の**ゲート通過判定**は7日連続トリガー発火確認後に確定する。C2以降の計画は本計画のC0成果物（`docs/tenant-constants.tsv`のjudgment分布）を見てから作成する。
+
+
+---
+
+## r5レビュー反映記録（2026-10-09・4機25指摘）
+
+**採用10件（本計画へ反映済み）**: フィクスチャ×正規表現不整合修正（GLM#1/#2・機械検証で確認）・LAST_RESERVATION_AT更新行追加（Gemini#1/GLM#5/MiniMax#9・3機一致）・heartbeat_token UNIQUE化（MiniMax#4）・/health競合の実測+完全一致規則（GLM#3/OR1#3/MiniMax#5）・チェックリスト[x]事前記入廃止（GLM#4）・Task 9判定値形式（OR1#6）・KPI_LOGのC0対象外明記（MiniMax#2）・run-all件数確認（MiniMax#7部分）・C1-go語彙分離（MiniMax#6）・RED判別条件（MiniMax#1）
+
+**却下（理由付き）**:
+- OR1#5「LINEトークンはxoxb-プレフィックス」= **誤認識**（xoxb-はSlack形式・LINE Messaging APIのトークンはJWT的long文字列で別形式）※外部知識に基づく判定・実装時に実トークン形式で最終確認
+- Gemini#3「value[:40]切り捨てをやめ全文保存」= git管理ファイルにシークレット全文を置くのは漏洩面を増やす（C0の目的は移行でなく判断）
+- OR1#2「heartbeats.last_reservation_atのNULL制約」= DDLはNULL許容でスタブと整合（乖離なし）
+- MiniMax#3「sendDaily失敗時のリトライ機構」= 送信失敗は中央側の「ハートビート24h不着→unknown化」検知（spec §5）が担う・二重化は不要
+- MiniMax#8「grep監査の除外ルール」= Task 9コマンドにnode_modules/tests除外は既存（記録のみ）
+- OR1#4「TENANT_IDデフォルト例外化」= 未設定早期リターンは「C1途中の院を壊さない」意図的設計
+- Gemini#2「D1スタブrun()失敗注入」= 将来改善（YAGNI・C1スコープ外）
