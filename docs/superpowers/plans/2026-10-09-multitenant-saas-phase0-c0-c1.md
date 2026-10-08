@@ -335,7 +335,7 @@ var KpiLogService = (function() {
   // 成功パスの return 直前:
   try {
     KpiLogService.logReservationEvent('success', 'T0001', requestId || '', 'system');
-    PropertiesService.getScriptProperties().setProperty('LAST_RESERVATION_AT', Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd HH:mm:ss'));
+    PropertiesService.getScriptProperties().setProperty('LAST_RESERVATION_AT', new Date().toISOString()); // ISO8601統一（r6 GLM#5）
   } catch (e) { /* KPI・ハートビートとも予約を止めない（r5・3機一致指摘で追加） */ }
   // 失敗パス（catch節内）:
   try { KpiLogService.logReservationEvent('failure', 'T0001', requestId || '', 'system'); } catch (e) { /* KPIは予約を止めない */ }
@@ -350,8 +350,8 @@ Expected: 全テストPASS（exit 0）
 
 - [ ] **Step 7: E2E回帰（データプレーン無変更の確認）**
 
-Run: `node tests/run-all.js 2>&1 | tail -5; echo "EXIT=$?"`
-Expected: 36/36 green・EXIT=0
+Run: `set -o pipefail && node tests/run-all.js 2>&1 | tail -5; echo "EXIT=$?"`
+Expected: 38系統green（36+新規テスト関数2系統・r6 OR1#4反映）・EXIT=0（pipefail付き・tailでなくnodeのexitを見る・r6 GLM#1反映）
 
 - [ ] **Step 8: Commit**
 
@@ -471,24 +471,40 @@ describe("registry routes", () => {
   });
 
   it("GET /tenants/:id returns tenant without secrets", async () => {
-    const env = { DB: createRegistryD1Stub([[TENANT]]) };
-    const res = await handleRegistryRequest(new Request("https://x/tenants/T0001"), env);
+    const env = { DB: createRegistryD1Stub([[TENANT]]), ADMIN_TOKEN: "admin-tok" };
+    const res = await handleRegistryRequest(
+      new Request("https://x/tenants/T0001", { headers: { Authorization: "Bearer admin-tok" } }),
+      env
+    );
     expect(res.status).toBe(200);
     const body = (await res.json()) as { heartbeat_token?: string };
     expect(body.heartbeat_token).toBeUndefined(); // シークレットは返さない
   });
 
   it("GET /tenants/unknown returns 404", async () => {
-    const env = { DB: createRegistryD1Stub([]) };
-    const res = await handleRegistryRequest(new Request("https://x/tenants/T9999"), env);
+    const env = { DB: createRegistryD1Stub([]), ADMIN_TOKEN: "admin-tok" };
+    const res = await handleRegistryRequest(
+      new Request("https://x/tenants/T9999", { headers: { Authorization: "Bearer admin-tok" } }),
+      env
+    );
     expect(res.status).toBe(404);
+  });
+
+  it("POST /heartbeat without Authorization header returns 401", async () => {
+    const env = { DB: createRegistryD1Stub([[TENANT]]) };
+    const res = await handleRegistryRequest(
+      new Request("https://x/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenant_id: "T0001" }) }),
+      env
+    );
+    expect(res.status).toBe(401);
   });
 });
 ```
 
 - [ ] **Step 2: テストが失敗することを確認**
 
-Run: `cd worker && npx vitest run src/registry.test.ts 2>&1 | tail -10; echo "EXIT=$?"`
+Run: `cd worker && set -o pipefail && npx vitest run src/registry.test.ts 2>&1 | tail -10; echo "EXIT=$?"`
 Expected: FAIL（`Cannot find module './registry'`）
 
 - [ ] **Step 3: registry.tsを実装**
@@ -503,6 +519,7 @@ Expected: FAIL（`Cannot find module './registry'`）
 
 export interface Env {
   DB: D1Database;
+  ADMIN_TOKEN?: string; // /tenants照会用（wrangler secret put ADMIN_TOKEN・r6 GLM#2）
 }
 
 interface TenantRow {
@@ -588,6 +605,11 @@ export async function handleRegistryRequest(request: Request, env: Env): Promise
 
   const tenantMatch = path.match(/^\/tenants\/([A-Za-z0-9]+)$/);
   if (tenantMatch && request.method === "GET") {
+    // /tenants照会は管理操作のため ADMIN_TOKEN 認証を必須化（無認証だと院名・URLが公開列挙される・r6 GLM#2）
+    const adminAuth = request.headers.get("Authorization") ?? "";
+    if (adminAuth !== `Bearer ${env.ADMIN_TOKEN}`) {
+      return json({ error: "unauthorized" }, 401);
+    }
     const tenant = await env.DB.prepare(
       "SELECT * FROM tenants WHERE tenant_id = ?1"
     )
@@ -607,7 +629,7 @@ export async function handleRegistryRequest(request: Request, env: Env): Promise
 
 - [ ] **Step 4: テストが通ることを確認**
 
-Run: `cd worker && npx vitest run src/registry.test.ts 2>&1 | tail -10; echo "EXIT=$?"`
+Run: `cd worker && set -o pipefail && npx vitest run src/registry.test.ts 2>&1 | tail -10; echo "EXIT=$?"`
 Expected: 5 passed
 
 - [ ] **Step 5: 既存index.tsへルーティングを追加**
@@ -622,7 +644,7 @@ const pathname = new URL(request.url).pathname;
 if (
   pathname === "/health" ||
   pathname === "/heartbeat" ||
-  pathname.startsWith("/tenants/")
+  /^\/tenants\/[A-Za-z0-9]+$/.test(pathname) // パラメータ付きルートは全体マッチ正規表現（部分一致禁止規則はLINE webhook系パス向け・r6 GLM#3で注記と統一）
 ) {
   return handleRegistryRequest(request, env as never);
 }
@@ -632,7 +654,7 @@ if (
 
 - [ ] **Step 6: 全テスト（既存含む）が通ることを確認**
 
-Run: `cd worker && npx vitest run 2>&1 | tail -8; echo "EXIT=$?"`
+Run: `cd worker && set -o pipefail && npx vitest run 2>&1 | tail -8; echo "EXIT=$?"`
 Expected: 既存テスト含め全PASS・EXIT=0
 
 - [ ] **Step 7: デプロイして実機ヘルス確認**
@@ -769,8 +791,8 @@ Expected: 全テストPASS
 
 - [ ] **Step 6: E2E回帰**
 
-Run: `node tests/run-all.js 2>&1 | tail -5; echo "EXIT=$?"`
-Expected: 36/36 green
+Run: `set -o pipefail && node tests/run-all.js 2>&1 | tail -5; echo "EXIT=$?"`
+Expected: 38系統green（r6 OR1#4/GLM#1反映）
 
 - [ ] **Step 7: Commit**
 
@@ -822,8 +844,8 @@ git commit -m "docs(c1): uptime probe runbook (spec §4 C1)"
 
 - [ ] **Step 1: 全回帰を実行**
 
-Run: `cd /home/yn4416/projects/reserve-optimizer && node tests/run-all.js 2>&1 | tail -3; echo "E2E_EXIT=$?" && cd worker && npx vitest run 2>&1 | tail -5; echo "VITEST_EXIT=$?"`
-Expected: E2E green（**件数が36+新規テスト分増えていることを出力で確認=concat追加漏れの検知・r5 MiniMax#7反映**）・vitest全PASS・両方EXIT=0
+Run: `cd /home/yn4416/projects/reserve-optimizer && set -o pipefail && node tests/run-all.js 2>&1 | tail -3; echo "E2E_EXIT=$?" && cd worker && set -o pipefail && npx vitest run 2>&1 | tail -5; echo "VITEST_EXIT=$?"`
+Expected: E2E 38系統green（件数増を確認=concat追加漏れの検知・r5 MiniMax#7/r6 OR1#4反映・pipefailでnode実exit code取得・r6 GLM#1反映）・vitest全PASS・両方EXIT=0
 
 - [ ] **Step 2: ゲートチェックリストを書く（C1ゲート=spec §4・MLRとKPI基準値は別途）**
 
@@ -842,6 +864,8 @@ Expected: E2E green（**件数が36+新規テスト分増えていることを�
 **本チェックリストの完了は「実装完了」を示すものでC1ゲート通過（C1-go）を含意しない**（r5 MiniMax#6反映・C1-goは7日連続発火+MLR+KPI基準値の3点セット）。
 
 ※ 「7日連続発火」と「KPI基準値」が未達の間、C1は**ゲート通過でなく実装完了**と呼ぶ（spec §4のゲート判定はこのチェックリスト全項目完了で確定）。
+※ **スコープ明示（r6 GLM#4反映）**: spec §5の「ハートビート24h不着→unknown化」機構（status書き換えCron）は**C2計画で実装**する・C1ではstatusは'active'のまま。C1の死活検知は外部プローブ（中央）+7日連続トリガー確認（テナント）のみ。
+※ last_reservation_at は初回ハートビートまではNULL正常（初回以降の値存在をC1ゲート確認項目に含める・r6 OR1#7反映）。
 ```
 
 - [ ] **Step 3: Commit**
