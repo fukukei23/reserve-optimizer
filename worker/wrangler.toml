@@ -6,6 +6,15 @@ compatibility_date = "2024-05-06"
 # GAS_WEBAPP_URL は .dev.vars または wrangler secret で設定
 ALLOWED_ORIGINS = "https://reserve-optimizer.fukukei44161.workers.dev"
 
+# ─── C1: D1 binding (spec §4 C1) ───
+# database_id はプレースホルダ: リモートDB未作成のため。
+# 実IDへの置換が必要（要 CloudflareトークンのD1権限付与後・2026-10-09）:
+#   npx wrangler d1 create reserve-optimizer → 出力のUUIDをここへ記入
+[[d1_databases]]
+binding = "DB"
+database_name = "reserve-optimizer"
+database_id = "PLACEHOLDER_LOCAL_ONLY_REPLACE_ME"
+
 [[rules]]
 type = "Text"
 globs = ["**/*.html"]
