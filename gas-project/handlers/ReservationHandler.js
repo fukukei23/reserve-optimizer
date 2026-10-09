@@ -473,6 +473,10 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
   var lockResult = _createReservationWithLock(tempData);
 
   if (!lockResult.ok) {
+    // Phase 0 KPI log (additive・spec §8)
+    try {
+      KpiLogService.logReservationEvent('failure', 'T0001', '', 'system');
+    } catch (e) { /* KPIは予約を止めない */ }
     clearUserState(userId);
     if (lockResult.reason === 'SLOT_FULL') {
       sendLinePushQuickReply(userId, '申し訳ございません、' + tempData.reserved_date + ' ' + tempData.reserved_start + 'は他の方が予約しました。\n\n再度「予約する」からお試しください。', [
@@ -494,6 +498,14 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
   try { _onReservationCreated(result.id, tempData); } catch (hookErr) {
     appendLogRow('WARN', 'Post-create hook error: ' + hookErr.message);
   }
+
+  // Phase 0 KPI log + heartbeat source (additive・spec §8)
+  try {
+    KpiLogService.logReservationEvent('success', 'T0001', '', 'system');
+    PropertiesService.getScriptProperties().setProperty(
+      'LAST_RESERVATION_AT', new Date().toISOString()
+    );
+  } catch (e) { /* KPI・ハートビートとも予約を止めない */ }
 
   // Check for active ticket — skip deposit if available
   var activeTicket = getActiveTicketByUser(userId);

@@ -42,6 +42,7 @@ function runAllTests() {
   results.tests = results.tests.concat(testMessageTemplates());
   results.tests = results.tests.concat(testReminderService());
   results.tests = results.tests.concat(testQuickReport());
+  results.tests = results.tests.concat(testKpiLogService());
 
   // Integration tests
   results.tests = results.tests.concat(testSheetServiceIntegration());

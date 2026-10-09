@@ -28,6 +28,7 @@ var _DEBUG_ROUTES = {
   testCancelFlow: testCancelFlow,
   testChangeFlow: testChangeFlow,
   testLineReply: testLineReply,
+  testKpiLogService: testKpiLogService,
   debugDoPost: debugDoPost,
   debugStripeLink: debugStripeLink
 };
