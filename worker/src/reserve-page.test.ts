@@ -11,7 +11,13 @@ function loadPage() {
   const dom = new JSDOM(html, { runScripts: "dangerously", url: "https://localhost/" });
   (global as any).window = dom.window;
   (global as any).document = dom.window.document;
-  (global as any).navigator = dom.window.navigator;
+  // Node >=21 の globalThis.navigator はgetter付きで直接代入不可のため
+  // definePropertyで上書き（環境互換・2026-10-09実測20件失敗の修正）
+  Object.defineProperty(global, "navigator", {
+    value: dom.window.navigator,
+    configurable: true,
+    writable: true,
+  });
   (global as any).localStorage = dom.window.localStorage;
 }
 

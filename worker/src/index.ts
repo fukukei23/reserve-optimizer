@@ -12,10 +12,13 @@ export interface Env {
   ALLOWED_ORIGINS: string; // カンマ区切り複数オリジン（本番 + デモ等）
   DEBUG?: string; // "true" のみデバッグログ出力
   DEMO_MODE?: string; // "true" でデモ環境（Phase α E11・S3で分岐本実装・今晚は掛け点のみ）
+  DB?: D1Database; // C1: テナント登録簿（wrangler.toml d1_databases binding）
+  ADMIN_TOKEN?: string; // C1: /tenants照会用（wrangler secret put ADMIN_TOKEN）
 }
 
 import RESERVE_PAGE_HTML from "./reserve-page.html";
 import INTAKE_FORM_HTML from "./intake-form.html";
+import { handleRegistryRequest } from "./registry";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -51,6 +54,15 @@ export default {
     // LINE webhook
     if (url.pathname === "/webhook/line" && request.method === "POST") {
       return handleLineWebhook(request, env, ctx);
+    }
+
+    // C1 registry routes (完全一致のみ・r5 GLM#3/OR1#3/MiniMax#5)
+    // /health は既存（gas到達性付き）を優先・registry側では扱わない
+    if (
+      url.pathname === "/heartbeat" ||
+      /^\/tenants\/[A-Za-z0-9]+$/.test(url.pathname)
+    ) {
+      return handleRegistryRequest(request, env);
     }
 
     // Stripe webhook
