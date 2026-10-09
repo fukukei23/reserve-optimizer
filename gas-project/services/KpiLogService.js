@@ -48,7 +48,9 @@ var KpiLogService = (function() {
     return { total: total, success: success, rate: rate };
   }
 
-  function getWeeklyRows() {
+  // MLR r2採用: 名前と実装の不一致解消（全行を返すためgetAllRows）
+  // 直近7日限定の週次集計は呼出側で日付フィルタする
+  function getAllRows() {
     var sheet = _getSheet();
     var last = sheet.getLastRow();
     if (last < 2) return [];
@@ -61,7 +63,7 @@ var KpiLogService = (function() {
   return {
     logReservationEvent: logReservationEvent,
     computeSuccessRate: computeSuccessRate,
-    getWeeklyRows: getWeeklyRows,
+    getAllRows: getAllRows,
     _setSheetForTest: _setSheetForTest
   };
 })();

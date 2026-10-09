@@ -69,6 +69,23 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// MLR r2採用: 定数時間比較（2ラウンド連続指摘・規定により最優先作業化）
+// 長さ不一致は即false（長さは秘匿情報でない・標準的実装）
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+const BEARER_PREFIX = "Bearer ";
+
+function extractBearer(header: string | null): string {
+  return (header ?? "").replace(/^Bearer\s+/i, "");
+}
+
 export async function handleRegistryRequest(
   request: Request,
   env: RegistryEnv
@@ -77,7 +94,9 @@ export async function handleRegistryRequest(
   // （GLM#3指摘採用・2026-10-09）
   try {
     return await handleRegistryInner(request, env);
-  } catch {
+  } catch (err) {
+    // MLR r2採用: 500を握り潰さずWorkersログへ記録
+    console.error("registry error:", err);
     return json({ error: "internal error" }, 500);
   }
 }
@@ -95,8 +114,7 @@ async function handleRegistryInner(
 
   if (path === "/heartbeat" && request.method === "POST") {
     if (!env.DB) return json({ error: "db not configured" }, 503);
-    const auth = request.headers.get("Authorization") ?? "";
-    const token = auth.replace(/^Bearer\s+/i, "");
+    const token = extractBearer(request.headers.get("Authorization"));
     let payload: {
       tenant_id?: string;
       last_reservation_at?: string | null;
@@ -114,7 +132,7 @@ async function handleRegistryInner(
     )
       .bind(payload.tenant_id)
       .first<TenantRow>();
-    if (!tenant || tenant.heartbeat_token !== token) {
+    if (!tenant || !timingSafeEqual(tenant.heartbeat_token, token)) {
       return json({ error: "unauthorized" }, 401);
     }
     await env.DB.prepare(
@@ -136,7 +154,12 @@ async function handleRegistryInner(
       return json({ error: "admin token not configured" }, 503);
     }
     const adminAuth = request.headers.get("Authorization") ?? "";
-    if (adminAuth !== `Bearer ${env.ADMIN_TOKEN}`) {
+    if (
+      !adminAuth.startsWith(BEARER_PREFIX) ||
+      !timingSafeEqual(
+        adminAuth.slice(BEARER_PREFIX.length), env.ADMIN_TOKEN
+      )
+    ) {
       return json({ error: "unauthorized" }, 401);
     }
     const tenant = await env.DB.prepare(
@@ -146,8 +169,9 @@ async function handleRegistryInner(
       .first<TenantRow>();
     if (!tenant) return json({ error: "not found" }, 404);
     // シークレット（heartbeat_token）は返さない
-    const { heartbeat_token, ...safe } = tenant;
-    void heartbeat_token;
+    // （MLR r2採用・rename destructureで意図明示）
+    const { heartbeat_token: _omitted, ...safe } = tenant;
+    void _omitted;
     return json(safe);
   }
 

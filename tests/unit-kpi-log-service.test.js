@@ -137,11 +137,11 @@ assertEqual('K3: success=2', summary.success, 2);
 assert('K3: rate≈66.7',
   Math.abs(summary.rate - 66.7) < 0.1, 'rate=' + summary.rate);
 
-// ─── K4: getWeeklyRows（複数行取得）──
+// ─── K4: getAllRows（複数行取得・r2リネーム追従）──
 resetMockSheets();
 KpiLogService.logReservationEvent('success', 'T0001', 'r1', 'system');
 KpiLogService.logReservationEvent('failure', 'T0001', 'r2', 'system');
-var weekly = KpiLogService.getWeeklyRows();
+var weekly = KpiLogService.getAllRows();
 assertEqual('K4: 2行取得', weekly.length, 2);
 
 // ─── Results ───

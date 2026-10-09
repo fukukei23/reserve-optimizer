@@ -190,6 +190,20 @@ describe("registry routes", () => {
     expect(body.error).toBe("internal error");
   });
 
+  it("subpath /tenants/:id/heartbeats returns 404", async () => {
+    const env = {
+      DB: createRegistryD1Stub([[TENANT]]),
+      ADMIN_TOKEN: "admin-tok",
+    };
+    const res = await handleRegistryRequest(
+      new Request("https://x/tenants/T0001/heartbeats", {
+        headers: { Authorization: "Bearer admin-tok" },
+      }),
+      env
+    );
+    expect(res.status).toBe(404);
+  });
+
   it("heartbeat records insert payload", async () => {
     const stub = createRegistryD1Stub([[TENANT]]) as unknown as {
       inserted: Array<{
