@@ -204,6 +204,25 @@ describe("registry routes", () => {
     expect(res.status).toBe(404);
   });
 
+  it("heartbeat same-length different token returns 401", async () => {
+    // timingSafeEqualの同長XORループ経路を直接カバー
+    // （長さ不一致のみだとループ未走=検知力の穴・自己点検発見）
+    const sameLen = "hb-token-000X"; // hb-token-0001 と同長・異値
+    const env = { DB: createRegistryD1Stub([[TENANT]]) };
+    const res = await handleRegistryRequest(
+      new Request("https://x/heartbeat", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${sameLen}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tenant_id: "T0001" }),
+      }),
+      env
+    );
+    expect(res.status).toBe(401);
+  });
+
   it("heartbeat records insert payload", async () => {
     const stub = createRegistryD1Stub([[TENANT]]) as unknown as {
       inserted: Array<{
