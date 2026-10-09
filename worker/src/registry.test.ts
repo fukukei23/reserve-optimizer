@@ -158,6 +158,38 @@ describe("registry routes", () => {
     expect(res.status).toBe(503);
   });
 
+  it("ADMIN_TOKEN unset returns 503 not auth bypass", async () => {
+    const env = { DB: createRegistryD1Stub([[TENANT]]) };
+    const res = await handleRegistryRequest(
+      new Request("https://x/tenants/T0001", {
+        headers: { Authorization: "Bearer undefined" },
+      }),
+      env
+    );
+    expect(res.status).toBe(503);
+  });
+
+  it("D1 failure returns 500 json not raw stack", async () => {
+    const throwingDb = {
+      prepare() {
+        throw new Error("d1 exploded: stack trace here");
+      },
+    } as unknown as D1Database;
+    const env = {
+      DB: throwingDb,
+      ADMIN_TOKEN: "admin-tok",
+    };
+    const res = await handleRegistryRequest(
+      new Request("https://x/tenants/T0001", {
+        headers: { Authorization: "Bearer admin-tok" },
+      }),
+      env
+    );
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("internal error");
+  });
+
   it("heartbeat records insert payload", async () => {
     const stub = createRegistryD1Stub([[TENANT]]) as unknown as {
       inserted: Array<{

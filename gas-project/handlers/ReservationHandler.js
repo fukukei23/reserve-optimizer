@@ -505,7 +505,10 @@ function createReservationAndGoToPayment(replyToken, userId, tempData) {
     PropertiesService.getScriptProperties().setProperty(
       'LAST_RESERVATION_AT', new Date().toISOString()
     );
-  } catch (e) { /* KPI・ハートビートとも予約を止めない */ }
+  } catch (e) {
+    // KPI・ハートビートとも予約を止めない（MLR採用(C)・失敗はWARN記録）
+    appendLogRow('WARN', 'KPI log failed: ' + e.message);
+  }
 
   // Check for active ticket — skip deposit if available
   var activeTicket = getActiveTicketByUser(userId);

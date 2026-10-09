@@ -73,6 +73,19 @@ export async function handleRegistryRequest(
   request: Request,
   env: RegistryEnv
 ): Promise<Response> {
+  // MLR採用(B): D1例外の生500伝播・スタック漏洩防止
+  // （GLM#3指摘採用・2026-10-09）
+  try {
+    return await handleRegistryInner(request, env);
+  } catch {
+    return json({ error: "internal error" }, 500);
+  }
+}
+
+async function handleRegistryInner(
+  request: Request,
+  env: RegistryEnv
+): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
 
@@ -117,6 +130,11 @@ export async function handleRegistryRequest(
     // /tenants照会は管理操作のため ADMIN_TOKEN 認証必須
     // （無認証だと院名・URLが公開列挙される・r6 GLM#2）
     if (!env.DB) return json({ error: "db not configured" }, 503);
+    // MLR採用(A): ADMIN_TOKEN未設定時は503（"Bearer undefined"
+    // 一致による認証回避ホール防止・4機一致指摘 2026-10-09）
+    if (!env.ADMIN_TOKEN) {
+      return json({ error: "admin token not configured" }, 503);
+    }
     const adminAuth = request.headers.get("Authorization") ?? "";
     if (adminAuth !== `Bearer ${env.ADMIN_TOKEN}`) {
       return json({ error: "unauthorized" }, 401);
