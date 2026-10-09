@@ -19,5 +19,5 @@
 
 | ブロッカー | 影響 | 解除条件 |
 |---|---|---|
-| Cloudflare APIトークンにD1権限なし（code 10000実測） | worker本番デプロイ不可（database_id プレースホルダのまま・検証エラー10021実測・旧版atomic維持確認済み） | ふくけいがトークンへD1 Edit権限付与 → `npx wrangler d1 create reserve-optimizer` → 実IDをwrangler.tomlへ記入 → `npx wrangler deploy` |
+| ~~Cloudflare APIトークンにD1権限なし~~ **✅解消済み（2026-10-09）**: ふくけいがD1 Edit権限を付与 → d1 create成功（db_id=247f0b72...・APAC）→ リモート適用（3 queries・tenants/heartbeats実測）→ 本番デプロイ成功（Version be4b7a24・/health ok・/heartbeat無認証401実測） | 解消 | — |
 | gas-run.shテスト実行経路の既存不具合（Web App経由） | GAS単体テストの実機実行不可（テストはローカルnodeハーネスで代替・全緑） | ①DoGet.jsのsetStatusCode削除（GAS TextOutputに非存在API・testConfigでも同エラー実測）②Bearer照合トークンの不一致解消（gas-run.sh送信OAuthトークン vs DoGet照合GAS_AUTH_TOKEN）※GAS_AUTH_TOKENはローカルに不在 |
