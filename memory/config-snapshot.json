@@ -1,11 +1,9 @@
 {
   "timeoutSeconds": 60,
   "primaryModel": "minimax/MiniMax-M3",
-  "fallbackModels": [
-    "zai/glm-5.1"
-  ],
+  "fallbackModels": ["zai/glm-5.1"],
   "hooksEnabled": true,
   "fallbackNotifyEnabled": true,
   "discordEnabled": true,
-  "lastCheck": "2026-10-07T03:45:00.000Z"
+  "lastCheck": "2026-10-10T01:13:00.000Z"
 }
