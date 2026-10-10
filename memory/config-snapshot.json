@@ -1,9 +1,7 @@
 {
-  "timeoutSeconds": 60,
-  "primaryModel": "minimax/MiniMax-M3",
-  "fallbackModels": ["zai/glm-5.1"],
-  "hooksEnabled": true,
-  "fallbackNotifyEnabled": true,
-  "discordEnabled": true,
-  "lastCheck": "2026-10-10T01:13:00.000Z"
+  "agents.defaults.timeoutSeconds": 60,
+  "agents.defaults.model.primary": "minimax/MiniMax-M3",
+  "agents.defaults.model.fallbacks": "[\"zai/glm-5.1\"]",
+  "hooks.internal.enabled": true,
+  "hooks.internal.entries.fallback-notify.enabled": true
 }
