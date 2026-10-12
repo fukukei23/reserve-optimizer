@@ -19,7 +19,9 @@ var _GET_ROUTES = {
   storeRichMenuImage: _storeRichMenuImageChunk,
   clearRichMenuImage: _clearRichMenuImageProperty,
   initializeDefaultProperties: initializeDefaultProperties,
-  renameResources: renameResources
+  renameResources: renameResources,
+  registerHeartbeatTrigger: registerHeartbeatTrigger,
+  listCurrentTriggers: listCurrentTriggers
 };
 
 // Debug/test routes — only available in non-production environments

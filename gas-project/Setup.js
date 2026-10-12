@@ -237,6 +237,43 @@ function listCurrentTriggers() {
 }
 
 /**
+ * sendDaily の日次トリガーを登録する（C1運用・冪等・2026-10-12）。
+ * 既に sendDaily トリガーが存在する場合は作成せず現状を返す。
+ * 戻り値に props 状態とトリガー一覧を含める
+ * （WebApp 経由での実測確認用・Logger.log は WebApp で回収不可のため）。
+ */
+function registerHeartbeatTrigger() {
+  var props = PropertiesService.getScriptProperties();
+  var existing = ScriptApp.getProjectTriggers();
+  var triggerList = [];
+  var sendDailyExists = false;
+
+  for (var i = 0; i < existing.length; i++) {
+    var handler = existing[i].getHandlerFunction();
+    triggerList.push(handler);
+    if (handler === 'sendDaily') sendDailyExists = true;
+  }
+
+  if (!sendDailyExists) {
+    ScriptApp.newTrigger('sendDaily')
+      .timeBased()
+      .everyDays(1)
+      .atHour(0)
+      .create();
+    triggerList.push('sendDaily');
+  }
+
+  return {
+    sendDailyRegistered: true,
+    alreadyExisted: sendDailyExists,
+    heartbeatTokenSet: !!props.getProperty('HEARTBEAT_TOKEN'),
+    centralUrlSet: !!props.getProperty('CENTRAL_URL'),
+    tenantId: props.getProperty('TENANT_ID') || 'T0001(未設定デフォルト)',
+    triggers: triggerList
+  };
+}
+
+/**
  * Get system status
  */
 function getSystemStatus() {
