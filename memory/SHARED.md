@@ -1451,3 +1451,5 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 推奨: 全セッションに `modelOverride=glm-5 / providerOverride=zai` 適用
 
 (追記者: フクロウ / 2026-10-12 03:00 UTC アーカイブ更新)
+
+- **10-12 10:43 UTC 定期スキャン**（19:43 JST）: 緊急案件なし・新規TODOなし・マネタイズ信号なし。会話量 10-12=52行/10-11=18行/10-10=11行（平常）。既知滞留: memory_search 401 / backup consecutiveErrors=25（最終成功10-09 04:00 JST・約3日なし・悪化中）/ よつばGitHub認証 / GLM override未対応9件（休眠）/ x-automation原料枯渇8日連続
