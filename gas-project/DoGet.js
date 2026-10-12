@@ -75,7 +75,7 @@ function doGet(e) {
       if (isProduction) {
         return ContentService.createTextOutput(
           JSON.stringify({ ok: false, error: 'Debug routes not available in production' })
-        ).setMimeType(ContentService.MimeType.JSON).setStatusCode(403);
+        ).setMimeType(ContentService.MimeType.JSON);
       }
     }
     var routeTable = fnName in _GET_ROUTES ? _GET_ROUTES : _DEBUG_ROUTES;
@@ -88,7 +88,7 @@ function doGet(e) {
     if (!expectedToken || authHeader !== 'Bearer ' + expectedToken) {
       return ContentService.createTextOutput(
         JSON.stringify({ ok: false, error: 'Unauthorized' })
-      ).setMimeType(ContentService.MimeType.JSON).setStatusCode(401);
+      ).setMimeType(ContentService.MimeType.JSON);
     }
     try {
       var result = routeTable[fnName](e.parameter);
