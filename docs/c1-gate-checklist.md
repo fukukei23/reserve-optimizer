@@ -5,7 +5,7 @@
 | E2E36本全緑（EXIT=0添付） | [x] | 1419/1419・E2E_EXIT=0（2026-10-09実測・Task 3/6の新規unitテスト込み） |
 | worker vitest 全緑 | [x] | 55/55・VITEST_EXIT=0（2026-10-09実測・registry 6テスト追加） |
 | ハートビート源=日次定期トリガー7日連続発火（合格基準=T0001で7日+外部再作成手順の動作確認） | [ ] | **観察中（開始日: 2026-10-13・判定日: 2026-10-20）** — sendDailyトリガーをregisterHeartbeatTrigger実行で登録済み（GASエディタ手動実行・listCurrentTriggers実測「Trigger 10: sendDaily」・10-13 09:34ふくけい実行ログ）・atHour(0)=毎日0-1時JST発火・初回自動発火は10-14 0-1時予定・7日判定cronあり（durable one-shot・10-20 09:47）・props設定（CENTRAL_URL/HEARTBEAT_TOKEN/TENANT_ID）は10-12にふくけいがScript Propertiesへ設定済み・end-to-end検証は初回発火のheartbeats行で実施 |
-| 中央死活の外部プローブ設定済み | [ ] | runbook作成済み（docs/runbooks/uptime-probe.md）・**UptimeRobot登録は人間タスク・未実施** |
+| 中央死活の外部プローブ設定済み | [x] | **完了（2026-10-13）**: UptimeRobot登録済み・ふくけいが作成（HTTP/S・`/health`監視・5分間隔〔runbook想定60分より高頻度〕・Down時メール通知fukukei4416@gmail.com）・Up表示実測（Current status: Up・Checked every 5m・12:2x時点0 incidents）・実機照合 `curl /health` =HTTP 200 `{"status":"ok","gas_reachable":true,...}`（10-13 12:24実測） |
 | KPI基準値確定 | [ ] | Phase 0メトリクス記録後（2〜4週の記録期間が必要） |
 | MLR（C1成果物に対する3機レビュー） | [ ] | 別回実施 |
 
