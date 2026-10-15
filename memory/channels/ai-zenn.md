@@ -319,3 +319,25 @@
 - **累計承認待ちバックログ**: 15件 → **16件**（1件増・滞留継続）
 
 (追記者: フクロウ / 2026-10-11 12:00 UTC アーカイブ更新)
+
+
+### 新規ドラフト×2（10-14 → 10-15 窓）
+
+#### 10-14 05:13 UTC — crontab正典をgit管理する設計術
+- **タイトル**: 【Claude Code】crontab正典をgit管理する設計術：コミット漏れ検知hookをTDDで作る14テスト全記録
+- **リポジトリ**: claude-config
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/claude-code-crontab-git-hook-tdd-14-b898c26a.md
+- **状態**: 承認待ち（Issueで /approve 待ち）
+
+#### 10-15 05:03 UTC — reserve-optimizer 商用化フェーズ全記録
+- **タイトル**: reserve-optimizer 商用化フェーズの全記録：C0 セキュリティ自己レビュー→C1 ハートビート→段階デプロイ戦略
+- **リポジトリ**: reserve-optimizer
+- **プレビュー**: https://github.com/fukukei23/zenn/blob/main/articles/reserve-optimizer-c0-c1-9b2a7b0c.md
+- **状態**: 承認待ち（Issueで /approve 待ち）
+- **注**: 商用化フェーズのC0/C1記録 — reserve-optimizerのマネタイズ進捗ドキュメント
+
+### まとめ（10-11 → 10-15 窓・4日間）
+- **新規ドラフト**: 2件 / **承認・却下処理**: 0件（ふくけい無応答継続のため）
+- **累計承認待ちバックログ**: 16件 → **18件**（2件増・滞留深刻化継続）
+
+(追記者: フクロウ / 2026-10-15 06:00 UTC アーカイブ更新)
