@@ -1,7 +1,9 @@
 {
   "agents.defaults.timeoutSeconds": 60,
   "agents.defaults.model.primary": "minimax/MiniMax-M3",
-  "agents.defaults.model.fallbacks": "[\"zai\\/glm-5.1\"]",
+  "agents.defaults.model.fallbacks": [
+    "zai/glm-5.1"
+  ],
   "hooks.internal.enabled": true,
   "hooks.internal.entries.fallback-notify.enabled": true
 }
