@@ -1643,3 +1643,13 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 10-16 01:44 UTC: OpenAI使用アラート10件（GLM override未設定・更新時刻は4/17で休眠継続・既知）
 
 (追記者: フクロウ / 2026-10-16 03:00 UTC アーカイブ更新)
+
+
+### 【追加 2026-10-16 06:00 UTC】ℹ️ Zenn承認バックログ 18→19件に増大（GAS商用事例記事追加）
+- 出典: 10-16 04:50 UTC #ai-zenn のZenn Pipeline投稿
+- **新規追加**: 【GAS商用事例】本番運用で踏み抜いた5つの落とし穴と恒久対策（repo: reserve-optimizer）
+- プレビュー: https://github.com/fukukei23/zenn/blob/main/articles/gas-5-96f4fbf1.md
+- 状態: 承認待ち（Issue `/approve` 待ち）
+- 注: 10-16 GLM候補4のreserve-optimizer SaaS化 brainstorming と並行してZenn発信も進行中
+
+(追記者: フクロウ / 2026-10-16 06:00 UTC アーカイブ更新)
