@@ -1,6 +1,4 @@
 {
-  "lastCheck": "2026-10-10T04:16:38Z",
-  "envHash": "9e9a0bad61ad4603185c05faccbc31f29886967f1868bb12693cd3db58c8b524",
-  "configHash": "f2f2b3e98d29ec4981d24280872f40f1700690b2197c9a7a84348bb1812f3100",
-  "note": "2026-10-10 04:14 UTC 定期チェック・hash一致（変更なし）— 前回2026-09-19。fallbacks=[\"zai/glm-5.1\"]・primary=minimax/MiniMax-M3"
+  "hash": "b3c116a6fa524ed63c4644bf10cc127465c1ecae72ab12bfc2b3a62997a6b78c",
+  "timestamp": "2026-10-18T05:52:00Z"
 }
