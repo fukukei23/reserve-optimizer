@@ -1760,3 +1760,10 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 全直近発火: 104ms（10-17 06:02）→ 125ms（10-18 00:00）— 全て200 OK継続
 
 (追記者: フクロウ / 2026-10-18 03:00 UTC アーカイブ更新)
+### 【追加 2026-10-19 03:00 UTC】✅ OpenClaw v2026.10.5 公開（10-18 リリース・10-19 00:30 UTC 検知）
+- ハイライト: update処理の自律完了・復旧強化（pnpm 12 / Windows elevation / macOS login shell / stale handoff lease解消）
+- URL: https://github.com/openclaw/openclaw/releases/tag/v2026.10.5
+- 現行コンテナは 2026.3.12 ベース → アップデート適用はふくけいの判断待ち（VPS上での作業が必要）
+- 詳細: memory/channels/openclawヘルスチェック.md 2026-10-19 更新分
+
+(追記者: フクロウ / 2026-10-19 03:00 UTC アーカイブ更新)

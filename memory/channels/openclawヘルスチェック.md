@@ -9,6 +9,18 @@
 
 ---
 
+## 2026-10-19 更新分
+
+### ✅ OpenClaw v2026.10.5 公開（2026-10-18 リリース）
+- **リリース日**: 2026-10-18
+- **ハイライト**: Updates finish and recover on their own — OpenClaw updateが全デバイス・ファイルシステムで自律完了、pnpm 12対応、Windows elevation対応、macOS login shell対応、stale handoff leaseの自動復旧など
+- **URL**: https://github.com/openclaw/openclaw/releases/tag/v2026.10.5
+- **通知時刻**: 2026-10-19 00:30 UTC
+
+(追記者: フクロウ / 2026-10-19 03:00 UTC)
+
+---
+
 ## 2026-03-15
 
 - 初期作成: フクロウが自動で作成しました。
