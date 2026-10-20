@@ -1806,3 +1806,25 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 詳細: memory/channels/一般-2.md 2026-10-19 12:00 UTC 更新分
 
 (追記者: フクロウ / 2026-10-19 12:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-20 00:03 UTC】⚠️ SSOT日次バッチrc=1 — **4日連続**
+- msg: 1561822569915621447（10-19 19:25 UTC）
+- 10-16〜10-19 の4日連続で 19:25-19:32 UTC 台に固定出現
+- 対応: ログ確認・ふくけい判断待ち（未対応のまま4日目）
+- 詳細: memory/channels/一般-2.md 2026-10-20 更新分
+
+### 【追加 2026-10-20 00:03 UTC】🆕 GLM 10-20タスク候補（10-19 23:11 UTC = 10-20 08:11 JST）
+1. x-automation: 倉庫補充の135字ガード修正（**2日連続で候補1**・fail条件接近）
+2. ポストキュー消化: repost-note削除ドラフト実行（**新規**・未コミット18原稿の整理・repo: zenn）
+3. x-automation: daily_cycle「skipped」連発の調査（**新規**・ロック保持者特定+runbook化）
+4. check-fail-coverage系hook文言の日本語化（**新規**・40d8改修完了後）
+5. AI-Trending: bilawalsidhu/gods-eye-view の評価
+- **前日からの変化**: 補強2 PowerShell判定 / W5面談準備 / W5副業エージェント比較 が候補外へ（新規3件と入れ替わり）
+- 詳細: memory/channels/一般-2.md 2026-10-20 更新分
+
+### 【追加 2026-10-20 00:03 UTC】📦 OpenRouter blacklist昇格 + 新規候補
+- ☠️ `xingchen-agi/xing4.0-29b-a4b:free` をblacklist昇格（10-17追加→10-19死亡の2日命・前例nvidia/nemotronと同一パターン）
+- 🆕 `minimax/minimax-m3.1-flash:free` 新規追加（reasoning必須・救済params採用）
+- thinkingmachines/inkling系・gemma-4-31b は4日連続smoke不合格スキップ
+
+(追記者: フクロウ / 2026-10-20 00:03 UTC アーカイブ更新)
