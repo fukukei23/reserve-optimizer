@@ -2228,3 +2228,28 @@
 - モデルアップデート監視 00:31 UTC: OpenClaw 最新 v2026.10.5（変更なし・config実機は2026.3.12のまま約6ヶ月）
 
 (追記者: フクロウ / 2026-10-22 00:04 UTC アーカイブ更新)
+
+## 2026-10-22 03:00 UTC — アーカイブ更新（窓: 00:04-03:00 UTC）
+
+### ✅ ヘルスチェック・監視（正常）
+- 00:07 UTC: https://fopenclaw.com/ → **200 / 84ms**（exit 0・失敗項目なし）
+- 00:31 UTC: モデルアップデート監視 → OpenClaw 最新リリース **v2026.10.5**（前回から変更なし）
+- .Response time 推移: 10-21 12:02 UTC 218ms → 10-22 00:07 UTC 84ms（正常域に復帰）
+
+(追記者: フクロウ / 2026-10-22 03:00 UTC アーカイブ更新)
+
+## 2026-10-22 09:00 UTC — アーカイブ更新（窓: 06:00-09:00 UTC）
+
+### ⚠️ 一時的cronタイムアウト3件（08:23 UTC 記録・全て1回限り・データ影響なし）
+1. **openclaw_health_check（6h毎）**: 06:00 UTC run が `job execution timed out`（60s制限）→ レポート未投稿。次回 12:00 UTC で自動回復見込み
+2. **daily-workspace-backup**: 10-21 19:00 UTC run が timed out（120s制限）だが **tar実在確認済み**（workspace_20261021_190002.tar.gz・10.4MB）→ バックアップ自体は成功扱い
+3. **Weekly OpenClaw Ideas Collector**: 00:00 UTC run が `All models failed`（LLM timeout・既知パターン）→ 次回 10-23 00:00 UTC
+
+- 共通要因: LLM応答タイムアウト（timeoutSeconds=60 と実行時間が逆転）
+- 恒久対応が要るかは要観測（単発なら対応不要）
+- 関連: 10-21 06:03/09:03 UTC の「All models failed」→ fallbackModels 復旧（10-21 12:15 UTC）と同じ系の事象
+
+### ✅ ヘルスチェック・監視（正常）
+- 00:07 UTC: https://fopenclaw.com/ → 200 / 84ms（00:31 UTC モデル監視: v2026.10.5 変更なし）
+
+(追記者: フクロウ / 2026-10-22 09:00 UTC アーカイブ更新)

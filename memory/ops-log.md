@@ -78,3 +78,18 @@
 - 追記: channels/記憶と記録.md, openclawヘルスチェック.md, llmモデルモニター.md, 一般-2.md, 技術手順.md
 - SHARED.md抜粋: backup復旧(12日ぶり) / sessions.json oscillation(判断待ち) / SSOT rc=1 5回目 / GLM 10-22候補
 - 重要事象: fallbackModels復旧は12:15 UTC済み(既録)・判断依頼(fallback 1つ化の意図性)はふくけい判断待ちのまま
+## 2026-10-22 03:00 UTC — チャンネルアーカイブ更新（窓: 00:04-03:00 UTC）
+- 追記: channels/記憶と記録.md, openclawヘルスチェック.md, llmモデルモニター.md
+- SHARED.md抜粋: cron f6467c7a フィルタ強化（30日超休眠の通知抑制・sessions.json破壊Operator禁止）
+## 2026-10-22 06:00 UTC — チャンネルアーカイブ更新（窓: 03:00-06:00 UTC）
+- 追記: channels/記憶と記録.md（定期スキャン6回分のみ）
+- SHARED.md抜粋: なし（新規の重要事項なし・判断待ち案件に変化なし）
+- 重要事象: なし（Config ドリフトなし・watch_alerts 空・緊急案件なし）
+## 2026-10-22 09:00 UTC — チャンネルアーカイブ更新（窓: 06:00-09:00 UTC）
+- 追記: channels/記憶と記録.md / openclawヘルスチェック.md / llmモデルモニター.md
+- SHARED.md抜粋: 一時的cronタイムアウト3件（health check 06:00 UTC / backup 10-21 19:00 UTC / Weekly Ideas Collector 00:00 UTC）
+- 重要事象: LLM監視フィルタ強化の検証完了（07:43 UTC 通知ゼロ）
+## 2026-10-22 12:00 UTC — チャンネルアーカイブ更新（窓: 09:00-12:00 UTC）
+- 追記: channels/記憶と記録.md, channels/一般-2.md
+- SHARED.md抜粋: x-automation 原料枯渇警告の再発（4日目・継続化・fail条件「週5日以上継続」に接近）
+- 重要事象: なし（Config ドリフトなし・watch_alerts 空・緊急案件なし）
