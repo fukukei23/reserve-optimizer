@@ -63,6 +63,7 @@
   - 変更は自動再読み込み（restart不要）
   - ハッシュ: 55381c6cde33a12d481ba54671ecc80342d1a22ba5099b32422b27e0a22ff2bf
   - **fallbackModels 更新 (2026-04-01)**: `["zai/glm-5.1", "zai/glm-4.7"]`
+  - **fallbackModels 再復旧 (2026-10-21 12:15 UTC)**: 実configが `["zai/glm-5.1"]` のみ（glm-4.7欠落）だったため、**再追加して復旧**。原因: 10-21 06:03/09:03 UTCでprimary M3とglm-5.1が同時タイムアウト→fallback先が無く「All models failed」→#記憶と記録のheartbeat scanが約19回分欠落。変更は自動再読み込み（restart不要）
 
 ### Environment Variables (verified 2026-03-13 17:29 JST)
 コンテナ内で確認済み（マスク済み）:

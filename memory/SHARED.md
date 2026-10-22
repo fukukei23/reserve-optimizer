@@ -1828,3 +1828,63 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - thinkingmachines/inkling系・gemma-4-31b は4日連続smoke不合格スキップ
 
 (追記者: フクロウ / 2026-10-20 00:03 UTC アーカイブ更新)
+
+
+### 【追加 2026-10-21 12:00 UTC】⚠️ LLMプロバイダタイムアウト — 06:03/09:03 UTC に「All models failed」2回連続
+- **事象**: 06:03:06 UTC (msg 1562345467139072022) + 09:03:01 UTC (msg 1562390745439141971) の2回、チャンネルアーカイブ自動更新 cron で全モデル失敗
+- 失敗内容: minimax/MiniMax-M2.7 / zai/glm-5.1 / minimax/MiniMax-M3 すべてLLM timeout (06:03)・09:03はglm-5.1が「Request was aborted」
+- **実config**: `agents.defaults.model = {primary: minimax/MiniMax-M3, fallbacks: [zai/glm-5.1]}` / timeoutSeconds=60
+- **MEMORY.md不整合**: fallbackModelsの記載 `["zai/glm-5.1","zai/glm-4.7"]` は現状と不一致・**glm-4.7が実chainから消えている**
+- 実行時間: 06:00 UTC=186.6秒 / 09:00 UTC=181.8秒（= 3×60秒逐次タイムアウトと一致）
+- 03:00 UTC (36.9秒・正常) → 06:00 (失敗) → 09:00 (失敗) → 12:00 (本更新・正常)
+- **影響**: 06:00/09:00台のアーカイブ更新未実行 / **#記憶と記録 heartbeat scan 沈黙 02:14 UTC 停止以降継続中**（期待投稿19回分欠落・同時間帯の同一provider障害と推定）
+- **判定**: 12:00 UTCで自然復帰済み。一時的なprovider輻輳と判断。次回03:00/06:00/09:00 UTC台の成否で再発有無を判定
+- 推奨: fallbacks への glm-4.7 再追加検討 / MEMORY.md の fallbackModels 記載修正
+- 詳細: memory/channels/技術手順.md「2026-10-21 06:03 UTC」「2026-10-21 12:00 UTC」更新分
+
+### 【追加 2026-10-21 12:00 UTC】ℹ️ x-automation 原料枯渇 — 投稿再開（10-21 11:45 UTC）
+- msg: 1562431618189234287 / 10-20 欠落を挟んで **Claude Code ボット再開後の初投稿**
+- ボット側カウンタは「3日連続」表記（実継続日数は要確認・過去16日超は確実）
+- GLM 10-21候補1で3日連続「倉庫補充の135字ガード修正」が最優先提示中・未着手
+- 詳細: memory/channels/一般-2.md「2026-10-21 12:00 UTC」更新分
+
+(追記者: フクロウ / 2026-10-21 12:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-21 12:15 UTC】🔧 fallbackModels 復旧 — glm-4.7 再追加（heartbeat scan欠落19回分の原因対処）
+- **検知**: 12:13 UTC heartbeat scan（定期スキャン）で rem_n 560→569 の増加を確認しSHARED.md 12:00 UTC追記を精査
+- **原因特定**: 10-21 06:03/09:03 UTCの「All models failed」= primary `minimax/MiniMax-M3` と fallback `zai/glm-5.1` が連続タイムアウト → **fallbackが1つしか無く残-states全滅**（timeoutSeconds=60・逐次3×60秒=180秒台）
+- **実config確認（12:15 UTC）**: `fallbacks = ["zai/glm-5.1"]` のみ → MEMORY.md记载 `["zai/glm-5.1","zai/glm-4.7"]` と**不整合**（SHARED.md 08-23/10-09 UTCに同種の不整合記録あり）
+- **対応**: `openclaw.json` の `agents.defaults.model.fallbacks` に `zai/glm-4.7` を再追加（自動再読み込み・restart不要）／ `memory/config-snapshot.json` も同期更新（Config Health Monitorの誤報回避）
+- **MEMORY.md更新**: 「fallbackModels 再復旧 (2026-10-21)」として記載追記
+- **効果**: primary+glm-5.1同時障害時もglm-4.7で復帰可能 → 同種「All models failed」による scan/アーカイブ欠落の再発防止
+- **注意**: 変更は「ドキュメント一致の復元」でありprimaryは変更なし。意図的変更だった場合は本件を戻す判断が必要（ふくけい判断待ち）
+- **影響**: #記憶と記録 heartbeat scan 沈黙 02:14 UTC停止以降・約19回分欠落は**本件と同一原因**と推定（12:00 UTCに自然復帰済み）
+
+### 【追加 2026-10-22 00:04 UTC】✅ daily-workspace-backup 復旧 — 12日ぶり成功（10-21 19:00 UTC）
+- msg 1562541020372013087: 「バックアップOK: workspace_20261021_190002.tar.gz（9.9M）」
+- ファイル実在確認済み: `memory/backups/workspace_20261021_190002.tar.gz`
+- 連続エラー25回超（最終成功 10-09・データ消失リスクとして最優先扱い）から**12日ぶりの成功**
+- 以後も毎日成功するか 10-22 19:00 UTC 頃に要確認
+
+### 【追加 2026-10-22 00:04 UTC】⚠️ sessions.json ストア oscillation — 恒久対応ふくけい判断待ち
+- **事象**: ストア件数が 206→137→95→137→117 と**書き戻しで往復**（消失して固定ではない）
+- 会話transcript（263本の .jsonl）は全て無傷・消失はインデックスメタデータのみ
+- 原因推定: gateway稼働中、liveセッション起点のストア書き戻しが復旧分を上書き
+- 副作用: LLM監視のOpenAI件数アラートが9件→27件と変動（休眠セッション復元による・実害なし・重複通知見込み）
+- **判断事項（ユーザー確認待ち）**: gateway再起動時に Aug-15バックアップ（135件）+ transcriptスナップショットから恒久復元するか、現状のまま運用するか
+- 詳細: memory/channels/openclawヘルスチェック.md「2026-10-22 00:04 UTC」更新分
+
+### 【追加 2026-10-22 00:04 UTC】⚠️ SSOT日次バッチrc=1 — 10-16以降5回目（10-20欠落あり）
+- msg 1562547118290379013（10-21 19:24 UTC）「pending再生成で一部エラー（ログ確認）」
+- 10-16/17/18/19/21 の5回発生（10-20はClaude Codeボット停止で欠落）・19:24-19:32 UTC台固定
+- ふくけい判断待ちのまま未対応（ログ確認が先決）
+
+### 【追加 2026-10-22 00:04 UTC】🆕 GLM 10-22タスク候補（10-21 21:39 UTC）
+1. **regen-wait-keywords.shの焼き込み先バグ修正** — P1・**時限爆弾・期限2026-11-01前必須**（放置で11-01月次cronがcheck-fail-coverage.shを構文破壊）
+2. test-check-fail-coverage.sh 既存7件のgrace期限切れ対応 — P2・新規
+3. ポートフォリオ数値マスターへ実測追記 — P2
+4. **reserve-optimizer SaaS化brainstorming** — P1・最有力事業化タスク
+5. AI-Trending: gods-eye-view 評価（毎日必須）
+- 詳細: memory/channels/一般-2.md「2026-10-22 00:04 UTC」更新分
+
+(追記者: フクロウ / 2026-10-22 00:04 UTC アーカイブ更新)

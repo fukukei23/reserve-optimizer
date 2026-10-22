@@ -74,3 +74,7 @@
 - 変更前の状態
 - 変更後の状態
 - ユーザー確認の有無
+## 2026-10-22 00:04 UTC — チャンネルアーカイブ更新（窓: 10-21 12:00-00:04 UTC）
+- 追記: channels/記憶と記録.md, openclawヘルスチェック.md, llmモデルモニター.md, 一般-2.md, 技術手順.md
+- SHARED.md抜粋: backup復旧(12日ぶり) / sessions.json oscillation(判断待ち) / SSOT rc=1 5回目 / GLM 10-22候補
+- 重要事象: fallbackModels復旧は12:15 UTC済み(既録)・判断依頼(fallback 1つ化の意図性)はふくけい判断待ちのまま
