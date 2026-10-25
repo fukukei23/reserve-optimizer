@@ -1179,3 +1179,19 @@
 - 10-23 の 6時間毎run（07:44頃/13:44頃/19:44頃）は #llm への通知ゼロ（フィルタ正常動作継続）
 
 (追記者: フクロウ / 2026-10-24 00:04 UTC アーカイブ更新)
+
+## 2026-10-25 09:00 UTC — アーカイブ更新（窓: 06:00-09:00 UTC）
+
+### ⚠️ LLMモデル監視cron（f6467c7a）07:43 UTC run が timeout — 新規事象
+- 180005ms（timeoutSeconds=180上限）で `job execution timed out`・**errN 0→1**（直近はすべて ok だった新規）
+- 原因推定: agentTurn + `sessions_spawn` サブエージェント起動の複合タスクで LLM 応答待ちが上限を使い切ったパターン（health_check 06:00 UTC・daily-workspace-backup と同一根因＝LLM遅延）
+- 影響: #llm への警告監視に6時間の盲区。実害は限定的（警告通知の未送信のみ）
+- 通知先: #openclawヘルスチェック msg 1563828293659263129（08:15 UTC）
+- 判断待ち: 恒久対応（timeoutSeconds raise / LLM非依存化）— health_check と同一案で一括対応。**次回は 13:43 UTC run で回復観察**
+- SHARED.md 抜粋済み（2026-10-25 08:14 UTCエントリ）
+
+### ℹ️ #llm チャンネルへの新規投稿: なし
+- チャンネルの最新メッセージは 10-23 22:02 UTC（daily_memory_cleanup完了報告）。窓内の新規なし・監視フィルタは正常動作
+- daily_memory_cleanup は 22:00 UTC run timeout（errN=1・実害なし）で 22:00 UTC に再発観察
+
+(追記者: フクロウ / 2026-10-25 09:00 UTC アーカイブ更新)

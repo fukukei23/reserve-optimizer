@@ -2412,3 +2412,38 @@
   - **Node要件**: v2026.10.6 と同じ「Node 24.22.1+（24系）or 26.12.1+（26系）」が継続。**コンテナは Node v24.14.0 で未達** → 更新にはNode更新＋VPS側リビルドが必要（Dockerコンテナ内では不可）
   - 変更: Gemini 4 Argon サポート追加（Google models）
 - 判断: バージョン更新はふくけい判断待ち（VPSリビルドを伴うためコンテナ内では実行不可）
+
+## 2026-10-25 06:00 UTC｜health_check 06:00 UTC run が timeout 再発（フクロウ）
+- 00:00/00:03 UTC の2連続正常から一転、**06:00 UTC run が `job execution timed out`（60005ms = 60s上限）・errN 0→1**・レポート未投稿
+- **「06:00/12:00/18:00 UTC 帯でLLM応答遅延が60sを超過」既知パターンの再確認**（daily-workspace-backup と同一根因＝スクリプトではなくagentTurnのLLM応答待ちで時間切れ）
+- 手動実行 `scripts/openclaw_health_check.py` は 06:15 UTC で **HTTP 200 / 83ms・正常**（サイト障害の兆候なし）
+- 通知: #openclawヘルスチェック msg 1563798219400544297（06:15 UTC）
+- 恒久対応（timeoutSeconds raise / LLM非依存化 / 通知分離）は 10-23 00:36 UTC・10-24 21:36 UTC にご依頼済み・回答待ちのため再依頼せず本通知のみ
+- 判断待ち: 恒久対応方針の承認／**次回は 12:00 UTC run で回復観察**
+
+## 2026-10-25 07:43 UTC｜LLMモデル監視cron（f6467c7a）timeout — 新規（フクロウ）
+- **180005ms（timeoutSeconds=180上限）で `job execution timed out`・errN 0→1**。直近はすべて ok だった**新規事象**（既知の滞留エラーではない）
+- 原因推定: agentTurn + `sessions_spawn` サブエージェント起動の複合タスクで、LLM応答待ちが上限を使い切ったパターン（health_check 06:00 UTC・daily-workspace-backup と同一根因＝LLM遅延）
+- 影響: #llm への警告監視に6時間の盲区。実害は限定的（警告通知の未送信のみ・サイト/機能障害なし）
+- 通知: #openclawヘルスチェック msg 1563828293659263129（08:15 UTC）
+- 恒久対応案は health_check と同一案で一括対応するのが効率的。回答待ちのため再依頼はせず本通知のみ
+- 判断待ち: 恒久対応方針／**次回は 13:43 UTC run で回復観察**
+
+## 2026-10-25 12:03 UTC — アーカイブ更新（窓: 06:00-12:03 UTC）
+
+### ⚠️ health_check 06:00 UTC run 再timeout（errN 0→1・06:15 UTC通知済み）
+- 00:00/00:03 UTC の2連続正常（200/86ms）後に 06:00 UTC run が 60s timeout（60005ms）・レポート未投稿
+- 手動実行は 06:15 UTC で HTTP 200 / 83ms → **サイト障害なし・agentTurnのLLM応答遅延が原因**（backupと同一根因）
+- **「06:00/12:00/18:00 UTC 帯偏在」パターンが継続確認**（10-23/10-24と同型）。恒久対応（timeout raise / LLM非依存化 / 通知分離）は 10-23 00:36 UTC・10-24 21:36 UTC に依頼済み・回答待ち
+- 次回 12:00 UTC run（12:03 UTC時点で実行中または直後・結果は次窓で確認）
+
+### 🆕 LLMモデル監視cron（f6467c7a）07:43 UTC run timeout — 新規（08:15 UTC通知済み）
+- `job execution timed out`（180005ms = timeoutSeconds 180上限）・errN 0→1。**直近すべてokだった新規事象**
+- 原因推定: agentTurn + sessions_spawn サブエージェント起動の複合タスクでLLM応答待ちが上限到達。health_check・backupと同一根因（LLM遅延）
+- 影響: #llm警告監視に6時間の盲区（警告通知の未送信のみ・実害限定）
+- 次回 13:43 UTC run で回復するか要確認
+
+### ℹ️ weekly_agent_self_diagnosis 12:00 UTC run error（errN=1）
+- 日曜21:00 JST発火の週次ジョブ。10-18 run に続き error（timeout）— LLM遅延帯と符合（詳細は次窓で確認）
+
+(追記者: フクロウ / 2026-10-25 12:03 UTC アーカイブ更新)

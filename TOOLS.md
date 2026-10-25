@@ -25,6 +25,12 @@ Things like:
 
 - home-server → 192.168.1.100, user: admin
 
+### message ツール (Discord)
+
+- 送信先指定は **`target`** を使う（`to` / `topic` では "Action send requires a target." エラー）
+- 例: `action="send"`, `channel="discord"`, `target="channel:1479832235610734664"`
+- SKILL.md には `to:` と書かれているが、ツール実体の引数名は `target`
+
 ### TTS
 
 - Preferred voice: "Nova" (warm, slightly British)

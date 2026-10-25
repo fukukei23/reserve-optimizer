@@ -154,3 +154,22 @@ backup: /home/node/.openclaw/workspace/memory/backups/ops-log.md.20261024_000609
 - 追記: channels/openclawヘルスチェック.md（health_check 復旧維持 + v2026.10.7 検出）, channels/記憶と記録.md（定期スキャン6回分）
 - SHARED.md抜粋: v2026.10.7 検出（Node 24.22.1+ 要件・コンテナ未達）/ health_check 2連続正常
 - 重要事象: あり（新規リリース検出・判断待ち）／緊急案件: なし
+## 2026-10-25 06:00 UTC — チャンネルアーカイブ更新（窓: 03:00-06:00 UTC）
+- 追記: channels/記憶と記録.md（定期スキャン6回分 03:15-05:45 UTC・全て平常・全回Discord投稿スキップ）
+- SHARED.md抜粋: なし（重要な新決定・新規障害なし・既知滞留のみ）
+- 重要事象: なし（cron error4件はすべて既知／Configドリフトなし／watch_alerts 空）
+## 2026-10-25 09:00 UTC — チャンネルアーカイブ更新（窓: 06:00-09:00 UTC）
+- 追記: channels/openclawヘルスチェック.md（health_check 06:00 UTC timeout / LLM監視 07:43 UTC timeout）、channels/llmモデルモニター.md（LLM監視 新規timeout）、channels/記憶と記録.md（定期スキャン6回分）
+- SHARED.md抜粋: なし（06:15 UTC・08:14 UTCエントリで既に抜粋済みのため差分ゼロ）
+- 重要事象: あり（LLMモデル監視cron timeoutは新規／他は既知・いずれも通知済み）
+## 2026-10-25 12:03 UTC — チャンネルアーカイブ更新（窓: 06:00-12:03 UTC）
+- 追記: channels/openclawヘルスチェック.md（health_check 06:00 UTC timeout / LLM監視 07:43 UTC timeout新規 / self_diagnosis 12:00 UTC error）, channels/記憶と記録.md（定期スキャン12回分 06:14-11:44 UTC・全て平常）
+- SHARED.md抜粋: 監視系2件の新規timeout（LLM遅延根因・恒久対応回答待ち）
+- 重要事象: あり（LLM監視timeoutは新規・ただし既知のLLM遅延系パターンで緊急度低）／緊急案件: なし
+
+## 2026-10-25 22:23 JST — auto_push_check_30m
+- 未pushコミット: なし（master == origin/master、差分0）
+- push実行: スキップ
+- 作業ツリー: 未コミット変更あり（memory/系・TOOLS.md・backups/*.bak）
+- 静穏時間(22:00-06:00 JST)のためDiscord通知スキップ
+- コスト試算: 入力 ~17,000tok → $0.017 / 出力 ~494tok → $0.0016 / 合計 ~$0.019 (約3円)

@@ -2124,3 +2124,28 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 00:03 UTC run: 200 / 86ms → 10-24 06:02 UTC 以降 約18時間の監視空白が完全終了
 
 (追記者: フクロウ / 2026-10-25 03:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-25 06:15 UTC】⚠️ openclaw_health_check_q6h 06:00 UTC run が timeout 再発（60s上限・レポート未投稿）
+- 00:00/00:03 UTC の2連続正常から一転、06:00 UTC run が `job execution timed out`（60005ms）・errN 0→1。**「06:00/12:00/18:00 UTC 帯でLLM応答遅延が60sを超過」既知パターンの再確認**（daily-workspace-backupと同一根因＝スクリプトではなくagentTurnのLLM応答待ちで時間切れ）。
+- 手動実行 `scripts/openclaw_health_check.py` は 06:15 UTC で HTTP 200 / 83ms・正常（サイト障害の兆候なし）。
+- 恒久対応（timeoutSeconds raise / LLM非依存化 / 通知分離）は 10-23 00:36 UTC・10-24 21:36 UTC に依頼済み・回答待ちのため再依頼はしない。
+- 判断待ち: 恒久対応方針の承認（次回は 12:00 UTC run で回復観察）
+
+### 【追加 2026-10-25 08:14 UTC】⚠️ LLMモデル監視cron（f6467c7a）07:43 UTC run が timeout — 新規
+- 180005ms（timeoutSeconds=180上限）で `job execution timed out`・errN 0→1。直近はすべて ok だった新規事象。
+- agentTurn + sessions_spawn サブエージェント起動の複合タスクで LLM 応答待ちが上限を使い切ったパターン（health_check 06:00 UTC・daily-workspace-backup と同一根因＝LLM遅延）。
+- 影響: #llm への警告監視に6時間の盲区。実害は限定的（警告通知の未送信のみ）。
+- 判断待ち: 恒久対応（timeoutSeconds raise / LLM非依存化）は health_check と同一案で一括対応するのが効率的。回答待ちのため再依頼はせず、#openclawヘルスチェック へ技術アラートのみ投稿。
+
+### 【追加 2026-10-25 12:03 UTC】⚠️ 監視系2件が新規timeout — いずれもLLM遅延根因・恒久対応は回答待ち
+- **openclaw_health_check_q6h**: 06:00 UTC run が60s timeout（00:00/00:03の2連続正常の直後）。手動実行は200/83msで正常 → agentTurnのLLM応答遅延。「06:00/12:00/18:00 UTC帯偏在」パターン継続。06:15 UTCに通知済み
+- **LLMモデル監視（f6467c7a）**: 07:43 UTC run が180s timeout（errN 0→1・直近すべてokだった**新規事象**）。#llm警告監視に6時間盲区・実害は限定。08:15 UTCに通知済み。次回13:43 UTCで回復確認
+- 両者とも backup と同一根因（LLM応答遅延）。恒久対応案（timeout raise / LLM非依存化 / 通知分離）は一括対応が効率的 → **回答待ち**
+- backup修正（glm-4.7/300s）の検証は本日19:00 UTC run
+
+(追記者: フクロウ / 2026-10-25 12:03 UTC アーカイブ更新)
+
+### 【追加 2026-10-25 12:35 UTC】✅ health_check 12:00 UTC run で復旧 / ⚠️ self_diagnosis は全3プロバイダ同時timeout
+- ✅ openclaw_health_check_q6h: 12:00 UTC run で 200/79ms・レポート投稿済（errN 1→0リセット）。06:00 UTC timeout は単発で終了。恒久対応案件は回答待ちのまま。
+- ⚠️ weekly_agent_self_diagnosis: 12:00 UTC run が `All models failed (3)`（glm-4.7 / glm-5.1 / MiniMax-M2.7 すべて LLM timeout）で errN 1→2。**全プロバイダ同時timeout**はプロバイダ側の帯域障害/遅延帯の疑い。影響は週次自己診断のスキップのみで機能障害なし。既存の恒久対応（timeout raise / LLM非依存化）案件で吸収可のためDiscord通知はせず記録のみ。
+- 判断待ち: 恒久対応方針（health_check / LLM監視 / self_diagnosis / backup を一括で timeout raise + LLM非依存化にする案）
