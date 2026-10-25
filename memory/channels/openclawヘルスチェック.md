@@ -2377,3 +2377,38 @@
 - 前回（03:00 UTC アーカイブ）からの変化: **なし**
 
 (追記者: フクロウ / 2026-10-24 09:00 UTC アーカイブ更新)
+
+### ⚠️ health_check 12:00 UTC run — timeout再発（10-24 12:26 UTC heartbeat実測）
+- cron 7b5c44d3 の 12:00 UTC run（12:26 UTC時点で26分前に完了）が error（60s timeout）・チャンネル投稿なし
+- 06:02 UTC run ok（200/85ms・2回連続正常）の後の再発 → **12:00/18:00 UTC偏在パターンに合致**（10-23 12:00/18:00両timeoutと同一）
+- 次回 18:00 UTC run で回復するか要確認。timeoutSeconds raise等の恒久対応案は 10-23 00:36 UTC に @ふくけい 宛依頼済み・回答待ち
+
+(追記者: フクロウ / 2026-10-24 12:26 UTC heartbeat)
+
+## 2026-10-24 20:26 UTC — 静穏時間heartbeat実測（backup・health_check悪化記録）
+- **daily-workspace-backup**: 10-24 19:00 UTC run が error（60s/120s timeout）→ **6日連続（10-19〜10-24）**。かつ **10-24分のtarが未生成**（最終成功=10-23 19:01 UTC・11M×2）。「fail条件正式成立・実害なし」の前提が10-24分について崩れ、バックアップギャップが進行中。次回run 10-25 19:00 UTC。対応案（timeoutSeconds raise / tar作成と通知の分離 / 時刻変更）は 10-23 00:36 UTC に @ふくけい 宛通知済み・回答待ち
+- **openclaw_health_check_q6h**: 12:00 UTC（12:26 UTC heartbeat記録済み）に続き **18:00 UTC run も timeout** → 2回連続・監視空白は 06:02 UTC から約14時間。10-23 12:00/18:00 UTC と同一の偏在パターン
+- 通知ポリシー: 静穏時間（05:26 JST）かつ既知案件の増分のため本 heartbeatでは投稿せず、06:00 JST 以降の通常スキャンで #記憶と記録 に反映予定
+(追記者: フクロウ / 2026-10-24 20:26 UTC heartbeat)
+
+## 2026-10-24 21:35 UTC｜backup実害の回復・根因特定・暫定処置（フクロウ）
+- 10-24 19:00 UTC run が 120s timeout → **10-24分tar未生成**（backup.logにエントリなし・スクリプト未到達）
+- **手動復旧**: 21:33 UTC に `scripts/backup_workspace.sh` を手動実行 → `workspace_20261024_213338.tar.gz`（11M）生成成功（1秒・exit 0）
+- **根因**: スクリプトは健全。失敗は agentTurn のLLM応答遅延（38連続error・120005ms=timeout上限ちょうど）で、LLM応答待ちが120sを使い切ってスクリプト到達前に打ち切られる
+- **暫定処置（可逆・自主判断）**: `openclaw cron edit 24b40913-... --model zai/glm-4.7 --timeout-seconds 300` 適用・確認済み
+- **検証**: 10-25 19:00 UTC run（consecutiveErrors 38→0期待）
+- 投稿: #openclawヘルスチェック msg 1563666635112583341（注意喚起）/ 1563667464674353325（処置報告）
+
+## 2026-10-25 00:00 UTC｜health_check 復旧（監視空白終了・フクロウ）
+- 00:00 UTC run: **ok（9710ms・errN 2→0にリセット）** → 10-24 06:02 UTC以降の約18時間の監視空白が解消。12:00/18:00 UTC帯のtimeout連鎖は終息
+- 参考: backup修正（glm-4.7/300s）の検証は本日19:00 UTC run / daily_memory_cleanupの22:00 UTC runで再発観察
+
+## 2026-10-25 03:00 UTC｜health_check 復旧維持 + OpenClaw v2026.10.7 検出（フクロウ）
+- **00:03 UTC run: 正常（200 / 86ms・9710ms）** — 00:00 UTC run に続き2連続正常。10-24 06:02 UTC 以降の監視空白（約18時間）は完全に終了
+- **🆕 OpenClaw v2026.10.7 検出（00:31 UTC・モデルアップデート監視）**
+  - リリースノート: https://github.com/openclaw/openclaw/releases/tag/v2026.10.7
+  - 公開: 2026-10-24 / 現行コンテナは v2026.10.6 系
+  - 主な内容: Replay-safe session recovery（中断セッションの復旧provenance保持・未完了ツール結果の保持）/ 安全な更新_activationと復旧 / DB・ワーカー継続性 / バックアップとstate永続化 / Operator control continuity / Provider・plugin継続性 / 管理連携の信頼性 / クロスプラットフォームのアプリ管理アップグレード
+  - **Node要件**: v2026.10.6 と同じ「Node 24.22.1+（24系）or 26.12.1+（26系）」が継続。**コンテナは Node v24.14.0 で未達** → 更新にはNode更新＋VPS側リビルドが必要（Dockerコンテナ内では不可）
+  - 変更: Gemini 4 Argon サポート追加（Google models）
+- 判断: バージョン更新はふくけい判断待ち（VPSリビルドを伴うためコンテナ内では実行不可）

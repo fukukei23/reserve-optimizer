@@ -2060,3 +2060,67 @@ OpenClawエージェントを使って自律的に売上を生むワークフロ
 - 対象: cron 54846eb9（error・既知）
 
 (追記者: フクロウ / 2026-10-24 09:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-24 12:00 UTC】⚠️ x-automation 原料枯渇警告 — 6日目の再発（10-24 10:00 UTC）
+- 10-24 10:00 UTC に再投稿（10-23に続く連続）。fail条件「週5日以上継続」到達は継続状態
+- 未着手のまま: 「x-automation: 倉庫補充の135字ガード修正」（GLM 10-23/10-24 候補に連続掲載）
+- 参照: data/daily_cycle.jsonl
+- 詳細: memory/channels/一般-2.md「2026-10-24 12:00 UTC」エントリ
+
+### 【追加 2026-10-24 12:00 UTC】ℹ️ 定期スキャン 09:26-11:56 UTC（6回）— 全て平常・#記憶と記録 投稿は全回スキップ
+- 会話量 10-24=66→71行（自己増分主体）／watch_alerts 空・Config ドリフトなし・.env ハッシュ一致
+- cron error3件+skipped1件はすべて既知（backup〔fail条件成立・19:00 UTC run で6日目判定〕/ Weekly Ideas Collector〔30連続timeout〕/ self_diagnosis / obsidian_note skipped）
+- 詳細: memory/channels/記憶と記録.md「2026-10-24 12:00 UTC」エントリ参照
+
+(追記者: フクロウ / 2026-10-24 12:00 UTC アーカイブ更新)
+
+### 【追加 2026-10-24 21:28 UTC】🔴 backup 10-24分tar未生成で実害化 / health_check 12:00・18:00 UTC timeout再発
+- **daily-workspace-backup**: 10-24 19:00 UTC run も120s timeout（10-18以降の成功tarは10-21・10-23のみ・10-19/20/22/24は欠落）。**10-24分のtar未生成を実測確認**（最新=workspace_20261023_190148.tar.gz・11MB）。1日分のバックアップ欠落でデータ消失リスクが現実化。対応案（①timeoutSeconds延長 ②tar生成とDiscord通知の分離 ③時刻変更）は 10-23 00:36 UTC に @ふくけい 宛通知済み・回答待ちのまま → 06:28 JST スキャンで再通知
+- **openclaw_health_check_q6h**: 10-24 12:00/18:00 UTC 両run が60s timeout（最終正常=06:02 UTC 200/85ms・監視空白約15時間）。10-23 と同一の「12:00/18:00 UTC偏在」パターン。次回 00:00 UTC 発での回復見込み・恒久対応要
+
+(追記者: フクロウ / 2026-10-24 21:28 UTC)
+
+### 【追加 2026-10-24 21:30 UTC】🔴 daily-workspace-backup 実害発生 — 10-24分tar欠落（6連続timeout・スクリプト未実行）
+- **10-24 19:00 UTC run**: 120s timeout（durationMs=120006・system event確認）。**backup.logに10-24分エントリなし・tar未生成**（最新=10-23 19:01 workspace_20261023_1901*.tar.gz 2本）
+- **従来との相違**: 10-19〜10-23のtimeout日はtar生成済み（通知ステップのみ失敗）だったが、**10-24はスクリプト自体が実行されていない** → 初の実被害（10-24分バックアップ欠落）
+- **6連続timeout**（10-19/20/21/22/23/24 の19:00 UTC run全滅）・fail条件「週5日以上」は10-24 22:16 UTCエントリで正式成立済み・判断待ちのまま実害化
+- **対応**: #openclawヘルスチェックへ@ふくけい宛再通知（前回通知 10-23 00:36 UTC・案①timeoutSeconds raise ②tar作成と通知の分離 ③時刻変更 のまま未回答）
+- **次回**: 10-25 19:00 UTC run
+
+(追記者: フクロウ / 2026-10-24 21:30 UTC)
+
+### 【追加 2026-10-24 21:40 UTC】backup 根因特定＋緩和措置実施（手動バックアップ成功・cron修正）
+- **根因特定**: スクリプト手動実行は1秒で成功（workspace_20261024_213338.tar.gz・11M生成）→ 失敗は**agentTurnのLLM応答遅延**（38連続error・duration 120005ms=timeout上限ぴったり）。スクリプトは健全
+- **緩和措置（可逆・前例準拠）**: `openclaw cron edit 24b40913 --model zai/glm-4.7 --timeout-seconds 300` を適用・確認済み。ふくけい無応答のため自主判断（10-22 LLM監視payload編集の前例に倣う）。取消・変更はいつでも可
+- **検証**: 10-25 19:00 UTC run（consecutiveErrors 38→0期待）
+- **health_check_q6h**（同一根因疑い・60s・12:00/18:00UTC帯失敗パターン）は未修正・次回00:00 UTC発火を観察
+
+(追記者: フクロウ / 2026-10-24 21:40 UTC)
+
+### 【追加 2026-10-25 00:02 UTC】🆕 GLM 10-25 タスク候補（21:40 UTC）— 期限近いP1が2件
+1. **apply_crons.py復旧**（claude-config）— **期限 2026-10-29（残5日）**。ゲート拒否時もexit 0で成功風サマリを出す無音失敗状態で、durable cron のreconcileが継続不能
+2. **regen-wait-keywords.shの焼き込み先バグ修正**（claude-config）— **P1・放置で全セッションの検証ゲートが無音で死ぬ**実測済み。月次cron（11-01 03:17発火）前に修正必須
+- その他: Sleep as Android 実機比較検証（P1・CSV入手で完結）/ MicroWin Release APK+NativeWind / AI-Trending評価
+- 詳細: memory/channels/一般-2.md「2026-10-25 00:02 UTC」エントリ
+
+### 【追加 2026-10-25 00:02 UTC】⚠️ daily_memory_cleanup 22:00 UTC run timeout（新規1回・実害なし）
+- 300006ms（=300s上限）· errN=1。**既に model=zai/glm-4.7 / timeout=300s でありながらtimeout** → LLM遅延が glm-4.7 にも及ぶ時間帯
+- 実害なし（memory/2026-10-24.md は無傷・本jobは整理のみ）
+- 再発判定: 10-25 22:00 UTC run。再発時は health_check と併せた恒久対応案を提示
+
+### 【追加 2026-10-25 00:02 UTC】📦 OpenRouter pick — blacklist 1件昇格（10-24 22:50 UTC）
+- `nvidia/nemotron-3.5-content-safety:free` を死亡スモーク（verified=Trueだがsmoke不合格）として blacklist 反映・1件除外
+
+(追記者: フクロウ / 2026-10-25 00:02 UTC アーカイブ更新)
+
+### 【追加 2026-10-25 03:00 UTC】🆕 OpenClaw v2026.10.7 リリース検出（10-24公開）— Node要件未達で更新不可
+- **要点**: セッション復旧强化（replay-safe recovery）・更新activation/復旧の安全性・バックアップとstate永続化・Provider/plugin継続性が柱
+- **Node要件**: v2026.10.6 と同じ「Node 24.22.1+（24系）or 26.12.1+（26系）」が継続。**コンテナは Node v24.14.0 で未達**（実測 10-25 03:00 UTC）
+- **制約**: コンテナ内ではdocker操作不可 → **更新にはVPS側でのDockerfile編集＋リビルドが必要**（ふくけい指示待ち）
+- 変更点: Gemini 4 Argon サポート追加
+- 詳細: memory/channels/openclawヘルスチェック.md「2026-10-25 03:00 UTC」エントリ参照
+
+### 【追加 2026-10-25 03:00 UTC】✅ openclaw_health_check 復旧維持（00:00→00:03 UTC 2連続正常）
+- 00:03 UTC run: 200 / 86ms → 10-24 06:02 UTC 以降 約18時間の監視空白が完全終了
+
+(追記者: フクロウ / 2026-10-25 03:00 UTC アーカイブ更新)

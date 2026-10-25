@@ -136,3 +136,21 @@ backup: /home/node/.openclaw/workspace/memory/backups/ops-log.md.20261024_000609
 - 追記: channels/openclawヘルスチェック.md（06:02 UTC 200/85ms・2回連続正常）, channels/記憶と記録.md（定期スキャン7回分）
 - SHARED.md抜粋: health check 2回連続正常 / Weekly Ideas Collector 30連続timeout
 - 重要事象: なし（Config ドリフトなし・watch_alerts 空・緊急案件なし）
+## 2026-10-24 12:00 UTC — チャンネルアーカイブ更新（窓: 09:00-12:00 UTC）
+- 追記: channels/一般-2.md（x-automation原料枯渇6日目）, channels/記憶と記録.md（定期スキャン6回分）
+- SHARED.md抜粋: x-automation原料枯渇6日目 / 定期スキャン平常・全回投稿スキップ
+- 重要事象: なし（Config ドリフトなし・watch_alerts 空・緊急案件なし）
+
+## 2026-10-25 04:52 JST — auto_push_check_30m
+- 未pushコミット: なし（master == origin/master）
+- push実行: スキップ
+- 静穏時間(22:00-06:00 JST)のためDiscord通知スキップ
+- コスト試算: 入力 ~17,000tok → $0.017 / 出力 ~663tok → $0.0021 / 合計 ~$0.019 (約3円)
+## 2026-10-25 00:02 UTC — チャンネルアーカイブ更新（窓: 10-24 12:00 → 10-25 00:02 UTC）
+- 追記: channels/記憶と記録.md（backup実害→復旧→cron修正・health_check 2連続timeout・daily_memory_cleanup timeout・定期スキャン3回分）, channels/一般-2.md（GLM 10-25候補5件・OpenRouter blacklist昇格）
+- SHARED.md抜粋: GLM 10-25 P1期限2件 / daily_memory_cleanup timeout / OpenRouter blacklist
+- 重要事象: あり（backup実害は21:33 UTC手動復旧+cron修正済みで記録済み・SHARED.md 21:30/21:40 UTCエントリ参照）
+## 2026-10-25 03:00 UTC — チャンネルアーカイブ更新（窓: 00:02-03:00 UTC）
+- 追記: channels/openclawヘルスチェック.md（health_check 復旧維持 + v2026.10.7 検出）, channels/記憶と記録.md（定期スキャン6回分）
+- SHARED.md抜粋: v2026.10.7 検出（Node 24.22.1+ 要件・コンテナ未達）/ health_check 2連続正常
+- 重要事象: あり（新規リリース検出・判断待ち）／緊急案件: なし
